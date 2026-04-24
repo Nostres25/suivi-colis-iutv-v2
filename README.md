@@ -1,7 +1,8 @@
 Bienvenue sur le projet de création de logiciel de suivi de colis pour l'IUT de Villetaneuse, Sorbonne Paris-Nord !
 
-# Équipe
-
+Le demandeur du projet est l'enseignant chercheur et responsable du département CRIT à l'IUTV, **Franck Butelle**.
+# Équipe A
+Il s'agit de l'équipe ayant commencé le projet entre septembre 2025 et janvier 2026 
 -   **@weame959** Weame EL MOUTTAQUI
 -   **@D4CJ** - Dimitar DIMITROV
 -   **@ysmn-a** - Yasmine AIT SALAH
@@ -9,7 +10,13 @@ Bienvenue sur le projet de création de logiciel de suivi de colis pour l'IUT de
 -   **@MeganeMaz** - Mégane Mazekem
 -   **@Nostres25** - Soan MOREAU (**auteur de ce document**)
 
-Le demandeur du projet est l'enseignant chercheur et responsable du département CRIT à l'IUTV, **Franck Butelle**.
+# Équipe B
+Il s'agit de l'équipe ayant repris le projet en avril 2026 jusqu'en juin 2026
+-   **@SanjaiV2** Sanjai RAMASAMY
+-   **@krishna171826** - Gopi SURESH
+-   **@sarah-dev05** - Sarah HELLAL
+-   **At9ph** - Lissam LOUTFI
+-   **@Nostres25** - Soan MOREAU (**auteur de ce document**)
 
 # Développement
 
