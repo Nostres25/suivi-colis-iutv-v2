@@ -66,6 +66,10 @@
             "cp -R vendor/twbs/bootstrap/dist public/bootstrap",
             "cp -R vendor/twbs/bootstrap-icons/icons public/bootstrap/icons"
         ],
+        "post-install-cmd": [
+            "cp -R vendor/twbs/bootstrap/dist public/bootstrap",
+            "cp -R vendor/twbs/bootstrap-icons/icons public/bootstrap/icons"
+        ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],

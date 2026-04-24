@@ -78,7 +78,7 @@ sudo dpkg -i ~/Téléchargements/code_<version>.deb
 curl sert à l'installation de certains paquets, mariadb c'est la base de données et les extensions php servent au bon fonctionnement de notre application, notamment avec la base de données.
 
 ```bash
-sudo apt-get install git curl mariadb-server php php-curl php-mbstring php-xml php-mysql php-zip
+sudo apt-get install git && sudo apt-get install curl && sudo apt-get install mariadb-server && sudo apt-get install php && sudo apt-get install php-curl && sudo apt-get install php-mbstring && sudo apt-get install php-xml && sudo apt-get install php-mysql && sudo apt-get install php-zip
 ```
 
 #### 4. Installer Composer :

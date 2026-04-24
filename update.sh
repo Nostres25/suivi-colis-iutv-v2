@@ -1,1 +1,1 @@
-git pull && composer install --optimize-autoloader --no-dev --no-interaction && sudo systemctl restart apache2
+git pull && composer update --optimize-autoloader --no-dev --no-interaction

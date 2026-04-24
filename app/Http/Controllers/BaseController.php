@@ -62,6 +62,7 @@ abstract class BaseController extends Controller
                 - d'une erreur au niveau du CAS de l'université qui provoque le non envoie des informations de connexions sous les noms de clés habituelles. Dans cette situation, c'est aux responsables du CAS de l'université de corriger le problème<br/><br/>
                 ";
 
+                // TODO rédiger cette exception ?
                 report('Les informations normalement envoyées par le CAS ');
 
                 return ['success' => false, 'response' => response($response_content, 403)];
