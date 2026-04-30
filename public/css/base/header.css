@@ -1,0 +1,22 @@
+.page-header {
+    background-color: var(--primary-color);
+    padding: 20px 0;
+    color: white;
+}
+
+.page-header .container {
+    display: flex;
+    align-items: center;
+}
+
+/*.page-header .subtitle {
+    margin-top: 8px;
+    font-size: 1rem;
+    opacity: 0.9;
+}*/
+
+#navbar-container {
+    top: 0;
+    position: sticky;
+    width: 100%;
+}
