@@ -14,7 +14,7 @@ abstract class BaseController extends Controller
 {
     public static function getSuccessModal(string $message)
     {
-        return view('components.successModal', [
+        return view('components.base.modal.successModal', [
             'message' => $message,
         ]);
     }

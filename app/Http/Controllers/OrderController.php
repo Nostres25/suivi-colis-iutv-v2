@@ -162,6 +162,81 @@ class OrderController extends BaseController
         ]);
     }
 
+    public function modalViewDetails(string $id)
+    {
+        $user = Auth::user();
+        $request = request();
+
+        /* @var Order $order */
+        $order = Order::where('id', $id)->first();
+        $orderId = $order->getId();
+        $edit = $request['edit'];
+
+        if ($request->method() === 'POST') {
+            // TODO corriger le fait que le message erreur ou succès il apparaît seulement au bout de 2 actualisations, pas une.
+
+            if ($edit && (($user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && $user->hasRole($order->getDepartment())) || $user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES))) {
+                $title = $request['title'];
+                $orderNum = $request['order_num'];
+                $quoteNum = $request['quote_num'];
+                $description = $request['description'];
+                $cost = $request['cost'];
+                $status = $request['status'];
+                $quote = $request['quote'];
+                $purchaseOrder = $request['purchase_order'];
+                $deliveryNote = $request['delivery_note'];
+
+                if (isset($title)) {
+                    $order->setTitle($title, false);
+                }
+                if (isset($orderNum)) {
+                    $order->setOrderNumber($orderNum, false);
+                }
+                if (isset($quoteNum)) {
+                    $order->setQuoteNumber($quoteNum, false);
+                }
+
+                if (isset($description)) {
+                    $order->setDescription($description, false);
+                }
+
+                if (isset($cost)) {
+                    $order->setCost($cost, false);
+                }
+
+                if ($request->hasFile('quote')) {
+                    $order->uploadQuote($request, false);
+                }
+
+                if ($request->hasFile('purchase_order')) {
+                    $order->uploadPurchaseOrder($request, false);
+                }
+
+                if ($request->hasFile('delivery_note')) {
+                    $order->uploadDeliveryNote($request, false);
+                }
+
+                $order->setStatus($status, false);
+
+                $order->save();
+
+                session()->flash('orderSuccess', 'La commande a été mise à jour !');
+            } else {
+                session()->flash('orderError-'.$orderId, "Vous n'avez pas la permission de modifier cette commande");
+                $edit = false;
+            }
+        }
+
+        return view('components.orders.modal.viewOrderModal', [
+            'user' => $user,
+            'order' => $order,
+            'orderId' => $orderId,
+            'edit' => $edit,
+            'userDepartments' => $user->getDepartments(),
+        ]);
+
+    }
+
     public function submitNewOrder(): RedirectResponse|Redirector
     {
 
@@ -296,7 +371,7 @@ class OrderController extends BaseController
         // On retourne une vue partielle (sans header, footer, etc.)
         // render() est important si vous voulez manipuler le string,
         // mais return view() suffit souvent car Laravel le convertit en string.
-        return view('components.addPurchaseOrderModal', [
+        return view('components.orders.modal.step-actions.addPurchaseOrderModal', [
             'user' => Auth::user(),
             'order' => $order,
             'orderId' => $order->getId(),
@@ -322,81 +397,6 @@ class OrderController extends BaseController
     public function modalDeliveredPackage($id) {}
 
     public function modalDeliveredAll(string $id) {}
-
-    public function modalViewDetails(string $id)
-    {
-        $user = Auth::user();
-        $request = request();
-
-        /* @var Order $order */
-        $order = Order::where('id', $id)->first();
-        $orderId = $order->getId();
-        $edit = $request['edit'];
-
-        if ($request->method() === 'POST') {
-            // TODO corriger le fait que le message erreur ou succès il apparaît seulement au bout de 2 actualisations, pas une.
-
-            if ($edit && (($user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && $user->hasRole($order->getDepartment())) || $user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES))) {
-                $title = $request['title'];
-                $orderNum = $request['order_num'];
-                $quoteNum = $request['quote_num'];
-                $description = $request['description'];
-                $cost = $request['cost'];
-                $status = $request['status'];
-                $quote = $request['quote'];
-                $purchaseOrder = $request['purchase_order'];
-                $deliveryNote = $request['delivery_note'];
-
-                if (isset($title)) {
-                    $order->setTitle($title, false);
-                }
-                if (isset($orderNum)) {
-                    $order->setOrderNumber($orderNum, false);
-                }
-                if (isset($quoteNum)) {
-                    $order->setQuoteNumber($quoteNum, false);
-                }
-
-                if (isset($description)) {
-                    $order->setDescription($description, false);
-                }
-
-                if (isset($cost)) {
-                    $order->setCost($cost, false);
-                }
-
-                if ($request->hasFile('quote')) {
-                    $order->uploadQuote($request, false);
-                }
-
-                if ($request->hasFile('purchase_order')) {
-                    $order->uploadPurchaseOrder($request, false);
-                }
-
-                if ($request->hasFile('delivery_note')) {
-                    $order->uploadDeliveryNote($request, false);
-                }
-
-                $order->setStatus($status, false);
-
-                $order->save();
-
-                session()->flash('orderSuccess', 'La commande a été mise à jour !');
-            } else {
-                session()->flash('orderError-'.$orderId, "Vous n'avez pas la permission de modifier cette commande");
-                $edit = false;
-            }
-        }
-
-        return view('components.viewOrderModal', [
-            'user' => $user,
-            'order' => $order,
-            'orderId' => $orderId,
-            'edit' => $edit,
-            'userDepartments' => $user->getDepartments(),
-        ]);
-
-    }
 
     public function sendAutoMail(Request $request)
     {

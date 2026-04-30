@@ -13,8 +13,8 @@
 </head>
 <body>
 <header class="mb-5">
-    <x-nav></x-nav>
-    <x-alert></x-alert>
+    <x-base.nav></x-base.nav>
+    <x-base.alert></x-base.alert>
 
     {{--Bannière bleue--}}
 <div class="page-header">
