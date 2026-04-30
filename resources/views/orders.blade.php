@@ -26,9 +26,10 @@
                     </svg>
                     <input type="text" name="search" class="form-control search-input"
                            placeholder="Rechercher une commande..."
+                           autocomplete="off"
                            value="{{ $search ?? '' }}">
                 </div>
-                <button type="submit" class="btn btn-outline-primary">Rechercher</button>
+                <button type="submit" class="btn btn-outline-primary search-button" style="display:none">Rechercher</button>
                 @if(isset($search) && $search)
                     <a href="{{ url('/orders') }}" class="btn btn-secondary ms-2">Effacer</a>
                 @endif

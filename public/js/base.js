@@ -304,4 +304,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+document.querySelectorAll('.search-input').forEach((searchInput) => {
+    searchInput.addEventListener('keyup', (event) => {
+        const input = event.target;
+        const searchButton = input.parentNode.parentNode.querySelector('.search-button');
+        if (input.value === '') {
+            searchButton.style.display = 'none';
+        } else {
+            searchButton.style.display = 'block';
+        }
+    });
+});
+
+
+
 
