@@ -52,12 +52,6 @@
                                 Les receveurs du mail automatique seront l'auteur de la commande et l'acteur chargé de la prochaine étape.
                             </dl>
                             <div class="mb-3">
-
-                                <label for="email-address" class="col-form-label fs-6">Adresse e-mail utilisée</label>
-                                <input type="text" class="form-control" id="email-address" value="{{$user->getEmail()}}"
-                                       maxlength="255"/>
-                            </div>
-                            <div class="mb-3">
                                 @php
                                     $signature = implode(', ', $user->getRoles()->map(fn (Role $role) => $role->getName())->toArray());
 
