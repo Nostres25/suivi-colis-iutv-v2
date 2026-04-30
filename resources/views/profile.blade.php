@@ -40,7 +40,7 @@
     @endif
 
     @if (session('login_alert'))
-        <x-alert :alertMessage="session('login_alert')"></x-alert>
+        <x-base.alert :alertMessage="session('login_alert')"></x-base.alert>
     @endif
 @endsection
 
