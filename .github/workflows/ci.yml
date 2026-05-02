@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4 # action github officiel pour clone le code dans la VM
+        with:
+          token: ${{ secrets.GITHUBTOKEN }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2 # setup php (comme apt install php) -> https://github.com/shivammathur/setup-php
