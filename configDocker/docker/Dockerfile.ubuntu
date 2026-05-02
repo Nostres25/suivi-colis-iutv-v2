@@ -40,7 +40,7 @@ RUN apt-get update -qq && \
     php-mysql && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN aptitude install apache2-threaded-dev
+RUN apt-get update -qq && apt-get install -qy apache2-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN svn co https://www.ja-sig.org/svn/cas-clients/mod_auth_cas/trunk && \
     mod_auth_cas 
