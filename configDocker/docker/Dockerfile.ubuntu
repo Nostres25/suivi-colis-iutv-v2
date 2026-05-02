@@ -47,8 +47,7 @@ RUN apt-get update -qq && apt-get install -qy autoconf automake libtool && apt-g
     && make \
     && make install \
     && rm -rf /tmp/mod_auth_cas \
-    && apt-get purge -y linux-libc-dev apache2-dev autoconf automake libtool libssl-dev libpcre2-dev \
-    && apt-get autoremove -y \
+    && apt-get purge -y linux-libc-dev apache2-dev autoconf automake libtool \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY configDocker/cas.load /etc/apache2/mods-available/cas.load
