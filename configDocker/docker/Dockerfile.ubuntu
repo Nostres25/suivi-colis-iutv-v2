@@ -1,131 +1,82 @@
-# for debug: docker compose build --progress=plain --no-cache 
-# Production
-FROM ubuntu:24.04 AS production
+# Source: https://laravel-france.com/posts/conteneuriser-son-application-laravel-avec-docker
+# source 2 https://docs.docker.com/guides/frameworks/laravel/production-setup/
+# https://github.com/apereo/mod_auth_cas
+# for debug: docker compose build --progress=plain --no-cache
 
-# Some system settings
+FROM php:8.4-apache
+
 ENV COMPOSER_ALLOW_SUPERUSER=1
-ENV TZ Europe/Paris
-
-# Paths
+ENV TZ=Europe/Paris
 ENV APP_NAME="suivi-colis-iutv"
-ENV PARENT_ROOT="/var/www/"
 ENV DOCUMENT_ROOT="/var/www/suivi-colis-iutv"
-ENV APP_DIRECTORY="${DOCUMENT_ROOT}"
+
 WORKDIR ${DOCUMENT_ROOT}
 
-# Ports the application is listening on
 EXPOSE 80
 EXPOSE 443
-# Expose port 3306 to allow connections to the database
-EXPOSE 3306
 
-# Updates & installs (what is -qq & -qy ? should use --no-install-recommends ?)
-# RUN add-apt-repository ppa:ondrej/php not working
-RUN apt-get update -qq && \
-    apt-get install -qy \
+# System dependencies + build deps for mod_auth_cas
+RUN apt-get update && apt-get install -y \
     git \
-    subversion \
-    # gnupg \
     curl \
-    unzip \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libpcre2-dev \
+    apache2-dev \
+    libicu-dev \
     zip \
-    apache2 \
-    libapache2-mod-php \
-    mariadb-server \
-    php \
-    php-curl \
-    php-dom \
-    php-mbstring \
-    php-xml \
-    php-zip \
-    php-mysql && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    unzip \
+    && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN apt-get update -qq && apt-get install -qy apache2-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
+# PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip curl intl opcache
 
-RUN svn co https://www.ja-sig.org/svn/cas-clients/mod_auth_cas/trunk && \
-    mod_auth_cas 
-
-WORKDIR /var/www/mod_auth_cas/src
-
-RUN cd mod_auth_cas/src && \
-    apxs2 -i -c mod_auth_cas.c
-
-WORKDIR ${DOCUMENT_ROOT}
+# mod_auth_cas (CAS authentication Apache module)
+RUN apt-get update -qq && apt-get install -qy autoconf automake libtool && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && git clone https://github.com/apereo/mod_auth_cas.git /tmp/mod_auth_cas \
+    && cd /tmp/mod_auth_cas \
+    && autoreconf -ivf \
+    && ./configure \
+    && make \
+    && make install \
+    && rm -rf /tmp/mod_auth_cas
 
 COPY configDocker/cas.load /etc/apache2/mods-available/cas.load
-COPY configDocker/cas.conf /etc/apache2/mods-available/cas.conf   
+COPY configDocker/cas.conf /etc/apache2/mods-available/cas.conf
+RUN a2enmod cas \
+    && mkdir -p /var/cache/apache2/mod_auth_cas \
+    && chown -R www-data:www-data /var/cache/apache2/mod_auth_cas
 
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-RUN php -r "if (hash_file('sha384', 'composer-setup.php') === 'c8b085408188070d5f52bcfe4ecfbee5f727afa458b2573b8eaaf77b3419b0bf2768dc67c86944da1544f06fa544fd47') { echo 'Installer verified'.PHP_EOL; } else { echo 'Installer corrupt'.PHP_EOL; unlink('composer-setup.php'); exit(1); }"
-RUN php composer-setup.php
-RUN php -r "unlink('composer-setup.php');"
+# Composer
+RUN php -r "readfile('http://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer
 
-RUN mv composer.phar /usr/local/bin/composer
-# PHP Extensions - not in tuto for laravel
-# RUN docker-php-ext-install -j$(nproc) opcache pdo_mysql
-
-# Set PHP settings - prefer to use default settings
+# PHP settings
 COPY configDocker/php.ini /usr/local/etc/php/conf.d/app.ini
 
-# Ensable URL rewriting apache2
+# Apache
 RUN a2enmod rewrite
-# RUN a2enconf ${APP_NAME} # - not in laravel tuto
+COPY configDocker/vhost.conf /etc/apache2/sites-available/000-default.conf
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# Copy project from git - not recommended
-# WORKDIR "/var/www"
-# RUN git clone https://github.com/Nostres25/suivi-colis-iutv.git
-# WORKDIR "/var/www/suivi-colis-iutv"
-# COPY .env ${APP_DIRECTORY}/.env
-
-# Copy project files - maybe find a better solution to not copy everything (no copy .env.example, vscode settings etc...)
+# Application
 COPY . .
-# COPY .env ${APP_DIRECTORY}/.env
 
-# Install dependencies - only if project is cloned from git
-# RUN composer install --optimize-autoloader --no-dev
-
-# Generate a new security key - not working
-RUN php artisan key:generate
+RUN mkdir -p bootstrap/cache storage/app/public storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
+    && composer install --no-dev --optimize-autoloader --no-interaction
 
 # Permissions
-WORKDIR ${DOCUMENT_ROOT}
-RUN chown -R www-data storage
-RUN chown -R www-data bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
-# COPY errors /errors
-# RUN chown -R www-data:www-data ${APP_DIRECTORY}
+COPY configDocker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Replace the /etc/apache2/envvars job because it not working else
-ENV APACHE_RUN_DIR="/var/run/apache2"
-ENV APACHE_PID_FILE="/var/run/apache2/apache2.pid"
-ENV APACHE_RUN_GROUP="www-data"
-ENV APACHE_RUN_USER="www-data"
-ENV APACHE_LOG_DIR="/var/lock/apache2"
-
-# Host configurations
-COPY configDocker/vhost.conf /etc/apache2/sites-available/${APP_NAME}.conf
-# COPY configDocker/apache.conf /etc/apache2/apache2.conf
-# COPY configDocker/httpd.conf /usr/local/apache2.conf/httpd.conf
-
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-# RUN chmod 777 /etc/apache2/envvars # was an attempt to operate envvars :/
-
-# Activate the site config
-RUN a2ensite ${APP_NAME}.conf
-RUN cat /etc/apache2/apache2.conf
-
-# Set the custom document root
-RUN sed -ri -e 's!/var/www/html!${DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# Set up database
-RUN service mariadb start && \
-  mariadb -u root -e "CREATE DATABASE suivi_colis_iutv; CREATE USER admin_colis; CREATE USER 'admin_colis'@'localhost' IDENTIFIED BY 'password'; GRANT ALL PRIVILEGES ON suivi_colis_iutv.* TO 'admin_colis'@'localhost'; FLUSH PRIVILEGES;" && \
-  php artisan migrate
-
-# To be sure apache2 configuration modifications is applied and to see apache config errors - on ubuntu : systemctl restart apache2 but on debian service apache2 restart
-
-RUN service apache2 restart
-
-CMD "/usr/sbin/apache2"
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["apache2-foreground"]

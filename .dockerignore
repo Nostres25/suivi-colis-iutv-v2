@@ -1,0 +1,9 @@
+.env
+.git
+.github
+vendor
+node_modules
+storage/app/public
+storage/logs
+bootstrap/cache
+*.md
