@@ -1,0 +1,131 @@
+# https://codepaper.com/blog/how-to-implement-ci-cd-pipeline-laravel/
+
+name: CI - Tests, Docker Build & Security Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+
+  laravel-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # action github officiel pour clone le code dans la VM
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2 # setup php (comme apt install php) -> https://github.com/shivammathur/setup-php
+        with:
+          php-version: "8.4"
+          extensions: mbstring, xml, zip, curl, dom, pdo_sqlite
+          coverage: none # ne pas prendre en compte du % des tests effectué dans la codebase donc ignore et lance directement les tests
+
+      - name: Install Composer dependencies
+        run: make install
+
+      - name: Copy .env for testing
+        run: cp .env.example .env
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run Pest tests
+        run: php artisan test
+
+
+
+  laravel-migrations:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: suivi_colis_iutv
+          MYSQL_USER: app_colis
+          MYSQL_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, xml, zip, curl, dom, pdo_mysql
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: make install
+
+      - name: Copy .env for testing
+        run: cp .env.example .env
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run migrations
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: suivi_colis_iutv
+          DB_USERNAME: app_colis
+          DB_PASSWORD: secret
+        run: php artisan migrate --force
+
+
+
+  docker-build-scan:
+    runs-on: ubuntu-latest
+    needs: [laravel-tests, laravel-migrations]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t suivi-colis-iutv -f configDocker/docker/Dockerfile.ubuntu .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.35.0 # pour scanner les images docker ayant des failes de secu connu CVE -> https://github.com/aquasecurity/trivy-action/releases
+        with:
+          image-ref: suivi-colis-iutv
+          format: table # manière d'afficher dans les logs
+          exit-code: 1 # fait crash la ci/cd en cas de trouvaille
+          ignore-unfixed: true # ignore les CVE pour lesquels il n'existe pas encore de correctif
+          vuln-type: os,library # scanne à la fois les paquets système (apt) et les dépendances applicatives (composer)
+          severity: CRITICAL,HIGH # ne remonte que les vulnérabilités critiques et hautes, ignore les MEDIUM/LOW
+
+
+
+  deploy-production:
+    needs: [docker-build-scan]
+    if: github.event_name == 'push'
+    permissions:
+      packages: write
+    uses: ./.github/workflows/cd.yml
+    secrets:
+      GITHUBTOKEN: ${{ secrets.GITHUBTOKEN }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_SUDO_PASSWORD: ${{ secrets.VPS_SUDO_PASSWORD }}
+      VPS_SSH_PASSPHRASE: ${{ secrets.VPS_SSH_PASSPHRASE }}
