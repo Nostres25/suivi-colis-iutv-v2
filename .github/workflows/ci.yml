@@ -23,7 +23,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2 # setup php (comme apt install php) -> https://github.com/shivammathur/setup-php
         with:
-          php-version: "8.3"
+          php-version: "8.4"
           extensions: mbstring, xml, zip, curl, dom, pdo_sqlite
           coverage: none # ne pas prendre en compte du % des tests effectué dans la codebase donc ignore et lance directement les tests
 
@@ -67,7 +67,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
+          php-version: "8.4"
           extensions: mbstring, xml, zip, curl, dom, pdo_mysql
           coverage: none
 
