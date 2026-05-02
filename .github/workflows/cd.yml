@@ -1,0 +1,71 @@
+name: CD - Docker Build, Push & Deploy
+
+on:
+  workflow_call:
+    secrets:
+      GITHUBTOKEN:
+        required: true
+      VPS_SSH_KEY:
+        required: true
+      VPS_HOST:
+        required: true
+      VPS_PORT:
+        required: true
+      VPS_USER:
+        required: true
+      VPS_SUDO_PASSWORD:
+        required: true
+      VPS_SSH_PASSPHRASE:
+        required: true
+
+jobs:
+  docker-build-push:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: at9ph
+          password: ${{ secrets.GITHUBTOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t suivi-colis-iutv -f configDocker/docker/Dockerfile.ubuntu .
+
+      - name: Tag and Push image
+        run: |
+          docker tag suivi-colis-iutv ghcr.io/at9ph/suivi-colis-iutv:latest
+          docker tag suivi-colis-iutv ghcr.io/at9ph/suivi-colis-iutv:${{ github.sha }}
+          docker push ghcr.io/at9ph/suivi-colis-iutv:latest
+          docker push ghcr.io/at9ph/suivi-colis-iutv:${{ github.sha }}
+
+  deploy-vps:
+    runs-on: ubuntu-22.04
+    needs: [docker-build-push]
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          passphrase: ${{ secrets.VPS_SSH_PASSPHRASE }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd DeployConfig/
+            SUDO_PW="${{ secrets.VPS_SUDO_PASSWORD }}"
+
+            echo "$SUDO_PW" | sudo -S make prod-suivi-colis-iutv || {
+              echo "Deploy failed, removing stack and retrying..."
+              echo "$SUDO_PW" | sudo -S docker stack rm ProdSuiviColisIutv
+              sleep 15
+              echo "$SUDO_PW" | sudo -S make prod-suivi-colis-iutv
+            }
+
+            sleep 10
+            echo "$SUDO_PW" | sudo -S make rdocker
