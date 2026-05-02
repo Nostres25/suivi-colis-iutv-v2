@@ -24,6 +24,7 @@ EXPOSE 3306
 RUN apt-get update -qq && \
     apt-get install -qy \
     git \
+    subversion \
     # gnupg \
     curl \
     unzip \
