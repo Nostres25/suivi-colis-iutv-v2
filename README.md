@@ -65,20 +65,11 @@ Autrement dit, si vous commencez le développement sur ce projet, suivez les ins
 sudo apt update && sudo apt upgrade
 ```
 
-#### 2. Installer l'IDE (Visual Studio Code) :
+#### 2. Installer l'IDE :
 
+Vous pouvez installer l'IDE de votre choix sur votre système. Il est tout de même fortement PHPStorm pour ce projet et pour tous les projets PHP. Pour avoir testé Visual Studio Code, le support du PHP n'est que très partiel et insuffisant pour un développement confortable même avec des extensions.
 > [!NOTE]
-> Si vous utilisez WSL, vous pourrez vous contenter d'[installer Vscode sur votre Windows](https://code.visualstudio.com/Download). Une fois cela fait, vous pourrez sauter cette étape.
-> _VSCodium pourrait fonctionner, mais certaines extensions comme LiveShare ne seront pas installable_
-
-Téléchargez vscode depuis la [page d'installation](https://code.visualstudio.com/download) (.deb sur ubuntu ou debian)  
-Puis en exécutant le fichier installé avec la commande :
-
-```bash
-sudo dpkg -i ~/Téléchargements/code_<version>.deb
-```
-
-###### Si votre système est en anglais, le dossier de téléchargements peut-être "Downloads" plutôt que "Téléchargements" et le nom du fichier `code_<version>.deb` est à modifier en fonction du nom du fichier installé via la page d'installation
+> Si vous utilisez WSL, vous pourrez vous contenter d'installer votre IDE sur Windows et non sur le WSL. Une fois cela fait, vous pourrez sauter cette étape.
 
 #### 3. Installer git, curl, mariadb, php et ses extensions
 
@@ -110,7 +101,7 @@ sudo mv composer.phar /usr/local/bin/composer
 
 ### II. Éditeur de code / IDE:
 
-Si vous avez suivi les étapes précédentes, vous avez installé Visual Studio Code qui est l'IDE choisi **en premier lieu** pour le projet. Cependant, il n'est pas directement adapté à php et au développement avec Laravel. C'est pour cela que nous installons des extensions pour bénéficier de certaines fonctionnalités pratiques qui nous feront gagner du temps dans le développement.
+Si vous choisissez Visual Studio Code, sachez qu'il n'est pas directement adapté à php et au développement avec Laravel. C'est pour cela que nous installons des extensions pour bénéficier de certaines fonctionnalités pratiques qui nous feront gagner du temps dans le développement.
 
 #### **Visual Studio Code**
 
@@ -144,7 +135,7 @@ Avec les extensions suivantes :
 > Et pour le reste, elles sont toutes très pratique pour coder dans de bonnes conditions, sans ralentissement, sans être perdu, etc. Si votre pc est encore lent, vous pouvez en désinstaller encore quelques-unes, du moins utile au plus utile (Laravel Goto View en premier et Laravel ainsi que PHP Intelephense en dernier). Mais sans ces autres extensions le développement risque d'être compliqué.
 
 #### **PHPStorm**
-Cet IDE de Intellij est beaucoup plus adapté que VSCode pour du développement PHP. Aucune extension supplémentaire n'est requise pour un fonctionnement. Toutefois, le plugin "Laravel" peut être utile pour quelques fonctionnalités comme une autocomplétion un peu plus poussée 
+Cet IDE de IntelliJ est beaucoup plus adapté que VSCode pour du développement PHP. Aucune extension supplémentaire n'est requise pour un fonctionnement. Toutefois, le plugin "Laravel" peut être utile pour quelques fonctionnalités comme une autocomplétion un peu plus poussée 
 > [!NOTE]
 > Il s'agit d'un logiciel payant, mais il est possible de se procurer facilement une [license gratuite](https://www.jetbrains.com/fr-fr/phpstorm/buy/?section=commercial&billing=yearly&special-offers=students) :
 > - Pour les étudiants ;
