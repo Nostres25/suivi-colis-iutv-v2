@@ -14,7 +14,7 @@
     </thead>
     <tbody>
     @foreach ($suppliers as $supplier)
-        <tr class="btn-load-modal" data-url="{{ route('suppliers.modal.viewDetails', ['id' => $supplier->getId(), 'edit' => false]) }}">
+        <tr class="btn-load-modal" data-url="{{ route('suppliers.modal.view-details', ['id' => $supplier->getId(), 'edit' => false]) }}">
             <td class="text-break">
                 <strong>{{ $supplier['company_name'] }}</strong><br>
                 <small>

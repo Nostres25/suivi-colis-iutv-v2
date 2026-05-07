@@ -20,13 +20,13 @@ use Illuminate\View\View;
 
 class OrderController extends BaseController
 {
-
     // TODO Annotation pour utiliser la fonction auth() de AuthController pour chaque page
     // Routes GET
     public function viewOrders(?string $alertMsg = null): View|Response|RedirectResponse|Redirector
     {
         $request = request();
         $search = $request->input('search');
+        $page = $request->input('page');
 
         /* @var User $user */
         $user = Auth::user();
@@ -34,7 +34,7 @@ class OrderController extends BaseController
         $userPermissions = $user->getPermissions(); // Récupération d'un dictionnaire des permissions pour simplifier la vérification de permissions
         $userDepartments = $userRoles->filter(fn (Role $role) => $role->isDepartment());
 
-        $orders = $this->fetchOrders($user, $search);
+        $orders = $this->fetchOrders($user, $page, $search)->withQueryString();
 
         $suppliers = Supplier::all(['id', 'company_name', 'is_valid']); // Récupération uniquement des informations utiles à propos des fournisseurs
 
@@ -50,9 +50,18 @@ class OrderController extends BaseController
 
     public function fetchOrdersTable()
     {
+        // Récupération des informations sur la requête
         $user = Auth::user();
         $request = request();
-        $orders = $this->fetchOrders($user, $request->input('search'));
+        $search = $request->input('search');
+
+        // Récupération des commandes
+        $orders = $this->fetchOrders($user, $request->input('page'), $search);
+
+        // Redéfinition de l'URL des boutons de navigation afin de pointer vers la page des commandes et non vers la route pour actualiser la table
+        $orders->withPath('/orders')->withQueryString();
+
+        // Récupération de valeurs supplémentaires
         $userDepartments = $user->getRoles()->filter(fn (Role $role) => $role->isDepartment());
 
         $suppliers = Supplier::all(['id', 'company_name', 'is_valid']); // Récupération uniquement des informations utiles à propos des fournisseurs
@@ -78,61 +87,6 @@ class OrderController extends BaseController
         $orderId = $order->getId();
         $edit = $request['edit'];
 
-        if ($request->method() === 'POST') {
-            // TODO corriger le fait que le message erreur ou succès il apparaît seulement au bout de 2 actualisations, pas une.
-
-            if ($edit && (($user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && $user->hasRole($order->getDepartment())) || $user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES))) {
-                $title = $request['title'];
-                $orderNum = $request['order_num'];
-                $quoteNum = $request['quote_num'];
-                $description = $request['description'];
-                $cost = $request['cost'];
-                $status = $request['status'];
-                $quote = $request['quote'];
-                $purchaseOrder = $request['purchase_order'];
-                $deliveryNote = $request['delivery_note'];
-
-                if (isset($title)) {
-                    $order->setTitle($title, false);
-                }
-                if (isset($orderNum)) {
-                    $order->setOrderNumber($orderNum, false);
-                }
-                if (isset($quoteNum)) {
-                    $order->setQuoteNumber($quoteNum, false);
-                }
-
-                if (isset($description)) {
-                    $order->setDescription($description, false);
-                }
-
-                if (isset($cost)) {
-                    $order->setCost($cost, false);
-                }
-
-                if ($request->hasFile('quote')) {
-                    $order->uploadQuote($request, false);
-                }
-
-                if ($request->hasFile('purchase_order')) {
-                    $order->uploadPurchaseOrder($request, false);
-                }
-
-                if ($request->hasFile('delivery_note')) {
-                    $order->uploadDeliveryNote($request, false);
-                }
-
-                $order->setStatus($status, false);
-
-                $order->save();
-
-                session()->flash('orderSuccess', 'La commande a été mise à jour !');
-            } else {
-                session()->flash('orderError-'.$orderId, "Vous n'avez pas la permission de modifier cette commande");
-                $edit = false;
-            }
-        }
-
         return view('components.orders.modal.viewOrderModal', [
             'user' => $user,
             'order' => $order,
@@ -140,7 +94,6 @@ class OrderController extends BaseController
             'edit' => $edit,
             'userDepartments' => $user->getDepartments(),
         ]);
-
     }
 
     // Routes GET modal pour les actions d'état (actions rapides)
@@ -267,6 +220,81 @@ class OrderController extends BaseController
         return redirect('orders');
     }
 
+    // Routes POST modal
+    public function editOrder(string $id)
+    {
+        $user = Auth::user();
+        $request = request();
+
+        /* @var Order $order */
+        $order = Order::where('id', $id)->first();
+        $orderId = $order->getId();
+        $edit = $request['edit'];
+
+        if ($request->method() === 'POST') {
+            // TODO corriger le fait que le message erreur ou succès il apparaît seulement au bout de 2 actualisations, pas une.
+
+            if ($edit && (($user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && $user->hasRole($order->getDepartment())) || $user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES))) {
+                $title = $request['title'];
+                $orderNum = $request['order_num'];
+                $quoteNum = $request['quote_num'];
+                $description = $request['description'];
+                $cost = $request['cost'];
+                $status = $request['status'];
+                $quote = $request['quote'];
+                $purchaseOrder = $request['purchase_order'];
+                $deliveryNote = $request['delivery_note'];
+
+                if (isset($title)) {
+                    $order->setTitle($title, false);
+                }
+                if (isset($orderNum)) {
+                    $order->setOrderNumber($orderNum, false);
+                }
+                if (isset($quoteNum)) {
+                    $order->setQuoteNumber($quoteNum, false);
+                }
+
+                if (isset($description)) {
+                    $order->setDescription($description, false);
+                }
+
+                if (isset($cost)) {
+                    $order->setCost($cost, false);
+                }
+
+                if ($request->hasFile('quote')) {
+                    $order->uploadQuote($request, false);
+                }
+
+                if ($request->hasFile('purchase_order')) {
+                    $order->uploadPurchaseOrder($request, false);
+                }
+
+                if ($request->hasFile('delivery_note')) {
+                    $order->uploadDeliveryNote($request, false);
+                }
+
+                $order->setStatus($status, false);
+
+                $order->save();
+
+                session()->flash('orderSuccess', 'La commande a été mise à jour !');
+            } else {
+                session()->flash('orderError-'.$orderId, "Vous n'avez pas la permission de modifier cette commande");
+                $edit = false;
+            }
+        }
+
+        return view('components.orders.modal.viewOrderModal', [
+            'user' => $user,
+            'order' => $order,
+            'orderId' => $orderId,
+            'edit' => $edit,
+            'userDepartments' => $user->getDepartments(),
+        ]);
+    }
+
     // Routes POST des actions d'états (actions rapides)
 
     public function actionUploadPurchaseOrder($page = 1)
@@ -366,7 +394,7 @@ class OrderController extends BaseController
 
     // Autres fonctions
 
-    public function fetchOrders(User $user, ?string $search): AbstractPaginator
+    public function fetchOrders(User $user, string|int|null $page, ?string $search): AbstractPaginator
     {
 
         // TODO réduire le nombre de requêtes et voir à propos du cache (je pense qu'on ne fera pas de cache mais on opti les requêtes)
@@ -489,6 +517,10 @@ class OrderController extends BaseController
         $query->orderBy('updated_at', 'asc');
 
         // Commandes retournées
-        return $query->paginate(20)->withQueryString();
+        if (is_string($page)) {
+            $page = intval($page);
+        }
+
+        return $query->paginate(20, ['*'], 'page', $page);
     }
 }

@@ -17,10 +17,11 @@
                         {{session('purchaseOrderError-'.$orderId)}}
                     </div>
                 @endif
-                <form id="addPurchaseOrder-{{$orderId}}" class="ajax-form" method="POST" enctype="multipart/form-data" action="{{route('orders.uploadPurchaseOrder', $orderId)}}" autocomplete="off">
+                <form id="addPurchaseOrder-{{$orderId}}" class="ajax-form" method="POST" enctype="multipart/form-data" action="{{route('orders.step-actions.upload-purchase-order', $orderId)}}" autocomplete="off">
                     @csrf
                     <input type="hidden" name="modalId" value="addPurchaseOrderModal-{{$orderId}}">
 
+                    <p>Déposer un bon de commande pour la commande N°{{$order->getOrderNumber()}} : "{{$order->getTitle()}}" </p>
                     <label class="form-label fs-5">Sélectionnez un bon de commande :</label><br/>
                     <small>Fichiers acceptés : pdf, doc, docx jusqu'à 10MB</small>
                     <input type="file" name="purchase_order" class="form-control mb-3" accept="*,.pdf,.docx,.doc" required>
