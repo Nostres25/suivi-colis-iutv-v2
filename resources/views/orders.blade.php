@@ -63,7 +63,7 @@
         <p>Devis et bons de commandes</p>
     </div>
 
-    <div id="orders-table-container" data-url="{{ route('orders.fetch.table') }}">
+    <div id="orders-table-container" data-url="{{ route('orders.fetch.table', ['search' => $search, 'page' => $orders->currentPage()]) }}">
         <x-orders.orders-table :orders="$orders" :user="$user" :userDepartments="$userDepartments"></x-orders.orders-table>
     </div>
 

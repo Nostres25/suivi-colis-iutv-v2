@@ -73,7 +73,7 @@
             <p>Liste des fournisseurs référencés</p>
         </div>
 
-        <div id="suppliers-table-container" data-url="{{ route('suppliers.fetch.table') }}" >
+        <div id="suppliers-table-container" data-url="{{ route('suppliers.fetch.table', ['search' => $search, 'page' => $suppliers->currentPage()]) }}" >
             <x-suppliers.suppliers-table :suppliers="$suppliers"></x-suppliers.suppliers-table>
         </div>
 

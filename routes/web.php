@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 // orders get
 Route::get('/', [OrderController::class, 'viewOrders']);
-Route::get('/orders', [OrderController::class, 'viewOrders']);
+Route::get('/orders', [OrderController::class, 'viewOrders'])->name('orders');
 Route::get('/orders', [OrderController::class, 'viewOrders'])->name('orders.index');
 Route::get('/orders/fetch/table', [OrderController::class, 'fetchOrdersTable'])
     ->name('orders.fetch.table');
@@ -27,31 +27,31 @@ Route::get('/suppliers/fetch/table', [SupplierController::class, 'fetchSuppliers
 
 
 // orders modals get
-Route::get('/order/{id}/uploadPurchaseOrder', [OrderController::class, 'modalUploadPurchaseOrder'])
-    ->name('orders.modal.uploadPurchaseOrder');
-Route::get('/order/{id}/refuse', [OrderController::class, 'modalRefuse'])
-    ->name('orders.modal.refuse');
-Route::get('/order/{id}/paid', [OrderController::class, 'modalPaid'])
-    ->name('orders.modal.paid');
-Route::get('/order/{id}/uploadDeliveryNote', [OrderController::class, 'modalUploadDeliveryNote'])
-    ->name('orders.modal.uploadDeliveryNote');
-Route::get('/order/{id}/sentToSupplier', [OrderController::class, 'modalSentToSupplier'])
-    ->name('orders.modal.sentToSupplier');
-Route::get('/order/{id}/deliveredPackages', [OrderController::class, 'modalDeliveredPackages'])
-    ->name('orders.modal.deliveredPackages');
-Route::get('/order/{id}/deliveredAll', [OrderController::class, 'modalDeliveredAll'])
-    ->name('orders.modal.deliveredAll');
-Route::get('/order/{id}/viewDetails', [OrderController::class, 'modalViewDetails'])
-    ->name('orders.modal.viewDetails');
+Route::get('/order/{id}/step-actions/upload-purchase-order', [OrderController::class, 'modalUploadPurchaseOrder'])
+    ->name('orders.step-actions.upload-purchse-order');
+Route::get('/order/{id}/step-actions/refuse', [OrderController::class, 'modalRefuse'])
+    ->name('orders.step-actions.refuse');
+Route::get('/order/{id}/step-actions/paid', [OrderController::class, 'modalPaid'])
+    ->name('orders.step-actions.paid');
+Route::get('/order/{id}/step-actions/upload-delivery-note', [OrderController::class, 'modalUploadDeliveryNote'])
+    ->name('orders.step-actions.upload-delivery-note');
+Route::get('/order/{id}/step-actions/sent-to-supplier', [OrderController::class, 'modalSentToSupplier'])
+    ->name('orders.step-actions.sent-to-supplier');
+Route::get('/order/{id}/step-actions/packaged-delivered', [OrderController::class, 'modalDeliveredPackages'])
+    ->name('orders.step-actions.packages-delivered');
+Route::get('/order/{id}/step-actions/all-delivered', [OrderController::class, 'modalDeliveredAll'])
+    ->name('orders.step-actions.all-delivered');
+Route::get('/order/{id}/view-details', [OrderController::class, 'modalViewDetails'])
+    ->name('orders.modal.view-details');
 
 // orders post modals post
 
-Route::post('/order/{id}/uploadPurchaseOrder', [OrderController::class, 'actionUploadPurchaseOrder'])
-    ->name('orders.uploadPurchaseOrder');
+Route::post('/order/{id}/step-actions/upload-purchase-order', [OrderController::class, 'actionUploadPurchaseOrder'])
+    ->name('orders.step-actions.upload-purchase-order');
 
 // EDIT ORDER
-Route::post('/order/{id}/viewDetails', [OrderController::class, 'modalViewDetails'])
-    ->name('orders.modal.viewDetails');
+Route::post('/order/{id}/view-details', [OrderController::class, 'modalViewDetails'])
+    ->name('orders.modal.view-details');
 
 Route::post('/orders/create', [OrderController::class, 'submitNewOrder'])
     ->name('orders.create');
@@ -62,14 +62,14 @@ Route::get('/order/{id}/document/{type}', [OrderController::class, 'downloadDocu
 
 
 // suppliers modals get
-Route::get('/supplier/{id}/viewDetails', [SupplierController::class, 'modalViewDetails'])
-    ->name('suppliers.modal.viewDetails');
+Route::get('/supplier/{id}/view-details', [SupplierController::class, 'modalViewDetails'])
+    ->name('suppliers.modal.view-details');
 
 
 
 // suppliers modals post
-Route::post('/supplier/{id}/viewDetails', [SupplierController::class, 'modalViewDetails'])
-    ->name('suppliers.modal.viewDetails');
+Route::post('/supplier/{id}/view-details', [SupplierController::class, 'modalViewDetails'])
+    ->name('suppliers.modal.view-details');
 
 
 // Seulement pour les tests sur le serveur de l'IUT

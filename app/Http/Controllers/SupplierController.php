@@ -24,8 +24,9 @@ class SupplierController extends BaseController
         $user = Auth::user();
 
         $search = $request->input('search');
+        $page = $request->input('page');
 
-        $suppliers = $this->fetchSuppliers($user, $search);
+        $suppliers = $this->fetchSuppliers($user, $page, $search)->withQueryString();
 
         return view('suppliers', [
             'user' => $user,
@@ -36,10 +37,19 @@ class SupplierController extends BaseController
 
     public function fetchSuppliersTable()
     {
+        // Récupérer les informations de la requête
         $user = Auth::user();
+        $request = request();
+        $search = $request->input('search');
+
+        // Récupérer les fournisseurs
+        $suppliers = $this->fetchSuppliers($user, $request->input('page'), $search);
+
+        // Redéfinition de l'URL des boutons de navigation afin de pointer vers la page des fournisseurs et non vers la route pour actualiser la table
+        $suppliers->withPath('/suppliers')->withQueryString();
 
         return view('components.suppliers.suppliers-table', [
-            'suppliers' => $this->fetchSuppliers($user, request()->input('search')),
+            'suppliers' => $suppliers,
         ]);
     }
 
@@ -113,7 +123,7 @@ class SupplierController extends BaseController
     public function editSupplier(Supplier $supplier) {}
 
     // Autres fonctions
-    public function fetchSuppliers(User $user, ?string $search): LengthAwarePaginator
+    public function fetchSuppliers(User $user, int|string|null $page, ?string $search): LengthAwarePaginator
     {
 
         $user = Auth::user();
@@ -166,6 +176,10 @@ class SupplierController extends BaseController
         $query->orderByRaw($sqlActivitySort);
 
         // return suppliers pagination
-        return $query->paginate(10);
+        if (is_string($page)) {
+            $page = intval($page);
+        }
+
+        return $query->paginate(10, ['*'], 'page', $page);
     }
 }

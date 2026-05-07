@@ -20,13 +20,13 @@ use Illuminate\View\View;
 
 class OrderController extends BaseController
 {
-
     // TODO Annotation pour utiliser la fonction auth() de AuthController pour chaque page
     // Routes GET
     public function viewOrders(?string $alertMsg = null): View|Response|RedirectResponse|Redirector
     {
         $request = request();
         $search = $request->input('search');
+        $page = $request->input('page');
 
         /* @var User $user */
         $user = Auth::user();
@@ -34,7 +34,7 @@ class OrderController extends BaseController
         $userPermissions = $user->getPermissions(); // Récupération d'un dictionnaire des permissions pour simplifier la vérification de permissions
         $userDepartments = $userRoles->filter(fn (Role $role) => $role->isDepartment());
 
-        $orders = $this->fetchOrders($user, $search);
+        $orders = $this->fetchOrders($user, $page, $search)->withQueryString();
 
         $suppliers = Supplier::all(['id', 'company_name', 'is_valid']); // Récupération uniquement des informations utiles à propos des fournisseurs
 
@@ -50,9 +50,18 @@ class OrderController extends BaseController
 
     public function fetchOrdersTable()
     {
+        // Récupération des informations sur la requête
         $user = Auth::user();
         $request = request();
-        $orders = $this->fetchOrders($user, $request->input('search'));
+        $search = $request->input('search');
+
+        // Récupération des commandes
+        $orders = $this->fetchOrders($user, $request->input('page'), $search);
+
+        // Redéfinition de l'URL des boutons de navigation afin de pointer vers la page des commandes et non vers la route pour actualiser la table
+        $orders->withPath('/orders')->withQueryString();
+
+        // Récupération de valeurs supplémentaires
         $userDepartments = $user->getRoles()->filter(fn (Role $role) => $role->isDepartment());
 
         $suppliers = Supplier::all(['id', 'company_name', 'is_valid']); // Récupération uniquement des informations utiles à propos des fournisseurs
@@ -366,7 +375,7 @@ class OrderController extends BaseController
 
     // Autres fonctions
 
-    public function fetchOrders(User $user, ?string $search): AbstractPaginator
+    public function fetchOrders(User $user, string|int|null $page, ?string $search): AbstractPaginator
     {
 
         // TODO réduire le nombre de requêtes et voir à propos du cache (je pense qu'on ne fera pas de cache mais on opti les requêtes)
@@ -489,6 +498,10 @@ class OrderController extends BaseController
         $query->orderBy('updated_at', 'asc');
 
         // Commandes retournées
-        return $query->paginate(20)->withQueryString();
+        if (is_string($page)) {
+            $page = intval($page);
+        }
+
+        return $query->paginate(20, ['*'], 'page', $page);
     }
 }
