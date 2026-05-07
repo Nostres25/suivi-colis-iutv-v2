@@ -64,8 +64,27 @@ class SupplierController extends BaseController
         $supplier = Supplier::where('id', $id)->first();
         $edit = $request['edit'];
 
+        return view('components.suppliers.modal.viewSupplierModal', [
+            'user' => $user,
+            'supplier' => $supplier,
+            'supplierId' => $supplier->getId(),
+            'edit' => $edit,
+        ]);
+
+    }
+
+    // Routes POST modal
+    public function editSupplier(string $id)
+    {
+        $user = Auth::user();
+        $request = request();
+
+        /* @var Supplier $supplier */
+        $supplier = Supplier::where('id', $id)->first();
+        $edit = $request['edit'];
+
         if ($request->method() === 'POST') {
-            // TODO corriger le fait que le message erreur ou succès il apparaît seulement au bout de 2 actualisations, pas une.
+            // TODO corriger le fait que le message erreur ou succès il disparait seulement au bout de 2 actualisations, pas une.
             if ($user->hasPermission(PermissionValue::NOTES_ET_COMMENTAIRES)) {
                 $note = $request['note'];
                 $supplier->setNote($note, false);
@@ -78,6 +97,7 @@ class SupplierController extends BaseController
                 $phoneNumber = $request['phoneNumber'];
                 $siret = $request['siret'];
                 $isValid = $request['isValid'];
+                $speciality = $request['speciality'];
 
                 if (isset($companyName)) {
                     $supplier->setCompanyName($companyName, false);
@@ -87,6 +107,14 @@ class SupplierController extends BaseController
                 }
                 if (isset($phoneNumber)) {
                     $supplier->setPhoneNumber($phoneNumber, false);
+                }
+
+                if (isset($contactName)) {
+                    $supplier->setCompanyName($contactName, false);
+                }
+
+                if (isset($speciality)) {
+                    $supplier->setSpeciality($speciality, false);
                 }
 
                 if (isset($siret)) {
@@ -119,8 +147,6 @@ class SupplierController extends BaseController
         ]);
 
     }
-
-    public function editSupplier(Supplier $supplier) {}
 
     // Autres fonctions
     public function fetchSuppliers(User $user, int|string|null $page, ?string $search): LengthAwarePaginator

@@ -50,7 +50,7 @@ Route::post('/order/{id}/step-actions/upload-purchase-order', [OrderController::
     ->name('orders.step-actions.upload-purchase-order');
 
 // EDIT ORDER
-Route::post('/order/{id}/view-details', [OrderController::class, 'modalViewDetails'])
+Route::post('/order/{id}/view-details', [OrderController::class, 'editOrder'])
     ->name('orders.modal.view-details');
 
 Route::post('/orders/create', [OrderController::class, 'submitNewOrder'])
@@ -68,7 +68,7 @@ Route::get('/supplier/{id}/view-details', [SupplierController::class, 'modalView
 
 
 // suppliers modals post
-Route::post('/supplier/{id}/view-details', [SupplierController::class, 'modalViewDetails'])
+Route::post('/supplier/{id}/view-details', [SupplierController::class, 'editSupplier'])
     ->name('suppliers.modal.view-details');
 
 
