@@ -28,7 +28,7 @@ Route::get('/suppliers/fetch/table', [SupplierController::class, 'fetchSuppliers
 
 // orders modals get
 Route::get('/order/{id}/step-actions/upload-purchase-order', [OrderController::class, 'modalUploadPurchaseOrder'])
-    ->name('orders.step-actions.upload-purchse-order');
+    ->name('orders.step-actions.upload-purchase-order');
 Route::get('/order/{id}/step-actions/refuse', [OrderController::class, 'modalRefuse'])
     ->name('orders.step-actions.refuse');
 Route::get('/order/{id}/step-actions/paid', [OrderController::class, 'modalPaid'])

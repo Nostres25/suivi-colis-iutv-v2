@@ -30,6 +30,21 @@
                         {{session('orderSuccess')}}
                     </div>
                 @endif
+                @if (session()->exists('success'))
+                    <div class="alert alert-success mb-0">
+                        {{session('success')}}
+                    </div>
+                @endif
+                @if ($errors->any())
+                    <div class="alert alert-danger mb-0 pb-0">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
 
                 {{-- BOUTON BASCULE VUE/EDITION --}}
                 @if($user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES) || ($user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && $userDepartments->contains($order->getDepartment())))
