@@ -216,7 +216,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const allowedStatuses = [
                     STATUS.BROUILLON,
                     STATUS.DEVIS,
-                    STATUS.DEVIS_REFUSE
+                    STATUS.DEVIS_REFUSE,
+                    STATUS.BON_DE_COMMANDE_REFUSE
                 ];
 
                 if (allowedStatuses.includes(currentStatus)) {

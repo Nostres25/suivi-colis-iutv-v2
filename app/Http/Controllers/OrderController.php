@@ -328,7 +328,13 @@ class OrderController extends BaseController
             }
 
             $oldStatus = $order->getStatus();
-            if ($nextStep) {
+            if ($nextStep && (
+                $oldStatus == Status::DEVIS ||
+                $oldStatus == Status::BON_DE_COMMANDE_NON_SIGNE ||
+                $oldStatus == Status::DEVIS_REFUSE ||
+                $oldStatus == Status::BROUILLON ||
+                $oldStatus == Status::BON_DE_COMMANDE_REFUSE)
+            ) {
                 $order->setStatus($isSigned ? Status::BON_DE_COMMANDE_SIGNE : Status::BON_DE_COMMANDE_NON_SIGNE, false);
             }
 
