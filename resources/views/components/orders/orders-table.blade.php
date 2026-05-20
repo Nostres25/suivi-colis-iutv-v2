@@ -45,7 +45,7 @@
                     {{-- TODO optimiser tout ça notamment avec un switch par status et après seulement vérifier les rôles + cache pour éviter que la vérification de permissions envoie pleins de requêtes--}}
                     {{-- TODO ajouter le bouton bon de commande signé du DIRECTEUR IUT pour le statut devis aussi --}}
                     @if($order->getStatus() == Status::BON_DE_COMMANDE_NON_SIGNE && ($user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES) || $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)))
-                        <button class="btn btn-success btn-action mb-2 btn-load-modal" title="Déposer un bon de commande signé" type="button" data-url="{{ route('orders.step-actions.upload-purchse-order', ['id' => $order->getId(), 'sign' => true]) }}">
+                        <button class="btn btn-success btn-action mb-2 btn-load-modal" title="Déposer un bon de commande signé" type="button" data-url="{{ route('orders.step-actions.upload-purchase-order', ['id' => $order->getId(), 'sign' => true]) }}">
                             {{--                                    data-bs-toggle="modal" data-bs-target="#addPurchaseOrderModal-{{$order->getId()}}" id="addPurchaseOrderButton-{{$order->getId()}}"--}}
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16">
                                 <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
@@ -67,7 +67,7 @@
                     {{--                            @endif--}}
                     @if($user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES))
                         @if($order->getStatus() == Status::DEVIS)
-                            <button class="btn btn-success btn-action mb-2 btn-load-modal" title="Déposer un bon de commande" type="button" data-url="{{ route('orders.step-actions.upload-purchse-order', ['id' => $order->getId(), 'sign' => false]) }}">
+                            <button class="btn btn-success btn-action mb-2 btn-load-modal" title="Déposer un bon de commande" type="button" data-url="{{ route('orders.step-actions.upload-purchase-order', ['id' => $order->getId(), 'sign' => false]) }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16">
                                     <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
                                     <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>

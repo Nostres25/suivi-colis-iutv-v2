@@ -23,6 +23,7 @@
     <div id="navbar-container">
         <x-base.nav></x-base.nav>
         <x-base.alert></x-base.alert>
+        @yield('alert')
     </div>
 
     {{--Bannière bleue--}}

@@ -89,10 +89,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(result => {
                     // CAS 1 : SUCCÈS (JSON) -> ON RECHARGE LA PAGE
-                    if (result.type === 'json' && result.data.status === 'success') {
+                    if (result.type === 'json') {
                         // Comme Laravel a mis un message en session()->flash(),
                         // il s'affichera au rechargement.
-                        window.location.reload();
+
+                        if (result.data.status === 'success') {
+                            window.location.reload();
+                        } else {
+                            // Pour les erreurs de validators par exemple
+                            displayAlert(result.data.message, 'error');
+                        }
                         return;
                     }
 
@@ -210,7 +216,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const allowedStatuses = [
                     STATUS.BROUILLON,
                     STATUS.DEVIS,
-                    STATUS.DEVIS_REFUSE
+                    STATUS.DEVIS_REFUSE,
+                    STATUS.BON_DE_COMMANDE_REFUSE
                 ];
 
                 if (allowedStatuses.includes(currentStatus)) {

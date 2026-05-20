@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Log;
 use App\Models\Order;
 use App\Models\Role;
 use App\Models\Supplier;
@@ -16,6 +17,7 @@ use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Validator;
 use Illuminate\View\View;
 
 class OrderController extends BaseController
@@ -297,45 +299,59 @@ class OrderController extends BaseController
 
     // Routes POST des actions d'états (actions rapides)
 
-    public function actionUploadPurchaseOrder($page = 1)
+    public function actionUploadPurchaseOrder()
     {
+        /* @var Order $order */
+        /* @var User $user */
         $request = request();
         $id = $request['id'];
-        /* @var Order $order */
-        $order = Order::findOrFail($id);
 
-        // Vérification de permissions
-        $user = Auth::user();
-        if (! ($user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES) || $user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES) || $user->hasRole($order->getDepartment()))) {
-            session()->flash('purchaseOrderError-'.$id, "Vous n'avez pas la permission d'ajouter un bon de commande");
+        try {
+            $order = Order::findOrFail($id);
+            $user = Auth::user();
 
-            return $this->modalUploadPurchaseOrder($id);
+            if (! ($user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES) || $user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES) || $user->hasRole($order->getDepartment()))) {
+                return $this->modalUploadPurchaseOrder($id)->withErrors("Vous n'avez pas la permission d'ajouter un bon de commande !");
+            }
+
+            $nextStep = $request['nextStep'];
+            $isSigned = $request['signed'];
+
+            // Stockage du fichier dans storage/app/public/quotes
+            $output = $order->uploadPurchaseOrder($request, $isSigned, false);
+            /* @var Validator $validator */
+            $validator = $output['validator'];
+            $validatorFails = $validator->fails();
+
+            if ($validatorFails || count($output) > 1) {
+                return $this->modalUploadPurchaseOrder($id)->withErrors($validatorFails ? $validator : $output['otherError']);
+            }
+
+            $oldStatus = $order->getStatus();
+            if ($nextStep && (
+                $oldStatus == Status::DEVIS ||
+                $oldStatus == Status::BON_DE_COMMANDE_NON_SIGNE ||
+                $oldStatus == Status::DEVIS_REFUSE ||
+                $oldStatus == Status::BROUILLON ||
+                $oldStatus == Status::BON_DE_COMMANDE_REFUSE)
+            ) {
+                $order->setStatus($isSigned ? Status::BON_DE_COMMANDE_SIGNE : Status::BON_DE_COMMANDE_NON_SIGNE, false);
+            }
+
+            $successfulSave = $order->save();
+            if (! $successfulSave) {
+                return $this->modalUploadPurchaseOrder($id)->withErrors('Une erreur est survenue à la sauvegarde de la commande !');
+            }
+
+            $logData = $order->sendLog('Le bon de commande'.($isSigned ? ' signé' : '').' a été publié.', $user, $oldStatus);
+            /* @var Log $log */
+            $log = $logData['model'];
+            session()->flash('success', $log->getContent());
+
+            return $this->modalViewDetails($id)->withErrors($logData['success'] ? null : "Le journal d'activité n'a pas pas été envoyé à cause d'un erreur");
+        } catch (\Throwable $th) {
+            return $this->modalUploadPurchaseOrder($id)->withErrors('Une erreur inconnue est survenue à la publication du bon de commande.');
         }
-        $nextStep = $request['nextStep'];
-        $isSigned = $request['signed'];
-
-        // Stockage du fichier dans storage/app/public/quotes
-        // TODO ce serait bien que upload purchase order retourne le validator pour avoir l'erreur personnalisée
-        $success = $order->uploadPurchaseOrder($request, $isSigned, false);
-        if (! $success) {
-            session()->flash('purchaseOrderError-'.$id, "Une erreur est survenue à l'enregistrement du bon de commande");
-
-            return $this->modalUploadPurchaseOrder($id);
-        }
-
-        if ($nextStep) {
-            $order->setStatus($isSigned ? Status::BON_DE_COMMANDE_SIGNE : Status::BON_DE_COMMANDE_NON_SIGNE, false);
-        }
-
-        $successToSave = $order->save();
-        if (! $successToSave) {
-            session()->flash('purchaseOrderError-'.$id, 'Une erreur est survenue à la sauvegarde de la commande !');
-
-            return $this->modalUploadPurchaseOrder($id);
-        }
-
-        // Fallback pour fonctionnement sans JS (si besoin)
-        return BaseController::getSuccessModal('Le bon de commande a été ajouté avec succès à la commande N°'.$order->getOrderNumber().'.');
     }
 
     // Notifications
