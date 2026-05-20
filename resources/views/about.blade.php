@@ -19,12 +19,8 @@
 
         <div class="p-4">
             <p class="mb-4 fs-5">
-                Ce projet a été initié dans le cadre de la <strong>SAE 3.01</strong> pour répondre à un problème
-                rencontré par l'IUT : <strong>la perte et le mauvais suivi des colis</strong>.
-                Une première équipe a conçu une version fonctionnelle de l'application.
-                Le projet est poursuivi dans le cadre de la <strong>SAE 4.01</strong>, où une nouvelle équipe
-                reprend le travail afin d'ajouter de nouvelles fonctionnalités, corriger les problèmes
-                et finaliser l'application.
+                Ce projet a été initié dans le cadre de la SAÉ 3.01, dont l’objectif était de concevoir une première version fonctionnelle d’une application de suivi des colis pour l’IUT de Villetaneuse.
+                Il a ensuite été repris dans le cadre de la SAÉ 4.01, qui consiste à analyser le travail réalisé par une autre équipe, à s’approprier son code, puis à finaliser l’application en corrigeant les défauts et en ajoutant de nouvelles fonctionnalités.
             </p>
 
             <div class="row g-4">
@@ -138,8 +134,9 @@
             <div class="alert alert-light border mb-4">
                 <h5 class="mb-3 fw-bold">Équipe B (avril 2026 - juin 2026)</h5>
                 <p class="mb-3">
-                    Cette équipe reprend le projet dans le cadre de la SAE 4.01 afin de l'améliorer,
-                    d'ajouter de nouvelles fonctionnalités et de finaliser l'application.
+                    L’équipe B a repris ce travail dans le cadre de la SAÉ 4.01 afin de corriger les 
+                    problèmes identifiés, d’ajouter de nouvelles fonctionnalités et de finaliser 
+                    l’application.
                 </p>
 
                 <h6 class="mb-3 fw-bold">Membres de l'équipe B</h6>
@@ -192,7 +189,7 @@
                 <h5 class="mb-3 fw-bold">Organisation de l'équipe B</h5>
                 <p class="mb-0">
                     Tous les membres de l'équipe participent aux différentes tâches du projet :
-                    analyse, conception de la base de données, développement, tests et rédaction de la documentation.
+                    analyse, conception de la base de données, développement, tests et rédaction de la documentation..
                 </p>
             </div>
 
