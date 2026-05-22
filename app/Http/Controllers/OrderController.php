@@ -129,7 +129,23 @@ class OrderController extends BaseController
 
     }
 
-    public function modalPaid($id) {}
+    public function modalPaid($id)
+    {
+        /* @var Order $order */
+        $sign = request()['sign'];
+        $order = Order::where('id', $id)->first();
+
+        $user = Auth::user();
+
+        // On retourne une vue partielle (sans header, footer, etc.)
+        // render() est important si vous voulez manipuler le string,
+        // mais return view() suffit souvent car Laravel le convertit en string.
+        return view('components.orders.modal.step-actions.paidOrderModal', [
+            'user' => Auth::user(),
+            'order' => $order,
+            'orderId' => $order->getId(),
+        ]);
+    }
 
     public function modalUploadDeliveryNote($id) {}
 
@@ -539,4 +555,6 @@ class OrderController extends BaseController
 
         return $query->paginate(20, ['*'], 'page', $page);
     }
+
+    public function actionOrderPaid(string $id) {}
 }

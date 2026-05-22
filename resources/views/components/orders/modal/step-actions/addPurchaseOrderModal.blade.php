@@ -53,28 +53,19 @@
                     ></x-orders.modal.modal-fields.auto-mail-field>
                 </form>
             </div>
-            <div class="modal-footer justify-content-between">
-                <div class="d-flex justify-content-start" title="Passer la commande du statut {{ $order->getStatus() }} au statut de {{ Status::BON_DE_COMMANDE_NON_SIGNE }} ou de {{ Status::BON_DE_COMMANDE_SIGNE }} si le bon de commande est marqué comme signé.">
+            <div class="modal-footer">
+                <div class="me-auto" title="Passer la commande du statut {{ $order->getStatus()->getDisplayName() }} au statut de {{ Status::COMMANDE->getDisplayName() }} ou de {{ Status::BON_DE_COMMANDE_SIGNE->getDisplayName() }} si le bon de commande est marqué comme signé.">
                     <input class="form-check-input me-2" name="nextStep" type="checkbox"
                            id="checkboxNextStep-{{$orderId}}" form="addPurchaseOrder-{{$orderId}}" checked>
                     <label class="form-check-label" for="checkboxNextStep-{{$orderId}}">
                         Passer la commande au statut suivant
                     </label>
                 </div>
-                <div class="d-inline">
-                    <button type="submit" form="addPurchaseOrder-{{$orderId}}" class="btn btn-primary">Sauvegarder</button>
+                <div class="d-flex justify-content-end">
+                    <button type="button" form="orderPaid-{{$orderId}}" class="btn btn-secondary m-1" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="addPurchaseOrder-{{$orderId}}" class="btn btn-primary m-1">Sauvegarder</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<script>
-    // TODO ajouter les modals avec le php
-    const mailCheckBox = document.getElementById('checkboxMail-{{$orderId}}');
-    const mailOptionsDiv = document.getElementById('mailOptionsDiv-{{$orderId}}');
-
-    mailCheckBox.addEventListener('click', (event) => {
-        console.debug(mailOptionsDiv.style);
-        mailOptionsDiv.style = event.target.checked ? "display:block;" : "display:none;"
-    });
-</script>

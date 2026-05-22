@@ -29,3 +29,14 @@
         </div>
     </div>
 </div>
+{{-- Ce code javascript ne peut pas fonctionner puisqu'il est envoyé par ajax-- }}
+{{--<script>--}}
+{{--    const mailCheckBox = document.getElementById('checkboxMail-{{$orderId}}');--}}
+{{--    const mailOptionsDiv = document.getElementById('mailOptionsDiv-{{$orderId}}');--}}
+
+{{--    mailCheckBox.addEventListener('click', (event) => {--}}
+{{--        console.log(mailOptionsDiv.style);--}}
+{{--        mailOptionsDiv.style = event.target.checked ? "display:block;" : "display:none;"--}}
+{{--    });--}}
+{{--</script>--}}
+
