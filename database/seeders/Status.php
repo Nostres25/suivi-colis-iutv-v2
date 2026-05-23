@@ -76,4 +76,28 @@ enum Status: string
     {
         return Status::getDescriptionsDict()[$this->value];
     }
+
+    public static function getDisplayNamesDict(): array
+    {
+        return [
+            Status::BROUILLON->value => 'Brouillon',
+            Status::DEVIS->value => 'Devis',
+            Status::DEVIS_REFUSE->value => 'Devis refusé',
+            Status::BON_DE_COMMANDE_NON_SIGNE->value => 'Bon de commande non signé',
+            Status::BON_DE_COMMANDE_REFUSE->value => 'Bon de commande refusé',
+            Status::BON_DE_COMMANDE_SIGNE->value => 'Bon de commande signé',
+            Status::COMMANDE->value => 'Commandé',
+            Status::COMMANDE_REFUSEE->value => 'Commande refusée',
+            Status::COMMANDE_AVEC_REPONSE->value => 'Commande en cours',
+            Status::PARTIELLEMENT_LIVRE->value => 'Commande partiellement livrée',
+            Status::SERVICE_FAIT->value => 'Service fait (livré)',
+            Status::LIVRE_ET_PAYE->value => 'Livré et payé',
+            Status::ANNULE->value => 'Commande annulée',
+        ];
+    }
+
+    public function getDisplayName(): string
+    {
+        return Status::getDisplayNamesDict()[$this->value];
+    }
 }

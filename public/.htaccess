@@ -1,12 +1,14 @@
-<IfModule mod_rewrite.c>
-    <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
-    </IfModule>
-
+<IfModule mod_auth_cas.c>
     AuthType Cas
     AuthName "Authentication Required"
     CASAuthNHeader CAS-User
     Require valid-user
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
 
     RewriteEngine On
 

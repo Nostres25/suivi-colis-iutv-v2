@@ -189,7 +189,7 @@
                 <h5 class="mb-3 fw-bold">Organisation de l'équipe B</h5>
                 <p class="mb-0">
                     Tous les membres de l'équipe participent aux différentes tâches du projet :
-                    analyse, conception de la base de données, développement, tests et rédaction de la documentation.
+                    analyse, conception de la base de données, développement, tests et rédaction de la documentation..
                 </p>
             </div>
 
