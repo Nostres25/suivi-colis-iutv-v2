@@ -14,41 +14,41 @@
                     <div class="mb-3">
                         <label for="company-name" class="form-label">Nom de l'entreprise <span title="champ requis"
                                                                                                class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="company-name" required>
+                        <input type="text" class="form-control" id="company-name" name="companyName" required>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="siret" class="form-label">SIRET <span title="champ requis"
                                                                               class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="siret" maxlength="14" required>
+                            <input type="text" class="form-control" id="siret" name="siret" maxlength="14" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">Email <span title="champ requis"
                                                                               class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="email" required>
+                            <input type="email" class="form-control" id="email" name="email" required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="phone" class="form-label">Téléphone <span title="champ requis"
                                                                                   class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="phone" required>
+                            <input type="tel" class="form-control" id="phone" name="phoneNumber" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="contact-name" class="form-label">Nom du contact <span title="champ requis"
                                                                                               class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="contact-name" required>
+                            <input type="text" class="form-control" id="contact-name" name="contactName" required>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label for="speciality" class="form-label">Spécialité</label>
-                        <input type="text" class="form-control" id="speciality"
+                           <input type="text" class="form-control" id="speciality" name="speciality"
                                placeholder="Ex: Matériel informatique, Fournitures...">
                     </div>
                     <div class="mb-3">
                         <label for="note" class="form-label">Note / Remarque</label>
-                        <textarea class="form-control" id="note" rows="3"></textarea>
+                        <textarea class="form-control" id="note" name="note" rows="3"></textarea>
                     </div>
                 </form>
             </div>
@@ -56,8 +56,8 @@
                 @if($user->hasPermission(PermissionValue::GERER_FOURNISSEURS))
                     <div class="d-flex justify-content-start"
                          title="Marquer qu'il est possible de passer commande avec ce fournisseur">
-                        <input class="form-check-input me-2" type="checkbox"
-                               id="checkboxValidate" form="addSupplierForm" checked>
+                           <input class="form-check-input me-2" type="checkbox"
+                               id="checkboxValidate" name="isValid" form="addSupplierForm" checked>
                         <label class="form-check-label" for="checkboxValidate">
                             Valider le fournisseur
                         </label>

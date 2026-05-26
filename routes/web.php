@@ -23,6 +23,9 @@ Route::post('/orders', [OrderController::class, 'submitNewOrder'])->name('orders
 Route::get('suppliers', [SupplierController::class, 'viewSuppliers']);
 Route::get('/suppliers/fetch/table', [SupplierController::class, 'fetchSuppliersTable'])
     ->name('suppliers.fetch.table');
+// suppliers post (create)
+Route::post('/suppliers', [SupplierController::class, 'create'])
+    ->name('suppliers.create');
 
 
 
