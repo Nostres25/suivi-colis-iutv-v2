@@ -148,6 +148,49 @@ class SupplierController extends BaseController
 
     }
 
+    // Route POST - create supplier
+    public function create()
+    {
+        $user = Auth::user();
+        $request = request();
+
+        $validated = $request->validate([
+            'companyName' => 'required|string|max:255',
+            'siret' => 'required|string|size:14',
+            'email' => 'required|email|max:255',
+            'phoneNumber' => 'required|string|max:50',
+            'contactName' => 'required|string|max:255',
+            'speciality' => 'nullable|string|max:255',
+            'note' => 'nullable|string',
+            'isValid' => 'nullable|boolean',
+        ]);
+
+        $supplier = new Supplier();
+        $supplier->setCompanyName($validated['companyName'], false);
+        $supplier->setSiret($validated['siret'], false);
+        $supplier->setEmail($validated['email'], false);
+        $supplier->setPhoneNumber($validated['phoneNumber'], false);
+        $supplier->setContactName($validated['contactName'], false);
+
+        if (isset($validated['speciality'])) {
+            $supplier->setSpeciality($validated['speciality'], false);
+        }
+        if (isset($validated['note'])) {
+            $supplier->setNote($validated['note'], false);
+        }
+
+        $isValid = false;
+        if ($user->hasPermission(PermissionValue::GERER_FOURNISSEURS) && isset($validated['isValid'])) {
+            $isValid = (bool)$validated['isValid'];
+        }
+        $supplier->setValidity($isValid, false);
+
+        $supplier->save();
+
+        return response()->json(['success' => true, 'data' => ['id' => $supplier->getId()], 'message' => 'Fournisseur créé']);
+    }
+
+
     // Autres fonctions
     public function fetchSuppliers(User $user, int|string|null $page, ?string $search): LengthAwarePaginator
     {
