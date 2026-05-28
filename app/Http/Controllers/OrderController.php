@@ -122,11 +122,14 @@ class OrderController extends BaseController
 
     public function modalRefuseToSign($id) {}
 
-    public function modalRefuse($id)
-    {
-        $request = request();
-        $about = $request['about'];
+    public function modalRefuse($id) {
 
+        $order = Order::findOrFail($id);
+
+        return view('components.orders.modal.step-actions.refuseOrderModal', [
+            'order' => $order,
+            'orderId' => $order->getId(),
+        ]);
     }
 
     public function modalPaid($id) {}
