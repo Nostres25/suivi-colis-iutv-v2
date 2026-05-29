@@ -89,9 +89,9 @@ class Order extends Model
     /**
      * Retourne le coût en euros total de la commande
      *
-     * @return string|null // coût en euros de la commande
+     * @return float|null // coût en euros de la commande
      */
-    public function getCost(): ?string
+    public function getCost(): ?float
     {
         return $this->attributes['cost'];
     }
@@ -103,11 +103,7 @@ class Order extends Model
      */
     public function getCostFormatted(): string
     {
-        if (is_null($this->getCost())) {
-            return 'Non précisé';
-        }
-
-        return number_format($this->getCost(), 2, ',', ' ').' €';
+        return Order::getFormattedCost($this->getCost());
     }
 
     /**
@@ -322,9 +318,10 @@ class Order extends Model
      *
      * @param  float  $cost  Coût de la commande à définir
      * @param  bool  $save  : si la fonction sauvegarde en base de données
-     */
+     * */
     public function setCost(float $cost, bool $save = true): void
     {
+
         if ($save) {
             $this->setAttribute('cost', $cost);
         } else {
@@ -650,4 +647,13 @@ class Order extends Model
     //  * @return void
     //  */
     // public function removeLog(int $index) {}
+
+    public static function getFormattedCost(float $cost): string
+    {
+        if (is_null($cost)) {
+            return 'Non précisé';
+        }
+
+        return number_format($cost, 2, ',', ' ').' €';
+    }
 }
