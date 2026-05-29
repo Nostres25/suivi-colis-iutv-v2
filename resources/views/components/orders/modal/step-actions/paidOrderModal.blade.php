@@ -27,12 +27,13 @@
                         </ul>
                     </div>
                 @endif
-                <form id="orderPaidr-{{$orderId}}" class="ajax-form" method="POST" enctype="multipart/form-data" action="{{route('orders.step-actions.paid', $orderId)}}" autocomplete="off">
+                <form id="orderPaid-{{$orderId}}" class="ajax-form" method="POST" enctype="multipart/form-data" action="{{route('orders.step-actions.paid', $orderId)}}" autocomplete="off">
                     @csrf
                     <input type="hidden" name="modalId" value="orderPaidModal-{{$orderId}}">
                     <p>Marquer la commande N°{{$order->getOrderNumber()}}, désignée"{{$order->getTitle()}}" comme payée.</p>
 
                     <label class="form-label fs-6">Veuillez rectifier le montant payé s'il n'est pas correct :</label><br/>
+                    @if($order->getCost() != null)<small>La coût de la commande actuellement défini est de {{$order->getCostFormatted()}}</small>@endif
                     <div class="input-group">
                         <input id="inputCost" name="cost" step="0.01" min="0" maxlength="12" max="2147483647" type="number" class="form-control" value="{{$order->getCost() ?? 0}}"
                                aria-label="Montant payé en euros">

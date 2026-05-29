@@ -173,11 +173,12 @@ abstract class BaseController extends Controller
             $signature = implode(', ', $user->getRoles()->map(fn (Role $role) => $role->getName())->toArray());
 
             return "Madame, monsieur,\n".
-                "La commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été payée par le service financier de l'IUT \n\n".
+                "La commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été payée par le service financier de l'IUT pour la somme de {coûtEnEuros}.\n\n".
                 "{$user->getFullName()}\n".
                 "{$signature},\n".
                 'IUT de Villetaneuse, Sorbonne Paris Nord';
         }
 
+        return null;
     }
 }

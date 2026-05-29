@@ -346,7 +346,6 @@ class OrderController extends BaseController
 
             // Stockage du fichier dans storage/app/public/quotes
             $output = $order->uploadPurchaseOrder($request, $isSigned, false);
-            /* @var Validator $validator */
             $validator = $output['validator'];
             $validatorFails = $validator->fails();
 
@@ -380,6 +379,69 @@ class OrderController extends BaseController
             return $this->modalViewDetails($id)->withErrors($logData['success'] ? null : "Le journal d'activité n'a pas pas été envoyé à cause d'un erreur");
         } catch (\Throwable $th) {
             return $this->modalUploadPurchaseOrder($id)->withErrors('Une erreur inconnue est survenue à la publication du bon de commande.');
+        }
+    }
+
+    public function actionOrderPaid(string $id)
+    {
+        /* @var Order $order */
+        /* @var User $user */
+        $request = request();
+        $id = $request['id'];
+
+        try {
+            $order = Order::findOrFail($id);
+            $user = Auth::user();
+
+            if (! $user->hasPermission(PermissionValue::GERER_PAIEMENT_FOURNISSEURS)) {
+                return $this->modalPaid($id)->withErrors("Vous n'avez pas la permission de marquer la commande comme payée !");
+            }
+
+            $validator = Validator::make($request->all(), [
+                'cost' => 'decimal:0,2|max:2147483647',
+            ]);
+
+            $nextStep = $request['nextStep'];
+            $cost = $request['cost'];
+            $sendMail = $request['sendMail'];
+            $isCostChanged = $order->getCost() != $cost;
+            $logMsg = 'La commande a été marquée comme payée à une somme de '.Order::getFormattedCost($cost).'.'.($isCostChanged ? ' Qui est différente de la somme précédemment définie à '.$order->getCostFormatted().'.' : '');
+
+            error_log($sendMail);
+            // Mise à jour du coût de la commande
+            if ($isCostChanged) {
+                $order->setCost($cost, false);
+            }
+
+            if ($validator->fails()) {
+                return $this->modalPaid($id)->withErrors($validator);
+            }
+
+            $oldStatus = $order->getStatus();
+            if ($nextStep && $oldStatus == Status::SERVICE_FAIT) {
+                $order->setStatus(Status::LIVRE_ET_PAYE, false);
+            } else {
+                $oldStatus = null;
+            }
+
+            $successfulSave = $order->save();
+            if (! $successfulSave) {
+                return $this->modalPaid($id)->withErrors('Une erreur est survenue à la sauvegarde des modifications de la commande !');
+            }
+
+            $logData = $order->sendLog($logMsg, $user, $oldStatus);
+            /* @var Log $log */
+            $log = $logData['model'];
+            session()->flash('success', $log->getContent());
+
+            if ($sendMail) {
+                $mailContent = str_replace('{coûtEnEuros}', Order::getFormattedCost($cost), $request['mailContent']);
+                error_log($mailContent);
+            }
+
+            return $this->modalViewDetails($id)->withErrors($logData['success'] ? null : "Le journal d'activité n'a pas pas été envoyé à cause d'un erreur");
+        } catch (\Throwable $th) {
+            return $this->modalPaid($id)->withErrors("Une erreur inconnue est survenue à lors de l'opération.");
         }
     }
 

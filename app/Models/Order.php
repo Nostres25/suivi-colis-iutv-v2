@@ -437,39 +437,38 @@ class Order extends Model
         /* @var UploadedFile $file */
         $file = $request->file('purchase_order');
 
-        $validator = Validator::make($request->all(), [
-            'purchase_order' => 'required|mimes:pdf,doc,docx|max:10240', // Max 10MB
-        ]);
+        $validator = $this->checkPurchaseOrder($request);
+        if (! $validator->fails()) {
+            try {
+                $fileName = $file->getClientOriginalName();
 
-        try {
-            $fileName = $file->getClientOriginalName();
-
-            if (! stripos($fileName, 'BonDeCommande')) {
-                $fileName = 'BonDeCommande'.$fileName;
-            }
-
-            if ($is_signed) {
-                $ext = $file->getExtension();
-                $fileName = str_replace('.'.$ext, '(signe).'.$ext, $fileName);
-            }
-
-            $purchase_order = $file->storeAs('uploads/orders/'.$this->getOrderNumber(), $fileName, 'public'); // public -> le dossier
-
-            if ($purchase_order) {
-                if ($save) {
-                    $this->setAttribute('path_purchase_order', $purchase_order);
-                } else {
-                    $this->attributes['path_purchase_order'] = $purchase_order;
+                if (! stripos($fileName, 'BonDeCommande')) {
+                    $fileName = 'BonDeCommande'.$fileName;
                 }
-            } else {
-                return ['validator' => $validator, 'otherError' => 'Une erreur est survenue lors de la sauvegarde du fichier de bon de commande'];
+
+                if ($is_signed) {
+                    $ext = $file->getExtension();
+                    $fileName = str_replace('.'.$ext, '(signe).'.$ext, $fileName);
+                }
+
+                $purchase_order = $file->storeAs('uploads/orders/'.$this->getOrderNumber(), $fileName, 'public'); // public -> le dossier
+
+                if ($purchase_order) {
+                    if ($save) {
+                        $this->setAttribute('path_purchase_order', $purchase_order);
+                    } else {
+                        $this->attributes['path_purchase_order'] = $purchase_order;
+                    }
+                } else {
+                    return ['validator' => $validator, 'otherError' => 'Une erreur est survenue lors de la sauvegarde du fichier de bon de commande'];
+                }
+
+            } catch (\Throwable $th) {
+                error_log("Une erreur est survenue lors de l'enregistrement d'un bon de commande : \n".$th->getMessage());
+                report($th);
+
+                return ['validator' => $validator, 'otherError' => "Une erreur est survenue lors de l'enregistrement d'un bon de commande"];
             }
-
-        } catch (\Throwable $th) {
-            error_log("Une erreur est survenue lors de l'enregistrement d'un bon de commande : \n".$th->getMessage());
-            report($th);
-
-            return ['validator' => $validator, 'otherError' => "Une erreur est survenue lors de l'enregistrement d'un bon de commande"];
         }
 
         return ['validator' => $validator];
@@ -522,6 +521,13 @@ class Order extends Model
         }
 
         return false;
+    }
+
+    public function checkPurchaseOrder(Request $request): \Illuminate\Validation\Validator
+    {
+        return Validator::make($request->all(), [
+            'purchase_order' => 'required|mimes:pdf,doc,docx|max:10240', // Max 10MB
+        ]);
     }
 
     /**
