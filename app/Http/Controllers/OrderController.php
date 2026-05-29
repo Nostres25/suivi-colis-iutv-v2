@@ -542,4 +542,43 @@ class OrderController extends BaseController
 
         return $query->paginate(20, ['*'], 'page', $page);
     }
+
+    public function actionRefuse($id) {
+        $request = request();
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        if (! $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
+            return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser ce devis.");
+        }
+
+        if ($order->getStatus() != Status::DEVIS) {
+            return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état devis.");
+        }
+
+        $oldStatus = $order->getStatus();
+
+        $order->setStatus(Status::DEVIS_REFUSE, false);
+        $order->save();
+
+        $reason = $request['reason'];
+
+        $message = 'Le devis a été refusé. Raison : '.$reason;
+
+        $logData = $order->sendLog(
+            $message,
+            $user,
+            $oldStatus
+        );
+
+        session()->flash('success', $message);
+
+        request()->merge(['edit' => false]);
+
+        return $this->modalViewDetails($id);
+    }
 }
