@@ -42,6 +42,8 @@
                                 <li><a class="dropdown-item" href="/orders?search=DEVIS">Voir les devis</a></li>
                                 <li><a class="dropdown-item" href="/orders?search=BON_DE_COMMANDE">Voir les bons de
                                         commandes</a></li>
+                                <li><a class="dropdown-item" href="/orders?recentOnly=true">Voir les commandes récentes</a></li>
+
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
