@@ -178,7 +178,7 @@
                                     Coût total de la commande en euros (€)
                                 </dl>
                                 <div class="input-group w-25">
-                                    <input id="inputCost" name="cost" maxlength="12" type="number" class="form-control"
+                                    <input id="inputCost" name="cost" step="0.01" min="0" maxlength="12" max="2147483647" type="number" class="form-control"
                                            aria-label="Quantité en euros">
                                     <span class="input-group-text">€</span>
                                 </div>

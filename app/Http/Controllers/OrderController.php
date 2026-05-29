@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\User;
+use Carbon\Carbon;
 use Database\Seeders\PermissionValue;
 use Database\Seeders\Status;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +18,7 @@ use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Validator;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class OrderController extends BaseController
@@ -30,13 +31,21 @@ class OrderController extends BaseController
         $search = $request->input('search');
         $page = $request->input('page');
 
+        $options = [
+            'search' => $request->input('search'),
+            'page' => $request->input('page'),
+            'recentOnly' => $request->input('recentOnly'),
+        ];
+
         /* @var User $user */
         $user = Auth::user();
         $userRoles = $user->getRoles(); // Récupération des rôles en base de données
         $userPermissions = $user->getPermissions(); // Récupération d'un dictionnaire des permissions pour simplifier la vérification de permissions
         $userDepartments = $userRoles->filter(fn (Role $role) => $role->isDepartment());
 
-        $orders = $this->fetchOrders($user, $page, $search)->withQueryString();
+        $orders = $this->fetchOrders($user, $options)->withQueryString();
+
+        $options['page'] = $orders->currentPage();
 
         $suppliers = Supplier::all(['id', 'company_name', 'is_valid']); // Récupération uniquement des informations utiles à propos des fournisseurs
 
@@ -46,7 +55,7 @@ class OrderController extends BaseController
             'orders' => $orders,
             'validSupplierNames' => $suppliers->where('is_valid', true)->map(fn (Supplier $supplier) => $supplier->getCompanyName())->values()->toArray(),
             'userDepartments' => $userDepartments,
-            'search' => $search, // Variable pour la vue
+            'options' => $options, // Variable pour la vue
         ]);
     }
 
@@ -55,10 +64,14 @@ class OrderController extends BaseController
         // Récupération des informations sur la requête
         $user = Auth::user();
         $request = request();
-        $search = $request->input('search');
+        $options = [
+            'search' => $request->input('search'),
+            'page' => $request->input('page'),
+            'recentOnly' => $request->input('recentOnly'),
+        ];
 
         // Récupération des commandes
-        $orders = $this->fetchOrders($user, $request->input('page'), $search);
+        $orders = $this->fetchOrders($user, $options);
 
         // Redéfinition de l'URL des boutons de navigation afin de pointer vers la page des commandes et non vers la route pour actualiser la table
         $orders->withPath('/orders')->withQueryString();
@@ -122,7 +135,8 @@ class OrderController extends BaseController
 
     public function modalRefuseToSign($id) {}
 
-    public function modalRefuse($id) {
+    public function modalRefuse($id)
+    {
 
         $order = Order::findOrFail($id);
 
@@ -132,7 +146,23 @@ class OrderController extends BaseController
         ]);
     }
 
-    public function modalPaid($id) {}
+    public function modalPaid($id)
+    {
+        /* @var Order $order */
+        $sign = request()['sign'];
+        $order = Order::where('id', $id)->first();
+
+        $user = Auth::user();
+
+        // On retourne une vue partielle (sans header, footer, etc.)
+        // render() est important si vous voulez manipuler le string,
+        // mais return view() suffit souvent car Laravel le convertit en string.
+        return view('components.orders.modal.step-actions.paidOrderModal', [
+            'user' => Auth::user(),
+            'order' => $order,
+            'orderId' => $order->getId(),
+        ]);
+    }
 
     public function modalUploadDeliveryNote($id) {}
 
@@ -322,7 +352,6 @@ class OrderController extends BaseController
 
             // Stockage du fichier dans storage/app/public/quotes
             $output = $order->uploadPurchaseOrder($request, $isSigned, false);
-            /* @var Validator $validator */
             $validator = $output['validator'];
             $validatorFails = $validator->fails();
 
@@ -339,6 +368,8 @@ class OrderController extends BaseController
                 $oldStatus == Status::BON_DE_COMMANDE_REFUSE)
             ) {
                 $order->setStatus($isSigned ? Status::BON_DE_COMMANDE_SIGNE : Status::BON_DE_COMMANDE_NON_SIGNE, false);
+            } else {
+                $oldStatus = null;
             }
 
             $successfulSave = $order->save();
@@ -355,6 +386,110 @@ class OrderController extends BaseController
         } catch (\Throwable $th) {
             return $this->modalUploadPurchaseOrder($id)->withErrors('Une erreur inconnue est survenue à la publication du bon de commande.');
         }
+    }
+
+    public function actionOrderPaid(string $id)
+    {
+        /* @var Order $order */
+        /* @var User $user */
+        $request = request();
+        $id = $request['id'];
+
+        try {
+            $order = Order::findOrFail($id);
+            $user = Auth::user();
+
+            if (! $user->hasPermission(PermissionValue::GERER_PAIEMENT_FOURNISSEURS)) {
+                return $this->modalPaid($id)->withErrors("Vous n'avez pas la permission de marquer la commande comme payée !");
+            }
+
+            $validator = Validator::make($request->all(), [
+                'cost' => 'decimal:0,2|max:2147483647',
+            ]);
+
+            $nextStep = $request['nextStep'];
+            $cost = $request['cost'];
+            $sendMail = $request['sendMail'];
+            $isCostChanged = $order->getCost() != $cost;
+            $logMsg = 'La commande a été marquée comme payée à une somme de '.Order::getFormattedCost($cost).'.'.($isCostChanged ? ' Qui est différente de la somme précédemment définie à '.$order->getCostFormatted().'.' : '');
+
+            error_log($sendMail);
+            // Mise à jour du coût de la commande
+            if ($isCostChanged) {
+                $order->setCost($cost, false);
+            }
+
+            if ($validator->fails()) {
+                return $this->modalPaid($id)->withErrors($validator);
+            }
+
+            $oldStatus = $order->getStatus();
+            if ($nextStep && $oldStatus == Status::SERVICE_FAIT) {
+                $order->setStatus(Status::LIVRE_ET_PAYE, false);
+            } else {
+                $oldStatus = null;
+            }
+
+            $successfulSave = $order->save();
+            if (! $successfulSave) {
+                return $this->modalPaid($id)->withErrors('Une erreur est survenue à la sauvegarde des modifications de la commande !');
+            }
+
+            $logData = $order->sendLog($logMsg, $user, $oldStatus);
+            /* @var Log $log */
+            $log = $logData['model'];
+            session()->flash('success', $log->getContent());
+
+            if ($sendMail) {
+                $mailContent = str_replace('{coûtEnEuros}', Order::getFormattedCost($cost), $request['mailContent']);
+                error_log($mailContent);
+            }
+
+            return $this->modalViewDetails($id)->withErrors($logData['success'] ? null : "Le journal d'activité n'a pas pas été envoyé à cause d'un erreur");
+        } catch (\Throwable $th) {
+            return $this->modalPaid($id)->withErrors("Une erreur inconnue est survenue à lors de l'opération.");
+        }
+    }
+  
+
+    public function actionRefuse($id)
+    {
+        $request = request();
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        if (! $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
+            return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser ce devis.");
+        }
+
+        if ($order->getStatus() != Status::DEVIS) {
+            return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état devis.");
+        }
+
+        $oldStatus = $order->getStatus();
+
+        $order->setStatus(Status::DEVIS_REFUSE, false);
+        $order->save();
+
+        $reason = $request['reason'];
+
+        $message = 'Le devis a été refusé. Raison : '.$reason;
+
+        $logData = $order->sendLog(
+            $message,
+            $user,
+            $oldStatus
+        );
+
+        session()->flash('success', $message);
+
+        request()->merge(['edit' => false]);
+
+        return $this->modalViewDetails($id);
     }
 
     // Notifications
@@ -413,7 +548,7 @@ class OrderController extends BaseController
 
     // Autres fonctions
 
-    public function fetchOrders(User $user, string|int|null $page, ?string $search): AbstractPaginator
+    public function fetchOrders(User $user, ?array $options): AbstractPaginator
     {
 
         // TODO réduire le nombre de requêtes et voir à propos du cache (je pense qu'on ne fera pas de cache mais on opti les requêtes)
@@ -426,6 +561,7 @@ class OrderController extends BaseController
         $query = Order::query();
 
         $userId = $user->getId();
+        $recentOnly = @$options['recentOnly'];
 
         // Récupération uniquement des commandes dont l'utilisateur a accès
         if (! $user->hasPermission(PermissionValue::CONSULTER_TOUTES_COMMANDES)) {
@@ -446,82 +582,85 @@ class OrderController extends BaseController
         $isResponsableColis = $user->hasPermission(PermissionValue::GERER_COLIS_LIVRES);
         $isDepartment = $userDepartments->isNotEmpty();
 
-        if ($isDirecteur) {
-            // TRI DIRECTEUR
-            $bcNonSigne = Status::BON_DE_COMMANDE_NON_SIGNE->value;
-            $devis = Status::DEVIS->value;
+        if (! $recentOnly) {
+            if ($isDirecteur) {
+                // TRI DIRECTEUR
+                $bcNonSigne = Status::BON_DE_COMMANDE_NON_SIGNE->value;
+                $devis = Status::DEVIS->value;
 
-            $query->orderByRaw("CASE
-            WHEN status = '$bcNonSigne' THEN 1
-            WHEN status = '$devis' THEN 2
-            ELSE 3
-        END");
+                $query->orderByRaw("CASE
+                    WHEN status = '$bcNonSigne' THEN 1
+                    WHEN status = '$devis' THEN 2
+                    ELSE 3
+                END");
 
-        } elseif ($isFinancier) {
-            // TRI FINANCIER
-            $p1 = Status::SERVICE_FAIT->value;
-            $p2 = Status::DEVIS->value;
-            $p3 = Status::BON_DE_COMMANDE_NON_SIGNE->value;
-            $p4 = Status::BON_DE_COMMANDE_REFUSE->value;
-            $p5 = Status::LIVRE_ET_PAYE->value;
+            } elseif ($isFinancier) {
+                // TRI FINANCIER
+                $p1 = Status::SERVICE_FAIT->value;
+                $p2 = Status::DEVIS->value;
+                $p3 = Status::BON_DE_COMMANDE_NON_SIGNE->value;
+                $p4 = Status::BON_DE_COMMANDE_REFUSE->value;
+                $p5 = Status::LIVRE_ET_PAYE->value;
 
-            $query->orderByRaw("CASE
-            WHEN status = '$p1' THEN 1
-            WHEN status = '$p2' THEN 2
-            WHEN status = '$p3' THEN 3
-            WHEN status = '$p4' THEN 4
-            WHEN status = '$p5' THEN 5
-            ELSE 6
-        END");
+                $query->orderByRaw("CASE
+                    WHEN status = '$p1' THEN 1
+                    WHEN status = '$p2' THEN 2
+                    WHEN status = '$p3' THEN 3
+                    WHEN status = '$p4' THEN 4
+                    WHEN status = '$p5' THEN 5
+                    ELSE 6
+                END");
 
-        } elseif ($isResponsableColis) {
-            // TRI RESPONSABLE COLIS
-            // 1. En attente de livraison (Réponse reçue ou Partiel)
-            // 2. Commande envoyée (Potentiellement en attente)
-            // 3. Le reste
+            } elseif ($isResponsableColis) {
+                // TRI RESPONSABLE COLIS
+                // 1. En attente de livraison (Réponse reçue ou Partiel)
+                // 2. Commande envoyée (Potentiellement en attente)
+                // 3. Le reste
 
-            $p1_Colis = implode("','", [
-                Status::COMMANDE_AVEC_REPONSE->value,
-                Status::PARTIELLEMENT_LIVRE->value,
-            ]);
+                $p1_Colis = implode("','", [
+                    Status::COMMANDE_AVEC_REPONSE->value,
+                    Status::PARTIELLEMENT_LIVRE->value,
+                ]);
 
-            $p2_Colis = Status::COMMANDE->value;
+                $p2_Colis = Status::COMMANDE->value;
 
-            $query->orderByRaw("CASE
-            WHEN status IN ('$p1_Colis') THEN 1
-            WHEN status = '$p2_Colis' THEN 2
-            ELSE 3
-        END");
+                $query->orderByRaw("CASE
+                    WHEN status IN ('$p1_Colis') THEN 1
+                    WHEN status = '$p2_Colis' THEN 2
+                    ELSE 3
+                END");
 
-        } elseif ($isDepartment) {
-            // TRI DEPARTEMENTS
-            $brouillon = Status::BROUILLON->value;
+            } elseif ($isDepartment) {
+                // TRI DEPARTEMENTS
+                $brouillon = Status::BROUILLON->value;
 
-            $refusals = implode("','", [
-                Status::DEVIS_REFUSE->value,
-                Status::BON_DE_COMMANDE_REFUSE->value,
-                Status::COMMANDE_REFUSEE->value,
-            ]);
+                $refusals = implode("','", [
+                    Status::DEVIS_REFUSE->value,
+                    Status::BON_DE_COMMANDE_REFUSE->value,
+                    Status::COMMANDE_REFUSEE->value,
+                ]);
 
-            $actionsRequises = implode("','", [
-                Status::BON_DE_COMMANDE_SIGNE->value,
-                Status::COMMANDE->value,
-                Status::COMMANDE_AVEC_REPONSE->value,
-                Status::PARTIELLEMENT_LIVRE->value,
-            ]);
+                $actionsRequises = implode("','", [
+                    Status::BON_DE_COMMANDE_SIGNE->value,
+                    Status::COMMANDE->value,
+                    Status::COMMANDE_AVEC_REPONSE->value,
+                    Status::PARTIELLEMENT_LIVRE->value,
+                ]);
 
-            $sqlSort = "CASE
-            WHEN status = '$brouillon' AND author_id = ? THEN 1
-            WHEN status IN ('$refusals') THEN 2
-            WHEN status IN ('$actionsRequises') THEN 3
-            ELSE 4
-        END";
+                $sqlSort = "CASE
+                    WHEN status = '$brouillon' AND author_id = ? THEN 1
+                    WHEN status IN ('$refusals') THEN 2
+                    WHEN status IN ('$actionsRequises') THEN 3
+                    ELSE 4
+                END";
 
-            $query->orderByRaw($sqlSort, [$user->getId()]);
-            $query->orderByRaw($sqlSort, [$user->getId()]);
+                $query->orderByRaw($sqlSort, [$user->getId()]);
+                $query->orderByRaw($sqlSort, [$user->getId()]);
+            }
         }
 
         // 2.1 Filtre de recherche (si rempli)
+        $search = @$options['search'];
         if ($search) {
             $query->where(function (Builder $q) use ($search) {
                 $q->where('order_num', 'LIKE', "%{$search}%")
@@ -531,54 +670,24 @@ class OrderController extends BaseController
             });
         }
 
+        if ($recentOnly) {
+            $query->join('logs', 'logs.order_id', '=', 'orders.id')
+                ->whereDate('logs.created_at', '>', Carbon::today()->subDays(5))
+                ->where('logs.author_id', '=', $user->getId())
+                ->orderBy('orders.updated_at', 'desc');
+        } else {
+            $query->orderBy('orders.updated_at', 'asc');
+        }
+
         // --- 3. TRI SECONDAIRE (Date) ---
         // Les plus anciennes (date lointaine) en premier
-        $query->orderBy('updated_at', 'asc');
 
         // Commandes retournées
+        $page = @$options['page'];
         if (is_string($page)) {
             $page = intval($page);
         }
 
-        return $query->paginate(20, ['*'], 'page', $page);
-    }
-
-    public function actionRefuse($id) {
-        $request = request();
-        $order = Order::findOrFail($id);
-        $user = Auth::user();
-
-        $request->validate([
-            'reason' => 'required|string|max:1000',
-        ]);
-
-        if (! $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
-            return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser ce devis.");
-        }
-
-        if ($order->getStatus() != Status::DEVIS) {
-            return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état devis.");
-        }
-
-        $oldStatus = $order->getStatus();
-
-        $order->setStatus(Status::DEVIS_REFUSE, false);
-        $order->save();
-
-        $reason = $request['reason'];
-
-        $message = 'Le devis a été refusé. Raison : '.$reason;
-
-        $logData = $order->sendLog(
-            $message,
-            $user,
-            $oldStatus
-        );
-
-        session()->flash('success', $message);
-
-        request()->merge(['edit' => false]);
-
-        return $this->modalViewDetails($id);
+        return $query->distinct()->paginate(20, ['orders.*'], 'page', $page);
     }
 }

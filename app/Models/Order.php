@@ -89,9 +89,9 @@ class Order extends Model
     /**
      * Retourne le coût en euros total de la commande
      *
-     * @return string|null // coût en euros de la commande
+     * @return float|null // coût en euros de la commande
      */
-    public function getCost(): ?string
+    public function getCost(): ?float
     {
         return $this->attributes['cost'];
     }
@@ -103,11 +103,7 @@ class Order extends Model
      */
     public function getCostFormatted(): string
     {
-        if (is_null($this->getCost())) {
-            return 'Non précisé';
-        }
-
-        return number_format($this->getCost(), 2, ',', ' ').' €';
+        return Order::getFormattedCost($this->getCost());
     }
 
     /**
@@ -322,9 +318,10 @@ class Order extends Model
      *
      * @param  float  $cost  Coût de la commande à définir
      * @param  bool  $save  : si la fonction sauvegarde en base de données
-     */
+     * */
     public function setCost(float $cost, bool $save = true): void
     {
+
         if ($save) {
             $this->setAttribute('cost', $cost);
         } else {
@@ -440,12 +437,10 @@ class Order extends Model
         /* @var UploadedFile $file */
         $file = $request->file('purchase_order');
 
-        $validator = Validator::make($request->all(), [
-            'purchase_order' => 'required|mimes:pdf,doc,docx|max:10240', // Max 10MB
-        ]);
-
-        try {
-            $fileName = $file->getClientOriginalName();
+        $validator = $this->checkPurchaseOrder($request);
+        if (! $validator->fails()) {
+            try {
+                $fileName = $file->getClientOriginalName();
 
             if (! stripos($fileName, 'BonDeCommande')) {
                 $fileName = 'BonDeCommande'.$fileName;
@@ -458,21 +453,22 @@ class Order extends Model
 
             $purchase_order = $file->storeAs('uploads/orders/'.$this->getOrderNumber(), $fileName, 'public'); // public -> le dossier
 
-            if ($purchase_order) {
-                if ($save) {
-                    $this->setAttribute('path_purchase_order', $purchase_order);
+                if ($purchase_order) {
+                    if ($save) {
+                        $this->setAttribute('path_purchase_order', $purchase_order);
+                    } else {
+                        $this->attributes['path_purchase_order'] = $purchase_order;
+                    }
                 } else {
-                    $this->attributes['path_purchase_order'] = $purchase_order;
+                    return ['validator' => $validator, 'otherError' => 'Une erreur est survenue lors de la sauvegarde du fichier de bon de commande'];
                 }
-            } else {
-                return ['validator' => $validator, 'otherError' => 'Une erreur est survenue lors de la sauvegarde du fichier de bon de commande'];
+
+            } catch (\Throwable $th) {
+                error_log("Une erreur est survenue lors de l'enregistrement d'un bon de commande : \n".$th->getMessage());
+                report($th);
+
+                return ['validator' => $validator, 'otherError' => "Une erreur est survenue lors de l'enregistrement d'un bon de commande"];
             }
-
-        } catch (\Throwable $th) {
-            error_log("Une erreur est survenue lors de l'enregistrement d'un bon de commande : \n".$th->getMessage());
-            report($th);
-
-            return ['validator' => $validator, 'otherError' => "Une erreur est survenue lors de l'enregistrement d'un bon de commande"];
         }
 
         return ['validator' => $validator];
@@ -525,6 +521,34 @@ class Order extends Model
         }
 
         return false;
+    }
+
+    public function checkPurchaseOrder(Request $request): \Illuminate\Validation\Validator
+    {
+        return Validator::make($request->all(), [
+            'purchase_order' => 'required|mimes:pdf,doc,docx|max:10240', // Max 10MB
+        ]);
+    }
+
+    /**
+     * Permet d'envoyer un journal (log)/ une ligne de modification pour garder une trace sur les actions de la commande
+     *
+     * @param  string  $content  : Contenu descriptif du log, description de l'action
+     * @param  User  $author  : Auteur de l'action ou de la modification
+     * @param  ?Status  $oldStatus  : Ancien statut à indiquer s'il y a un changement de statut afin d'indiquer automatiquement le changement de statut
+     * @return array dictionnaire indiquant si la sauvegarde du log a été réussie ou non avec la valeur booléenne à la clé `success` et transmettant le model du log à la clé `model`
+     */
+    public function sendLog(string $content, User $author, ?Status $oldStatus = null): array
+    {
+        /* @var Log $log */
+
+        $log = $this->logs()->make([
+            'content' => $content.($oldStatus ? " De plus, le statut de la commande passe de \"{$oldStatus->getDisplayName()}\" à \"{$this->getStatus()->getDisplayName()}\"." : ''),
+        ]);
+
+        $log->author()->associate($author);
+
+        return ['success' => $log->save(), 'model' => $log];
     }
 
     /**
@@ -650,4 +674,13 @@ class Order extends Model
     //  * @return void
     //  */
     // public function removeLog(int $index) {}
+
+    public static function getFormattedCost(float $cost): string
+    {
+        if (is_null($cost)) {
+            return 'Non précisé';
+        }
+
+        return number_format($cost, 2, ',', ' ').' €';
+    }
 }

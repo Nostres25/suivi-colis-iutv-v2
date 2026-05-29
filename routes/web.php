@@ -48,6 +48,8 @@ Route::get('/order/{id}/view-details', [OrderController::class, 'modalViewDetail
 
 Route::post('/order/{id}/step-actions/upload-purchase-order', [OrderController::class, 'actionUploadPurchaseOrder'])
     ->name('orders.step-actions.upload-purchase-order');
+Route::post('/order/{id}/step-actions/paid', [OrderController::class, 'actionOrderPaid'])
+    ->name('orders.step-actions.paid');
 
 // EDIT ORDER
 Route::post('/order/{id}/view-details', [OrderController::class, 'editOrder'])
@@ -56,7 +58,7 @@ Route::post('/order/{id}/view-details', [OrderController::class, 'editOrder'])
 Route::post('/orders/create', [OrderController::class, 'submitNewOrder'])
     ->name('orders.create');
 
-// Ajoutez cette route dans votre groupe de routes authentifiées
+// Routes de téléchargement
 Route::get('/order/{id}/document/{type}', [OrderController::class, 'downloadDocument'])
     ->name('orders.download');
 
@@ -72,7 +74,7 @@ Route::post('/supplier/{id}/view-details', [SupplierController::class, 'editSupp
     ->name('suppliers.modal.view-details');
 
 
-// Seulement pour les tests sur le serveur de l'IUT
+// seulement pour les tests sur le serveur de l'IUT
 Route::get('/cookies', function (Request $request) {
     dd($request->cookie());
 });

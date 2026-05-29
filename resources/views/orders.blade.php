@@ -15,7 +15,6 @@
     @use(App\Models\Role)
     @use(App\Models\Order)
 
-<section>
     <section class="mb-4">
     <form method="GET" action="{{ url('/orders') }}">
         <div class="row justify-content-center">
@@ -27,10 +26,10 @@
                     <input type="text" name="search" class="form-control search-input"
                            placeholder="Rechercher une commande..."
                            autocomplete="off"
-                           value="{{ $search ?? '' }}">
+                           value="{{ @$options['search'] ?? '' }}">
                 </div>
                 <button type="submit" class="btn btn-outline-primary search-button" style="display:none">Rechercher</button>
-                @if(isset($search) && $search)
+                @if(@$options['search'])
                     <a href="{{ url('/orders') }}" class="btn btn-secondary ms-2">Effacer</a>
                 @endif
             </div>
@@ -63,11 +62,9 @@
         <p>Devis et bons de commandes</p>
     </div>
 
-    <div id="orders-table-container" data-url="{{ route('orders.fetch.table', ['search' => $search, 'page' => $orders->currentPage()]) }}">
+    <div id="orders-table-container" data-url="{{ route('orders.fetch.table', $options) }}">
         <x-orders.orders-table :orders="$orders" :user="$user" :userDepartments="$userDepartments"></x-orders.orders-table>
     </div>
-
-</section>
 @endsection
 
 @section('javascript')
