@@ -1,4 +1,4 @@
-
+/* TODO organiser les fichiers css*/
 /*Correction d'un bug bootsrap qui décale les éléments en fond avec des modals "larges" avec peu d'éléments */
 
 .modal-open {
@@ -13,7 +13,7 @@ html {
     --primary-color: #293358 !important;
     --secondary-color: #f8f9fa !important;
     [data-bs-theme=light] {
-        --bs-primary-rgb: var(--primary-color); 
+        --bs-primary-rgb: var(--primary-color);
         --bs-primary: var(--primary-color) !important;
     }
 }
@@ -82,23 +82,6 @@ html {
 body {
     background-color: var(--secondary-color);
 }
-
-.page-header {
-    background-color: var(--primary-color);
-    padding: 20px 0; 
-    color: white;
-}
-
-.page-header .container {
-    display: flex;
-    align-items: center; 
-}
-
-/*.page-header .subtitle {
-    margin-top: 8px;
-    font-size: 1rem;
-    opacity: 0.9;
-}/*
 
 /*Sections*/
 section {

@@ -15,15 +15,6 @@
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const el = document.getElementById('profileToast');
-            if (!el) return;
-            const toast = new bootstrap.Toast(el, { delay: 5000 }); // 5 sec
-            toast.show();
-        });
-    </script>
 @endif
 
 
@@ -40,7 +31,7 @@
     @endif
 
     @if (session('login_alert'))
-        <x-alert :alertMessage="session('login_alert')"></x-alert>
+        <x-base.alert :alertMessage="session('login_alert')"></x-base.alert>
     @endif
 @endsection
 
@@ -89,4 +80,15 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('javascript')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById('profileToast');
+            if (!el) return;
+            const toast = new bootstrap.Toast(el, { delay: 5000 }); // 5 sec
+            toast.show();
+        });
+    </script>
 @endsection

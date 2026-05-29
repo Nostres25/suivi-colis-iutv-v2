@@ -14,7 +14,7 @@ abstract class BaseController extends Controller
 {
     public static function getSuccessModal(string $message)
     {
-        return view('components.successModal', [
+        return view('components.base.modal.successModal', [
             'message' => $message,
         ]);
     }
@@ -83,7 +83,7 @@ abstract class BaseController extends Controller
 
                         // Rôle que l'utilisateur de test doit avoir (mettre null pour pas de rôle en particulier)
                         // Choix du rôle de l'utilisateur : Service financier, Directeur IUT, Département Info, Département SD, Département RT, Administrateur BD
-                        $roleToHave = 'Département Info';
+                        $roleToHave = 'Service financier';
 
                         // Nombre de rôles que l'utilisateur de test doit avoir
                         $roleNumber = 1;
