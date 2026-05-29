@@ -552,27 +552,6 @@ class Order extends Model
     }
 
     /**
-     * Permet d'envoyer un journal (log)/ une ligne de modification pour garder une trace sur les actions de la commande
-     *
-     * @param  string  $content  : Contenu descriptif du log, description de l'action
-     * @param  User  $author  : Auteur de l'action ou de la modification
-     * @param  ?Status  $oldStatus  : Ancien statut à indiquer s'il y a un changement de statut afin d'indiquer automatiquement le changement de statut
-     * @return array dictionnaire indiquant si la sauvegarde du log a été réussie ou non avec la valeur booléenne à la clé `success` et transmettant le model du log à la clé `model`
-     */
-    public function sendLog(string $content, User $author, ?Status $oldStatus = null): array
-    {
-        /* @var Log $log */
-
-        $log = $this->logs()->make([
-            'content' => $content.($oldStatus ? " De plus, le statut de la commande passe de \"{$oldStatus->getDisplayName()}\" à \"{$this->getStatus()->getDisplayName()}\"." : ''),
-        ]);
-
-        $log->author()->associate($author);
-
-        return ['success' => $log->save(), 'model' => $log];
-    }
-
-    /**
      * Retourne la liste des colis de la commande
      *
      * @return HasMany // Liste des colis de la commande

@@ -1,3 +1,5 @@
+@use(App\Http\Controllers\BaseController)
+@use(Database\Seeders\Status)
 <div class="modal fade" id="refuseOrderModal-{{$orderId}}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
@@ -22,16 +24,32 @@
                         name="reason"
                         class="form-control"
                         rows="4"
+                        maxlength="1000"
                         required
                     ></textarea>
+                    <hr/>
+                    <x-orders.modal.modal-fields.auto-mail-field
+                        :orderId="$orderId"
+                        :defaultMailContent="BaseController::getDefaultMailContent('refuse', $order, $user)"
+                    ></x-orders.modal.modal-fields.auto-mail-field>
                 </form>
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="submit" form="refuseOrder-{{$orderId}}" class="btn btn-danger">
-                    Refuser le devis
-                </button>
+                <div class="me-auto" title="Passer la commande du statut {{ $order->getStatus()->getDisplayName() }} au statut {{ Status::DEVIS_REFUSE->getDisplayName() }}">
+                    <input class="form-check-input me-2" name="nextStep" type="checkbox"
+                           id="checkboxNextStep-{{$orderId}}" form="refuseOrder-{{$orderId}}" checked>
+                    <label class="form-check-label" for="checkboxNextStep-{{$orderId}}">
+                        Passer la commande au statut refusé
+                    </label>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-secondary m-1" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="refuseOrder-{{$orderId}}" class="btn btn-danger m-1">
+                        Refuser le devis
+                    </button>
+                </div>
+
             </div>
 
         </div>

@@ -143,6 +143,7 @@ class OrderController extends BaseController
         return view('components.orders.modal.step-actions.refuseOrderModal', [
             'order' => $order,
             'orderId' => $order->getId(),
+            'user' => Auth::user(),
         ]);
     }
 
@@ -450,7 +451,6 @@ class OrderController extends BaseController
             return $this->modalPaid($id)->withErrors("Une erreur inconnue est survenue à lors de l'opération.");
         }
     }
-  
 
     public function actionRefuse($id)
     {
@@ -470,12 +470,17 @@ class OrderController extends BaseController
             return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état devis.");
         }
 
-        $oldStatus = $order->getStatus();
-
-        $order->setStatus(Status::DEVIS_REFUSE, false);
-        $order->save();
-
         $reason = $request['reason'];
+        $sendMail = $request['sendMail'];
+        $nextStep = $request['nextStep'];
+
+        $oldStatus = null;
+
+        if ($nextStep) {
+            $oldStatus = $order->getStatus();
+            $order->setStatus(Status::DEVIS_REFUSE, false);
+        }
+        $order->save();
 
         $message = 'Le devis a été refusé. Raison : '.$reason;
 
@@ -485,7 +490,12 @@ class OrderController extends BaseController
             $oldStatus
         );
 
-        session()->flash('success', $message);
+        session()->flash('success', $logData['model']->getContent());
+
+        if ($sendMail) {
+            $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request['mailContent']);
+            error_log($mailContent);
+        }
 
         request()->merge(['edit' => false]);
 

@@ -1,6 +1,6 @@
 <div class="d-flex justify-content-start" title="Cocher pour envoyer un mail automatique aux acteurs concernés lorsque le bon de commande sera déposé">
     <input class="form-check-input me-2" type="checkbox" name="sendMail"
-           id="checkboxMail-{{$orderId}}" form="addPurchaseOrder-{{$orderId}}" checked>
+           id="checkboxMail-{{$orderId}}" checked>
     <label class="form-check-label" for="checkboxMail-{{$orderId}}">
         Envoyer un mail automatique pour avertir de la modification
     </label>
@@ -18,7 +18,6 @@
             Les receveurs du mail automatique seront l'auteur de la commande et l'acteur chargé de la prochaine étape.
         </dl>
         <div class="mb-3">
-
             <label for="mailContent-{{$orderId}}" class="col-form-label fs-6">Contenu :</label>
             <textarea
                 class="form-control"
@@ -26,6 +25,7 @@
                 name="mailContent"
                 id="mailContent-{{$orderId}}"
             >{{$defaultMailContent}}</textarea>
+            <small>Les éléments entre accolades, par exemple "<code>{raison}</code>" sont des variables qui seront remplacées en fonction du contenu entré plus haut.</small>
         </div>
     </div>
 </div>
