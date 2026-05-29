@@ -15,7 +15,6 @@
     @use(App\Models\Role)
     @use(App\Models\Order)
 
-<section>
     <section class="mb-4">
     <form method="GET" action="{{ url('/orders') }}">
         <div class="row justify-content-center">
@@ -66,8 +65,6 @@
     <div id="orders-table-container" data-url="{{ route('orders.fetch.table', $options) }}">
         <x-orders.orders-table :orders="$orders" :user="$user" :userDepartments="$userDepartments"></x-orders.orders-table>
     </div>
-
-</section>
 @endsection
 
 @section('javascript')
