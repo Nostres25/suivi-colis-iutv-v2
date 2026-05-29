@@ -44,7 +44,7 @@
     @yield('footer')
     <div class="bg-gray-50 px-8 py-5 text-center border-t">
         <p class="text-sm font-semibold text-gray-700">BUT2 Informatique - IUT de Villetaneuse</p>
-        <p class="text-xs text-gray-500 mt-1">Projet SAE - Suivi de Colis • 2024-2025</p>
+        <p class="text-xs text-gray-500 mt-1">Projet SAE - Suivi de Colis • 2025-2026</p>
     </div>
 {{--    <div class="min-h-screen bg-gray-50 py-8">--}}
 {{--        <div class="mx-auto max-w-5xl">--}}

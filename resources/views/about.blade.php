@@ -19,20 +19,17 @@
 
         <div class="p-4">
             <p class="mb-4 fs-5">
-                Ce projet a été initié dans le cadre de la <strong>SAE 3.01</strong> pour répondre à un problème
-                rencontré par l'IUT : <strong>la perte et le mauvais suivi des colis</strong>.
-                Une première équipe a conçu une version fonctionnelle de l'application.
-                Le projet est poursuivi dans le cadre de la <strong>SAE 4.01</strong>, où une nouvelle équipe
-                reprend le travail afin d'ajouter de nouvelles fonctionnalités, corriger les problèmes
-                et finaliser l'application.
+                Ce projet a été initié dans le cadre d'un projet évalué d'étudiants en deuxième année de BUT Informatique (SAÉ 3.01), dont l’objectif était de concevoir une première version d’un site internet de suivi des colis pour l’IUT de Villetaneuse. Cette application web doit fluidifier le traitement des commandes et des colis des départements de l'IUT ainsi que de réduire les pertes.<br/>
+                Le projet a ensuite été repris pour le second projet évalué de l'année (SAÉ 4.01), qui consiste à reprendre le projet d'une autre équipe afin de le finaliser ou/et de l'améliorer.<br/>
             </p>
+            <h5 class="mb-3 fw-bold">Objectifs principaux</h5>
 
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="bg-primary text-white p-4 rounded shadow h-100">
                         <h5 class="fw-bold mb-3">Suivi en temps réel</h5>
                         <p class="mb-0 opacity-90">
-                            Suivre chaque colis depuis la commande jusqu'à la réception finale pour éviter les pertes.
+                            Suivre chaque colis depuis la commande jusqu'à la livraison et le paiement pour éviter les pertes et les ralentissements.
                         </p>
                     </div>
                 </div>
@@ -41,7 +38,7 @@
                     <div class="bg-primary text-white p-4 rounded shadow h-100">
                         <h5 class="fw-bold mb-3">Gestion centralisée</h5>
                         <p class="mb-0 opacity-90">
-                            Regrouper toutes les informations sur les commandes au même endroit pour faciliter la coordination.
+                            Regrouper toutes les informations sur les commandes au même endroit pour faciliter l'accès aux informations sur les commandes.
                         </p>
                     </div>
                 </div>
@@ -50,7 +47,7 @@
                     <div class="bg-primary text-white p-4 rounded shadow h-100">
                         <h5 class="fw-bold mb-3">Interface simple</h5>
                         <p class="mb-0 opacity-90">
-                            Proposer un outil accessible à tous, quel que soit le niveau technique de l'utilisateur.
+                            Proposer un outil accessible et intuitif quel que soit le niveau technique de l'utilisateur.
                         </p>
                     </div>
                 </div>
@@ -59,7 +56,7 @@
                     <div class="bg-primary text-white p-4 rounded shadow h-100">
                         <h5 class="fw-bold mb-3">Solution pratique</h5>
                         <p class="mb-0 opacity-90">
-                            Créer un outil qui répond réellement aux besoins quotidiens de l'IUT.
+                            Créer un outil facile et rapide à utiliser, qui répond correctement aux besoins de traitement et de suivi des commandes.
                         </p>
                     </div>
                 </div>
@@ -138,8 +135,9 @@
             <div class="alert alert-light border mb-4">
                 <h5 class="mb-3 fw-bold">Équipe B (avril 2026 - juin 2026)</h5>
                 <p class="mb-3">
-                    Cette équipe reprend le projet dans le cadre de la SAE 4.01 afin de l'améliorer,
-                    d'ajouter de nouvelles fonctionnalités et de finaliser l'application.
+                    L’équipe B a repris ce travail dans le cadre de la SAÉ 4.01 afin de corriger les
+                    problèmes identifiés, d’ajouter de nouvelles fonctionnalités et de finaliser
+                    l’application.
                 </p>
 
                 <h6 class="mb-3 fw-bold">Membres de l'équipe B</h6>
@@ -169,7 +167,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-4 offset-md-2">
                         <div class="card border shadow-sm">
                             <div class="card-body text-center py-3">
                                 <h6 class="mb-0 fw-semibold"> Sarah HELLAL</h6>
@@ -184,18 +182,20 @@
                             </div>
                         </div>
                     </div>
+                    {{-- Organisation --}}
+                    <h6 class="mb-3 fw-bold">Organisation de l'équipe B</h6>
+                    <p class="mb-0">
+                        Tous les membres de l'équipe participent aux différentes tâches du projet :<br/>
+                        analyse, organisation, conception de la base de données, développement, tests et rédaction de la documentation.
+                    </p>
                 </div>
             </div>
-
-            {{-- Organisation --}}
             <div class="alert alert-light border">
-                <h5 class="mb-3 fw-bold">Organisation de l'équipe B</h5>
+                <h5 class="mb-3 fw-bold">Maintenance et gestion du site</h5>
                 <p class="mb-0">
-                    Tous les membres de l'équipe participent aux différentes tâches du projet :
-                    analyse, conception de la base de données, développement, tests et rédaction de la documentation..
+                    Le responsable du site lors de son utilisation en situation réelle est M. <strong>Franck BUTELLE</strong>, responsable CRIT à l'IUTV et enseignant chercheur. Qui est aussi le demandeur du projet. Il s'agit notamment de la personne à contacter si vous rencontrez des difficultés avec ce site.
                 </p>
             </div>
-
         </div>
     </section>
 
