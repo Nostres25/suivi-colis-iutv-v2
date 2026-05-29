@@ -54,7 +54,6 @@ class SupplierController extends BaseController
     }
 
     // Routes GET modal
-
     public function modalViewDetails(string $id)
     {
         $user = Auth::user();
@@ -70,7 +69,6 @@ class SupplierController extends BaseController
             'supplierId' => $supplier->getId(),
             'edit' => $edit,
         ]);
-
     }
 
     // Routes POST modal
@@ -98,6 +96,7 @@ class SupplierController extends BaseController
                 $siret = $request['siret'];
                 $isValid = $request['isValid'];
                 $speciality = $request['speciality'];
+                $contactName = $request['contactName'] ?? null; // Ajout d'une sécurité si contactName n'est pas dans la requête
 
                 if (isset($companyName)) {
                     $supplier->setCompanyName($companyName, false);
@@ -110,7 +109,7 @@ class SupplierController extends BaseController
                 }
 
                 if (isset($contactName)) {
-                    $supplier->setCompanyName($contactName, false);
+                    $supplier->setContactName($contactName, false); // Correction: c'était setCompanyName avant
                 }
 
                 if (isset($speciality)) {
@@ -145,13 +144,24 @@ class SupplierController extends BaseController
             'supplierId' => $supplier->getId(),
             'edit' => $edit,
         ]);
-
     }
 
     // Route POST - create supplier
     public function create()
     {
         $user = Auth::user();
+        
+        // 1. VÉRIFICATION DES RÔLES
+        $roleNames = $user->getRoles()->pluck('name')->toArray();
+        $isAuthorized = in_array('Service financier', $roleNames) || in_array('Administrateur BD', $roleNames);
+
+        if (!$isAuthorized) {
+            return response()->json([
+                'success' => false, 
+                'message' => "Accès refusé. Seul le Service financier ou l'Administrateur BD peut créer un fournisseur."
+            ], 403);
+        }
+
         $request = request();
 
         $validated = $request->validate([
@@ -179,8 +189,9 @@ class SupplierController extends BaseController
             $supplier->setNote($validated['note'], false);
         }
 
+        // Seuls les rôles autorisés arrivent ici, on peut donc valider directement si la checkbox est cochée
         $isValid = false;
-        if ($user->hasPermission(PermissionValue::GERER_FOURNISSEURS) && isset($validated['isValid'])) {
+        if (isset($validated['isValid'])) {
             $isValid = (bool)$validated['isValid'];
         }
         $supplier->setValidity($isValid, false);
@@ -190,12 +201,9 @@ class SupplierController extends BaseController
         return response()->json(['success' => true, 'data' => ['id' => $supplier->getId()], 'message' => 'Fournisseur créé']);
     }
 
-
     // Autres fonctions
     public function fetchSuppliers(User $user, int|string|null $page, ?string $search): LengthAwarePaginator
     {
-
-        $user = Auth::user();
         $userRoles = $user->getRoles();
         $userPermissions = Role::getPermissionsAsDict($userRoles);
 
@@ -203,7 +211,7 @@ class SupplierController extends BaseController
         $query = Supplier::query();
 
         // ---------------------------------------------------------
-        // ETAPE 1 : TRI PAR VALIDITÉ (Reste identique)
+        // ETAPE 1 : TRI PAR VALIDITÉ
         // ---------------------------------------------------------
         $isFinancier = $user->hasPermission(PermissionValue::GERER_FOURNISSEURS);
 
@@ -218,15 +226,6 @@ class SupplierController extends BaseController
         // ---------------------------------------------------------
         // ETAPE 2 : LE TRI "MÉLANGÉ" (Activité Globale)
         // ---------------------------------------------------------
-
-        // Nous allons trier en utilisant une logique SQL brute (orderByRaw).
-        // La logique est : PRENDS LA PLUS GRANDE DATE ENTRE :
-        // 1. La date de modification du fournisseur (suppliers.updated_at)
-        // 2. La date de modification de sa dernière commande (sous-requête)
-
-        // NOTE : COALESCE est là pour gérer le cas où un fournisseur n'a AUCUNE commande.
-        // Dans ce cas, la sous-requête renvoie NULL, et on se rabat sur suppliers.updated_at.
-
         $sqlActivitySort = '
             GREATEST(
                 suppliers.updated_at,

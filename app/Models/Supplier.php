@@ -221,6 +221,7 @@ class Supplier extends Model
         }
     }
 
+
     /**
      * Définit si le fournisseur est considéré comme valide, false sinon.
      * Un fournisseur valide est un fournisseur auprès duquel il est possible de commander.
