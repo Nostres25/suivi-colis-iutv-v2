@@ -28,6 +28,8 @@ class OrderController extends BaseController
     public function viewOrders(?string $alertMsg = null): View|Response|RedirectResponse|Redirector
     {
         $request = request();
+        $search = $request->input('search');
+        $page = $request->input('page');
 
         $options = [
             'search' => $request->input('search'),
@@ -135,9 +137,14 @@ class OrderController extends BaseController
 
     public function modalRefuse($id)
     {
-        $request = request();
-        $about = $request['about'];
 
+        $order = Order::findOrFail($id);
+
+        return view('components.orders.modal.step-actions.refuseOrderModal', [
+            'order' => $order,
+            'orderId' => $order->getId(),
+            'user' => Auth::user(),
+        ]);
     }
 
     public function modalPaid($id)
@@ -443,6 +450,53 @@ class OrderController extends BaseController
         } catch (\Throwable $th) {
             return $this->modalPaid($id)->withErrors("Une erreur inconnue est survenue à lors de l'opération.");
         }
+    }
+
+    public function actionRefuse($id)
+    {
+        $request = request();
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        if (! $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
+            return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser ce devis.");
+        }
+
+        if ($order->getStatus() != Status::DEVIS) {
+            return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état devis.");
+        }
+
+        $reason = $request['reason'];
+        $sendMail = $request['sendMail'];
+        $nextStep = $request['nextStep'];
+
+        $oldStatus = null;
+
+        if ($nextStep) {
+            $oldStatus = $order->getStatus();
+            $order->setStatus(Status::DEVIS_REFUSE, false);
+        }
+        $order->save();
+
+        $message = 'Le devis a été refusé. Raison : '.$reason;
+
+        $logData = $order->sendLog(
+            $message,
+            $user,
+            $oldStatus
+        );
+
+        session()->flash('success', $logData['model']->getContent());
+
+        if ($sendMail) {
+            $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request['mailContent']);
+            error_log($mailContent);
+        }
+        return $this->modalViewDetails($id);
     }
 
     // Notifications

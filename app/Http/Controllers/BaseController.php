@@ -159,23 +159,31 @@ abstract class BaseController extends Controller
 
     public static function getDefaultMailContent(string $type, ?Order $order = null, ?User $user = null)
     {
-        if ($type === 'update_purchase_order') {
-            $signature = implode(', ', $user->getRoles()->map(fn (Role $role) => $role->getName())->toArray());
+        $signature_roles = implode(', ', $user->getRoles()->map(fn (Role $role) => $role->getName())->toArray());
 
+        if ($type === 'update_purchase_order') {
             return "Madame, monsieur,\n".
                 "Un bon de commande a été ajouté à la commande désignée \"{$order->getTitle()}\" de numéro {$order->getOrderNumber()}.\n\n".
                 "{$user->getFullName()}\n".
-                "{$signature},\n".
+                "{$signature_roles},\n".
                 'IUT de Villetaneuse, Sorbonne Paris Nord';
         }
 
         if ($type === 'paid_order') {
-            $signature = implode(', ', $user->getRoles()->map(fn (Role $role) => $role->getName())->toArray());
-
             return "Madame, monsieur,\n".
                 "La commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été payée par le service financier de l'IUT pour la somme de {coûtEnEuros}.\n\n".
                 "{$user->getFullName()}\n".
-                "{$signature},\n".
+                "{$signature_roles},\n".
+                'IUT de Villetaneuse, Sorbonne Paris Nord';
+        }
+
+        if ($type === 'refuse') {
+            return "Madame, monsieur,\n".
+                "Le devis de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été refusé pour la raison suivante :\n".
+                "{raison}\n".
+                "Par conséquent, aucun bon de commande ne sera rédigé en l'état".
+                "{$user->getFullName()}\n".
+                "{$signature_roles},\n".
                 'IUT de Villetaneuse, Sorbonne Paris Nord';
         }
 

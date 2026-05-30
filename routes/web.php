@@ -107,3 +107,7 @@ Route::post('/account/profile', [ProfileController::class, 'update'])->name('pro
 Route::get('/about', [AboutController::class, 'about']);
 
 
+// Refuser devis POST
+
+Route::post('/order/{id}/step-actions/refuse', [OrderController::class, 'actionRefuse'])
+    ->name('orders.step-actions.refuse');

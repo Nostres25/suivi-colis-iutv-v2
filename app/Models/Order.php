@@ -442,16 +442,16 @@ class Order extends Model
             try {
                 $fileName = $file->getClientOriginalName();
 
-                if (! stripos($fileName, 'BonDeCommande')) {
-                    $fileName = 'BonDeCommande'.$fileName;
-                }
+            if (! stripos($fileName, 'BonDeCommande')) {
+                $fileName = 'BonDeCommande'.$fileName;
+            }
 
-                if ($is_signed) {
-                    $ext = $file->getExtension();
-                    $fileName = str_replace('.'.$ext, '(signe).'.$ext, $fileName);
-                }
+            if ($is_signed) {
+                $ext = $file->getExtension();
+                $fileName = str_replace('.'.$ext, '(signe).'.$ext, $fileName);
+            }
 
-                $purchase_order = $file->storeAs('uploads/orders/'.$this->getOrderNumber(), $fileName, 'public'); // public -> le dossier
+            $purchase_order = $file->storeAs('uploads/orders/'.$this->getOrderNumber(), $fileName, 'public'); // public -> le dossier
 
                 if ($purchase_order) {
                     if ($save) {
