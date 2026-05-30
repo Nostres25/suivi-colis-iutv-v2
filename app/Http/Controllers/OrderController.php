@@ -496,9 +496,6 @@ class OrderController extends BaseController
             $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request['mailContent']);
             error_log($mailContent);
         }
-
-        request()->merge(['edit' => false]);
-
         return $this->modalViewDetails($id);
     }
 
