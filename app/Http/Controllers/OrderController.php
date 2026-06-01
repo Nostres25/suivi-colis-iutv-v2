@@ -490,7 +490,7 @@ class OrderController extends BaseController
             $oldStatus
         );
 
-        session()->flash('success', $logData['model']->getContent());
+        session()->flash('success', $message);
 
         if ($sendMail) {
             $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request['mailContent']);
