@@ -3,7 +3,7 @@
 @use(App\Models\Role)
 @use(App\Models\Order)
 
-<table class="table table-striped mb-0">
+<table class="table orders-table align-middle mb-0">
     {{ $orders->links()}}
     <caption>
         @if ($user->hasPermission(PermissionValue::CONSULTER_TOUTES_COMMANDES))
@@ -159,10 +159,20 @@
                 <small class="d-none d-lg-inline">Dernière modification: {{ $order->getLastUpdateDate() }}</small>
             </td>
             <td class="d-none d-md-table-cell">{{ $order->getCreationDate() }}</td>
-            <td class="ps-0 pe-0">
-                <button class="btn btn-light btn-more-options">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
-                        <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+            <td class="text-center align-middle">
+                <button
+                    class="btn btn-light btn-more-options btn-load-modal"
+                    title="Voir les détails de la commande"
+                    type="button"
+                    data-url="{{ route('orders.modal.view-details', ['id' => $order->getId(), 'edit' => false]) }}">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="18"
+                         height="18"
+                         fill="currentColor"
+                         class="bi bi-eye-fill"
+                         viewBox="0 0 16 16">
+                        <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
+                        <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
                     </svg>
                 </button>
             </td>

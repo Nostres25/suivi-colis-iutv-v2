@@ -55,88 +55,195 @@
                 {{-- PARTIE VUE (LECTURE SEULE) --}}
                 {{-- =================================================================== --}}
                 @if(!$edit)
+                    @php
+                        $status = $order->getStatus();
+
+                        $statusDisplayNames = [
+                            Status::BROUILLON->value => 'Brouillon',
+                            Status::DEVIS->value => 'Devis',
+                            Status::DEVIS_REFUSE->value => 'Devis refusé',
+                            Status::BON_DE_COMMANDE_NON_SIGNE->value => 'Bon de commande non signé',
+                            Status::BON_DE_COMMANDE_REFUSE->value => 'Bon de commande refusé',
+                            Status::BON_DE_COMMANDE_SIGNE->value => 'Bon de commande signé',
+                            Status::COMMANDE->value => 'Commande envoyée',
+                            Status::COMMANDE_REFUSEE->value => 'Commande refusée',
+                            Status::COMMANDE_AVEC_REPONSE->value => 'Commande acceptée',
+                            Status::PARTIELLEMENT_LIVRE->value => 'Partiellement livré',
+                            Status::SERVICE_FAIT->value => 'Service fait',
+                            Status::LIVRE_ET_PAYE->value => 'Livré et payé',
+                            Status::ANNULE->value => 'Annulé',
+                        ];
+
+                        $refusedStatuses = [
+                            Status::DEVIS_REFUSE,
+                            Status::BON_DE_COMMANDE_REFUSE,
+                            Status::COMMANDE_REFUSEE,
+                        ];
+
+                        $signedPurchaseOrderStatuses = [
+                            Status::BON_DE_COMMANDE_SIGNE,
+                            Status::COMMANDE,
+                            Status::COMMANDE_REFUSEE,
+                            Status::COMMANDE_AVEC_REPONSE,
+                            Status::PARTIELLEMENT_LIVRE,
+                            Status::SERVICE_FAIT,
+                            Status::LIVRE_ET_PAYE,
+                        ];
+
+                        $hasQuote = $order->getAttribute('path_quote');
+                        $hasPurchaseOrder = $order->getAttribute('path_purchase_order');
+                        $hasDeliveryNote = $order->getAttribute('path_delivery_note');
+                        $hasDocs = $hasQuote || $hasPurchaseOrder || $hasDeliveryNote;
+                        $isPurchaseOrderSigned = in_array($status, $signedPurchaseOrderStatuses, true);
+                    @endphp
+
                     <div id="viewPart">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="text-muted small fw-bold text-uppercase">N° Commande</label>
-                                <p class="mb-0 fw-bold">#{{ $order->getOrderNumber() }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small fw-bold text-uppercase">Département</label>
-                                <p class="mb-0">{{ $order->getDepartment()->getName() }}</p>
+                        <div class="border rounded-3 bg-light p-3 mb-4">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Auteur de la commande</div>
+                                    <div class="fw-semibold fs-5">
+                                        {{ $order->getAuthor()->getFullName() ?? 'Non renseigné' }}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Fournisseur</div>
+                                    <div class="fw-semibold fs-5">
+                                        {{ $order->getSupplier()->getCompanyName() ?? 'Non renseigné' }}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Statut</div>
+                                    <span class="orders-status-badge" title="{{ $status->getDescription() }}">
+                        {{ $statusDisplayNames[$status->value] ?? $status->value }}
+                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{-- Modification libellé --}}
-                                <label class="text-muted small fw-bold text-uppercase">Coût Total</label>
-                                <p class="mb-0 fs-5 text-primary">{{ $order->getCostFormatted() }}</p>
+                        @if(in_array($status, $refusedStatuses, true))
+                            <div class="alert alert-danger mb-4">
+                                <div class="fw-bold mb-1">Commande refusée</div>
+                                <div>
+                                    {{ $status->getDescription() }}
+                                </div>
                             </div>
+                        @endif
+
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="text-muted small fw-bold text-uppercase">Référence Devis</label>
-                                <p class="mb-0">{{ $order->getQuoteNumber() ?? 'Non renseigné' }}</p>
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">N° Commande</div>
+                                    <div class="fw-semibold fs-5">#{{ $order->getOrderNumber() }}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Département</div>
+                                    <div class="fs-5">{{ $order->getDepartment()->getName() }}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Coût total</div>
+                                    <div class="fs-5 text-primary fw-semibold">{{ $order->getCostFormatted() }}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Référence devis</div>
+                                    <div class="fs-5">{{ $order->getQuoteNumber() ?? 'Non renseigné' }}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Date de création</div>
+                                    <div>{{ $order->getCreationDate() }}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Dernière modification</div>
+                                    <div>{{ $order->getLastUpdateDate() }}</div>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Ajout des dates --}}
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="text-muted small fw-bold text-uppercase">Date de création</label>
-                                <p class="mb-0">{{ $order->getCreationDate() }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small fw-bold text-uppercase">Dernière modification</label>
-                                <p class="mb-0">{{ $order->getLastUpdateDate() }}</p>
+                        <div class="mb-4">
+                            <div class="text-muted small fw-bold text-uppercase mb-2">Description</div>
+                            <div class="p-3 bg-light rounded-3 border">
+                                {{ $order->getDescription() ?? 'Aucune description renseignée.' }}
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="text-muted small fw-bold text-uppercase">Statut</label>
-                            <div>
-                            <span class="orders-status-badge" title="{{$order->getStatus()->getDescription()}}">
-                                {{ $order->getStatus() }}
-                            </span>
-                            </div>
-                        </div>
+                        <div class="mb-4">
+                            <div class="text-muted small fw-bold text-uppercase mb-2">Documents associés</div>
 
-                        <div class="mb-3">
-                            <label class="text-muted small fw-bold text-uppercase">Description</label>
-                            <div class="p-2 bg-light rounded border">
-                                {{ $order->getDescription() }}
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="text-muted small fw-bold text-uppercase mb-2">Documents associés</label>
-                            <div class="d-flex gap-2 flex-wrap">
-                                @php
-                                    $hasDocs = $order->getAttribute('path_quote') || $order->getAttribute('path_purchase_order') || $order->getAttribute('path_delivery_note');
-                                @endphp
-
-                                @if(!$hasDocs)
-                                    <span class="text-muted fst-italic">Aucun document</span>
-                                @else
-                                    @if($order->getAttribute('path_quote'))
-                                        <a href="{{ route('orders.download', ['id' => $order->getId(), 'type' => 'quote']) }}" target="_blank" class="btn btn-sm btn-outline-dark">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text" viewBox="0 0 16 16"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></svg>
-                                            Devis
-                                        </a>
+                            @if(!$hasDocs)
+                                <div class="text-muted fst-italic border rounded-3 p-3 bg-light">
+                                    Aucun document associé à cette commande.
+                                </div>
+                            @else
+                                <div class="row g-2">
+                                    @if($hasQuote)
+                                        <div class="col-md-4">
+                                            <a href="{{ route('orders.download', ['id' => $order->getId(), 'type' => 'quote']) }}"
+                                               target="_blank"
+                                               class="btn btn-outline-dark w-100 d-flex justify-content-center align-items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text" viewBox="0 0 16 16">
+                                                    <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/>
+                                                    <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+                                                </svg>
+                                                Devis
+                                            </a>
+                                        </div>
                                     @endif
-                                    @if($order->getAttribute('path_purchase_order'))
-                                        <a href="{{ route('orders.download', ['id' => $order->getId(), 'type' => 'purchase_order']) }}" target="_blank" class="btn btn-sm btn-outline-dark">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-check" viewBox="0 0 16 16"><path d="M10.854 7.854a.5.5 0 0 0-.708-.708L7.5 9.793 6.354 8.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></svg>
-                                            Bon de commande
-                                        </a>
+
+                                    @if($hasPurchaseOrder)
+                                        <div class="col-md-4">
+                                            <a href="{{ route('orders.download', ['id' => $order->getId(), 'type' => 'purchase_order']) }}"
+                                               target="_blank"
+                                               class="btn btn-outline-dark w-100 d-flex justify-content-center align-items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-check" viewBox="0 0 16 16">
+                                                    <path d="M10.854 7.854a.5.5 0 0 0-.708-.708L7.5 9.793 6.354 8.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
+                                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+                                                </svg>
+                                                Bon de commande
+                                            </a>
+
+                                            @if($isPurchaseOrderSigned)
+                                                <div class="text-success small fw-semibold mt-2 text-center">
+                                                    Signé par le directeur
+                                                </div>
+                                            @else
+                                                <div class="text-muted small mt-2 text-center">
+                                                    Non marqué comme signé
+                                                </div>
+                                            @endif
+                                        </div>
                                     @endif
-                                    @if($order->getAttribute('path_delivery_note'))
-                                        <a href="{{ route('orders.download', ['id' => $order->getId(), 'type' => 'delivery_note']) }}" target="_blank" class="btn btn-sm btn-outline-dark">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-seam" viewBox="0 0 16 16"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2zm3.564 1.426L5.596 5 8 5.961 14.154 3.5zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464z"/></svg>
-                                            Bon de livraison
-                                        </a>
+
+                                    @if($hasDeliveryNote)
+                                        <div class="col-md-4">
+                                            <a href="{{ route('orders.download', ['id' => $order->getId(), 'type' => 'delivery_note']) }}"
+                                               target="_blank"
+                                               class="btn btn-outline-dark w-100 d-flex justify-content-center align-items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-seam" viewBox="0 0 16 16">
+                                                    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2zm3.564 1.426L5.596 5 8 5.961 14.154 3.5zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464z"/>
+                                                </svg>
+                                                Bon de livraison
+                                            </a>
+                                        </div>
                                     @endif
-                                @endif
-                            </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -209,7 +316,25 @@
                                 </div>
 
                                 <div class="mb-2">
-                                    <label class="form-label small fw-bold">Bon de commande @if($order->getAttribute('path_purchase_order')) <span class="badge bg-success ms-2">Existant</span> @endif</label>
+                                    <label class="form-label small fw-bold">
+                                        Bon de commande
+                                        @if($order->getAttribute('path_purchase_order'))
+                                            <span class="badge bg-success ms-2">
+                                                Existant
+                                                @if(in_array($order->getStatus(), [
+                                                    Status::BON_DE_COMMANDE_SIGNE,
+                                                    Status::COMMANDE,
+                                                    Status::COMMANDE_REFUSEE,
+                                                    Status::COMMANDE_AVEC_REPONSE,
+                                                    Status::PARTIELLEMENT_LIVRE,
+                                                    Status::SERVICE_FAIT,
+                                                    Status::LIVRE_ET_PAYE,
+                                                ], true))
+                                                        - signé
+                                                    @endif
+                                            </span>
+                                        @endif
+                                    </label>
                                     <input type="file" name="purchase_order" id="inputPurchaseOrder-{{$orderId}}" class="form-control" accept=".pdf,.doc,.docx">
 
                                     <div class="mt-2">

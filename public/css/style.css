@@ -279,3 +279,300 @@ section {
     color: white;
 }
 
+/* ============================================================
+   Amélioration visuelle globale - UI plus professionnelle
+   Safe : CSS uniquement, aucune logique modifiée
+   ============================================================ */
+
+:root {
+    --app-bg: #f3f5f9;
+    --app-surface: #ffffff;
+    --app-primary: #293358;
+    --app-primary-soft: #eef1f8;
+    --app-border: #e4e8f0;
+    --app-text: #252a34;
+    --app-muted: #6c757d;
+    --app-shadow: 0 12px 32px rgba(22, 34, 67, 0.08);
+    --app-radius: 16px;
+}
+
+body {
+    background: var(--app-bg);
+    color: var(--app-text);
+}
+
+.page-header {
+    background: linear-gradient(135deg, #293358, #43507d);
+    color: white;
+    padding: 28px 0;
+    box-shadow: 0 12px 30px rgba(22, 34, 67, 0.16);
+}
+
+.page-header h1 {
+    font-weight: 750;
+    letter-spacing: -0.02em;
+}
+
+section {
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    box-shadow: var(--app-shadow);
+}
+
+.table-header {
+    background: linear-gradient(180deg, #ffffff, #f8f9fc);
+    border-bottom: 1px solid var(--app-border);
+}
+
+.table-header h2 {
+    color: var(--app-primary);
+    font-weight: 700;
+}
+
+.table-section {
+    overflow: hidden;
+}
+
+.table-section thead th {
+    background: #f8f9fc;
+    color: var(--app-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.table-section tbody tr {
+    border-left: 4px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.table-section tbody tr:hover {
+    background-color: #f7f9fd;
+    border-left-color: var(--app-primary);
+}
+
+.table-section tbody th {
+    color: var(--app-primary);
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.btn-action {
+    border-radius: 999px;
+    padding: 7px 12px;
+}
+
+.btn-more-options {
+    border-radius: 999px;
+}
+
+.search-input {
+    border-radius: 999px;
+    height: 46px;
+    background: white;
+    border-color: var(--app-border) !important;
+}
+
+.search-input:focus,
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--app-primary) !important;
+    box-shadow: 0 0 0 0.18rem rgba(41, 51, 88, 0.14) !important;
+}
+
+.orders-status-badge {
+    border-radius: 999px;
+    padding: 7px 13px;
+    font-size: 0.76rem;
+    letter-spacing: 0.02em;
+}
+
+.modal-content {
+    border: 0;
+    border-radius: 20px;
+    box-shadow: 0 26px 80px rgba(22, 34, 67, 0.24);
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.modal-title {
+    color: var(--app-primary);
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    background: #f8f9fc;
+    border-top: 1px solid var(--app-border);
+    border-radius: 0 0 20px 20px;
+}
+
+.bg-light {
+    background-color: #f8f9fc !important;
+}
+
+.border {
+    border-color: var(--app-border) !important;
+}
+
+.rounded-3 {
+    border-radius: 14px !important;
+}
+
+
+/* Tableau commandes - version plus propre */
+.orders-table {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+.orders-table thead th {
+    background: #f8f9fc;
+    color: #5f6b7a;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: none;
+    padding: 16px 14px;
+}
+
+.orders-table tbody tr {
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(22, 34, 67, 0.06);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.orders-table tbody tr:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(22, 34, 67, 0.1);
+}
+
+.orders-table tbody th,
+.orders-table tbody td {
+    border: none;
+    padding: 18px 14px;
+}
+
+.orders-table tbody th:first-child,
+.orders-table tbody td:first-child {
+    border-radius: 14px 0 0 14px;
+}
+
+.orders-table tbody td:last-child {
+    border-radius: 0 14px 14px 0;
+}
+
+.orders-table .btn-action {
+    border-radius: 999px;
+    font-size: 0.86rem;
+    padding: 8px 14px;
+}
+
+.orders-table .btn-more-options {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    color: #293358;
+    background: #eef1f8;
+    border: 1px solid #dfe4ee;
+}
+
+.orders-table .btn-more-options:hover {
+    background: #293358;
+    color: #ffffff;
+}
+
+.orders-status-badge {
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+/* Header commandes - version sobre */
+.page-header {
+    background: linear-gradient(135deg, #293358, #3f4d7a);
+    color: #ffffff;
+    padding: 56px 0;
+    box-shadow: 0 14px 34px rgba(22, 34, 67, 0.16);
+}
+
+.orders-hero {
+    display: flex;
+    align-items: center;
+}
+
+.orders-hero-content {
+    max-width: 780px;
+}
+
+.orders-hero-kicker {
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.orders-hero-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.orders-hero-subtitle {
+    margin-top: 14px;
+    margin-bottom: 0;
+    font-size: 1.25rem;
+    opacity: 0.78;
+}
+
+
+
+
+/* Ajustement doux du header : plus compact sans changer la structure */
+.page-header {
+    padding: 34px 0 !important;
+}
+
+.orders-hero-title {
+    font-size: clamp(2rem, 3.2vw, 3rem) !important;
+}
+
+.orders-hero-title svg {
+    width: 34px;
+    height: 34px;
+}
+
+.orders-hero-subtitle {
+    font-size: 1rem !important;
+    margin-top: 8px;
+}
+
+.orders-hero-kicker {
+    font-size: 0.72rem;
+    margin-bottom: 8px;
+}
+
+.page-header img,
+.page-header img[src*="logo"] {
+    max-width: 170px !important;
+    max-height: 64px !important;
+    object-fit: contain;
+}
