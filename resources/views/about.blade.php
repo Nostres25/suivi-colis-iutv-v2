@@ -178,7 +178,7 @@
                     <div class="col-md-4">
                         <div class="card border shadow-sm">
                             <div class="card-body text-center py-3">
-                                <h6 class="mb-0 fw-semibold"> Lissam HELLAL</h6>
+                                <h6 class="mb-0 fw-semibold"> Lissam LOUTFI</h6>
                             </div>
                         </div>
                     </div>
