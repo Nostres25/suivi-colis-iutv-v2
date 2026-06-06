@@ -457,15 +457,53 @@ class OrderController extends BaseController
         $request = request();
         $order = Order::findOrFail($id);
         $user = Auth::user();
+        $about = $request->input('about');
 
         $request->validate([
             'reason' => 'required|string|max:1000',
         ]);
 
         if (! $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
-            return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser ce devis.");
+            return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser.");
         }
 
+        // Cas refus de signature du bon de commande
+        if ($about === 'purchaseOrderSignature') {
+            if ($order->getStatus() != Status::BON_DE_COMMANDE_NON_SIGNE) {
+                return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état bon de commande non signé.");
+            }
+
+            $reason = $request['reason'];
+            $sendMail = $request['sendMail'];
+            $nextStep = $request['nextStep'];
+
+            $oldStatus = null;
+
+            if ($nextStep) {
+                $oldStatus = $order->getStatus();
+                $order->setStatus(Status::BON_DE_COMMANDE_REFUSE, false);
+            }
+            $order->save();
+
+            $message = 'La signature du bon de commande a été refusée. Raison : '.$reason;
+
+            $logData = $order->sendLog(
+                $message,
+                $user,
+                $oldStatus
+            );
+
+            session()->flash('success', $logData['model']->getContent());
+
+            if ($sendMail) {
+                $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request['mailContent']);
+                error_log($mailContent);
+            }
+
+            return $this->modalViewDetails($id);
+        }
+
+        // Cas refus de devis (par défaut)
         if ($order->getStatus() != Status::DEVIS) {
             return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état devis.");
         }
