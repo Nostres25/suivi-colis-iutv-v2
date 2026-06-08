@@ -654,7 +654,7 @@ class Order extends Model
     //  */
     // public function removeLog(int $index) {}
 
-    public static function getFormattedCost(float $cost): string
+    public static function getFormattedCost(?float $cost): string
     {
         if (is_null($cost)) {
             return 'Non précisé';
