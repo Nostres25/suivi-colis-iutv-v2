@@ -83,7 +83,7 @@ abstract class BaseController extends Controller
 
                         // Rôle que l'utilisateur de test doit avoir (mettre null pour pas de rôle en particulier)
                         // Choix du rôle de l'utilisateur : Service financier, Directeur IUT, Département Info, Département SD, Département RT, Administrateur BD
-                        $roleToHave = 'Directeur IUT';
+                        $roleToHave = 'Service financier';
 
                         // Nombre de rôles que l'utilisateur de test doit avoir
                         $roleNumber = 1;
@@ -189,7 +189,7 @@ abstract class BaseController extends Controller
 
         if ($type === 'refuse_signature') {
             return "Madame, monsieur,\n".
-                "La signature du bon de commande pour la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été refusée pour la raison suivante :\n".
+                "La signature du bon de commande désigné \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été refusée pour la raison suivante :\n".
                 "{raison}\n\n".
                 "{$user->getFullName()}\n".
                 "{$signature_roles},\n".
