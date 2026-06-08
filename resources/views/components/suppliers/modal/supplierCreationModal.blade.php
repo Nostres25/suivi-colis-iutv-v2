@@ -11,36 +11,7 @@
             <div class="modal-body">
                 <form id="addSupplierForm" class="needs-validation" novalidate>
                 @csrf
-                    <div class="mb-3">
-                        <label for="company-name" class="form-label">Nom de l'entreprise <span title="champ requis"
-                                                                                               class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="company-name" required>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="siret" class="form-label">SIRET <span title="champ requis"
-                                                                              class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="siret" maxlength="14" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="email" class="form-label">Email <span title="champ requis"
-                                                                              class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="email" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="phone" class="form-label">Téléphone <span title="champ requis"
-                                                                                  class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="phone" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="contact-name" class="form-label">Nom du contact <span title="champ requis"
-                                                                                              class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="contact-name" required>
-                        </div>
-                    </div>
+                   <x-suppliers.fields.supplierCreationFields></x-suppliers.fields.supplierCreationFields>
                     <div class="mb-3">
                         <label for="speciality" class="form-label">Spécialité</label>
                         <input type="text" class="form-control" id="speciality"

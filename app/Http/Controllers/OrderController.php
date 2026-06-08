@@ -53,7 +53,7 @@ class OrderController extends BaseController
         return view('orders', [
             'user' => $user,
             'orders' => $orders,
-            'validSupplierNames' => $suppliers->where('is_valid', true)->map(fn (Supplier $supplier) => $supplier->getCompanyName())->values()->toArray(),
+            'suppliers' => $suppliers,
             'userDepartments' => $userDepartments,
             'options' => $options, // Variable pour la vue
         ]);
@@ -482,7 +482,7 @@ class OrderController extends BaseController
         }
         $order->save();
 
-        $message = 'Le devis a été refusé. Raison : '.$reason;
+        $message = 'Le devis a été refusé pour la raison suivante : '.$reason;
 
         $logData = $order->sendLog(
             $message,

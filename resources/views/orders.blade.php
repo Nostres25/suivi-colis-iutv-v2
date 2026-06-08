@@ -52,7 +52,7 @@
             </svg>
             Ajouter une commande
         </button>
-        <x-orders.modal.orderCreationModal :user="$user" :userDepartments="$userDepartments" :validSupplierNames="$validSupplierNames"/>
+        <x-orders.modal.orderCreationModal :user="$user" :userDepartments="$userDepartments" :suppliers="$suppliers"/>
     @endif
 
     <div class="table-header mt-4">
