@@ -139,11 +139,13 @@ class OrderController extends BaseController
     {
 
         $order = Order::findOrFail($id);
+        $about = request()->input('about');
 
         return view('components.orders.modal.step-actions.refuseOrderModal', [
             'order' => $order,
             'orderId' => $order->getId(),
             'user' => Auth::user(),
+            'about' => $about,
         ]);
     }
 
@@ -457,45 +459,70 @@ class OrderController extends BaseController
         $request = request();
         $order = Order::findOrFail($id);
         $user = Auth::user();
+        $about = $request->input('about');
 
+        // Validation simple : la raison est obligatoire
         $request->validate([
             'reason' => 'required|string|max:1000',
         ]);
 
-        if (! $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
-            return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser ce devis.");
+        // Vérification des permissions selon ce qu'on refuse
+        if ($about === 'purchaseOrderSignature') {
+            // Pour refuser la signature, il faut avoir le droit de signer ou de gérer les bons de commande
+            if (!$user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES) && !$user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
+                return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser la signature.");
+            }
+        } else {
+            // Par défaut (refus de devis), il faut avoir le droit de gérer les bons de commande
+            if (!$user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
+                return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser.");
+            }
         }
 
-        if ($order->getStatus() != Status::DEVIS) {
-            return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état devis.");
-        }
-
-        $reason = $request['reason'];
-        $sendMail = $request['sendMail'];
-        $nextStep = $request['nextStep'];
-
+        $reason = $request->input('reason');
+        $nextStep = $request->input('nextStep');
+        $sendMail = $request->input('sendMail');
         $oldStatus = null;
 
-        if ($nextStep) {
-            $oldStatus = $order->getStatus();
-            $order->setStatus(Status::DEVIS_REFUSE, false);
+        // --- CAS 1 : Refus de la signature du bon de commande ---
+        if ($about === 'purchaseOrderSignature') {
+            if ($order->getStatus() != Status::BON_DE_COMMANDE_NON_SIGNE) {
+                return $this->modalRefuse($id)->withErrors("Cette commande n'est pas en attente de signature.");
+            }
+
+            if ($nextStep) {
+                $oldStatus = $order->getStatus();
+                $order->setStatus(Status::BON_DE_COMMANDE_REFUSE, false);
+            }
+            $message = 'La signature du bon de commande a été refusée. Raison : ' . $reason;
+        } 
+        // --- CAS 2 : Refus du devis (par défaut) ---
+        else {
+            if ($order->getStatus() != Status::DEVIS) {
+                return $this->modalRefuse($id)->withErrors("Cette commande n'est pas à l'état devis.");
+            }
+
+            if ($nextStep) {
+                $oldStatus = $order->getStatus();
+                $order->setStatus(Status::DEVIS_REFUSE, false);
+            }
+            $message = 'Le devis a été refusé. Raison : ' . $reason;
         }
+
+        // Sauvegarde des changements (statut)
         $order->save();
 
-        $message = 'Le devis a été refusé. Raison : '.$reason;
-
-        $logData = $order->sendLog(
-            $message,
-            $user,
-            $oldStatus
-        );
-
+        // Enregistrement du log avec la raison du refus
+        $logData = $order->sendLog($message, $user, $oldStatus);
         session()->flash('success', $logData['model']->getContent());
 
+        // Simulation d'envoi de mail si demandé (comme dans le reste du projet)
         if ($sendMail) {
-            $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request['mailContent']);
-            error_log($mailContent);
+            $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request->input('mailContent'));
+            error_log("Mail de refus : " . $mailContent);
         }
+
+        // Retourne vers la vue détaillée de la commande
         return $this->modalViewDetails($id);
     }
 
