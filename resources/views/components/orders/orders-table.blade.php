@@ -23,6 +23,7 @@
         <th scope="col">Statut&nbsp<span title="{{Status::getDescriptions()}}" class="d-none d-md-inline">(?)</span></th>
         <th scope="col" class="d-none d-sm-table-cell">Actions&nbsp<span title="Les actions peuvent dépendre de votre rôle" class="d-none d-md-inline">(?)</span></th>
         <th scope="col" class="d-none d-md-table-cell">Date création&nbsp<span title="Explications" class="d-none d-md-inline">(?)</span></th>
+        <th scope="col" class="text-center">Voir</th>
     </tr>
     </thead>
     <tbody>

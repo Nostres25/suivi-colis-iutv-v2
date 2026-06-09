@@ -19,21 +19,23 @@
     @yield('head')
 </head>
 <body>
-<header class="mb-5">
+<header class="app-header">
     <div id="navbar-container">
         <x-base.nav></x-base.nav>
         <x-base.alert></x-base.alert>
     </div>
 
-    {{--Bannière bleue--}}
-<div class="page-header">
-    <div class="container d-flex flex-row-reverse align-items-center justify-content-between">
-        <img src="{{ asset('217.png') }}" alt="Logo Sorbonne" style="height: 70px; width: auto; margin-left: 20px;">
-        <div>
-            @yield('header')
+    <div class="page-header">
+        <div class="container page-header-inner">
+            <div class="page-header-content">
+                @yield('header')
+            </div>
+
+            <div class="page-header-brand d-none d-md-flex">
+                <img src="{{ asset('217.png') }}" alt="Logo Sorbonne Paris Nord">
+            </div>
         </div>
     </div>
-</div>
 </header>
 <main>
     @yield('content')
