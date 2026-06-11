@@ -775,4 +775,41 @@ class OrderController extends BaseController
     }
 
 
+    public function actionUpdatePackageInfos($id) {
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        foreach ($order->getPackages() as $package) {
+
+            $package->setName(
+                request()->input('name_'.$package->getId()),
+                false
+            );
+
+            $package->setCout(
+                request()->input('cost_'.$package->getId()),
+                false
+            );
+
+            $package->setExpectedDeliveryTime(
+                request()->input('expected_delivery_time_'.$package->getId()),
+                false
+            );
+
+            $package->save();
+        }
+
+        $logData = $order->sendLog(
+            "Les informations des colis ont été mises à jour.",
+            $user
+        );
+
+        session()->flash(
+            'success',
+            $logData['model']->getContent()
+        );
+
+        return $this->modalViewDetails($id);
+    }
+
 }

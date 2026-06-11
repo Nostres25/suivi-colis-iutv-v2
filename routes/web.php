@@ -116,3 +116,17 @@ Route::post('/order/{id}/step-actions/refuse', [OrderController::class, 'actionR
 // Commande commandé POST
 Route::post('/order/{id}/step-actions/sent-to-supplier', [OrderController::class, 'actionSentToSupplier'])
     ->name('orders.step-actions.sent-to-supplier');
+
+// Information colis POST
+Route::post(
+    '/order/{id}/step-actions/package-infos',
+    [OrderController::class, 'actionUpdatePackageInfos']
+    )->name('orders.step-actions.package-infos');
+
+
+    Route::get(
+    '/order/{id}/step-actions/upload-delivery-note',
+    [OrderController::class, 'modalUploadDeliveryNote']
+    )->name('orders.step-actions.upload-delivery-note');
+
+    
