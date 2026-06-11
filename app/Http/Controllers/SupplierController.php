@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\PermissionValue;
@@ -27,7 +26,7 @@ class SupplierController extends BaseController
     {
         $request = request();
 
-        /* @var User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         $search = $request->input('search');
@@ -43,7 +42,7 @@ class SupplierController extends BaseController
     }
 
     /**
-     * Refreshes and returns just the HTMl table slice component via AJAX.
+     * Refreshes and returns just the HTML table slice component via AJAX.
      */
     public function fetchSuppliersTable()
     {
@@ -69,8 +68,8 @@ class SupplierController extends BaseController
         $user = Auth::user();
         $request = request();
 
-        /* @var Supplier $supplier */
-        $supplier = Supplier::where('id', $id)->first();
+        /** @var Supplier $supplier */
+        $supplier = Supplier::where('id', $id)->firstOrFail();
         $edit = $request['edit'];
 
         return view('components.suppliers.modal.viewSupplierModal', [
@@ -93,8 +92,8 @@ class SupplierController extends BaseController
         $user = Auth::user();
         $request = request();
 
-        /* @var Supplier $supplier */
-        $supplier = Supplier::where('id', $id)->first();
+        /** @var Supplier $supplier */
+        $supplier = Supplier::where('id', $id)->firstOrFail();
         $edit = $request['edit'];
 
         if ($request->method() === 'POST') {
@@ -112,6 +111,7 @@ class SupplierController extends BaseController
                 $isValid = $request['isValid'];
                 $speciality = $request['speciality'];
                 $contactName = $request['contactName'] ?? null;
+                $address = $request['address'];
 
                 if (isset($companyName)) {
                     $supplier->setCompanyName($companyName, false);
@@ -127,6 +127,9 @@ class SupplierController extends BaseController
                 }
                 if (isset($speciality)) {
                     $supplier->setSpeciality($speciality, false);
+                }
+                if (isset($address)) {
+                    $supplier->setAddress($address, false);
                 }
 
                 if (isset($siret)) {
@@ -170,14 +173,14 @@ class SupplierController extends BaseController
      */
     public function create(): JsonResponse
     {
-        /* @var User $user */
+        /** @var User $user */
         $user = Auth::user();
         
-        // Validation via Permissions uniquement
+        // Validation stricte via Permissions uniquement
         $canManage = $user->hasPermission(PermissionValue::GERER_FOURNISSEURS);
         $canRequest = $user->hasPermission(PermissionValue::DEMANDER_AJOUT_FOURNISSEUR);
 
-        if (! $canManage && ! $canRequest) {
+        if (!$canManage && !$canRequest) {
             return response()->json([
                 'success' => false,
                 'message' => "Accès refusé. Vous n'avez pas l'autorisation d'ajouter un fournisseur."
@@ -192,6 +195,7 @@ class SupplierController extends BaseController
             'email'       => 'required|email|max:255',
             'phoneNumber' => 'required|string|max:50',
             'contactName' => 'required|string|max:255',
+            'address'     => 'required|string|max:255', // Prise en compte du nouveau composant
             'speciality'  => 'nullable|string|max:255',
             'note'        => 'nullable|string',
         ]);
@@ -202,6 +206,7 @@ class SupplierController extends BaseController
         $supplier->setEmail($validated['email'], false);
         $supplier->setPhoneNumber($validated['phoneNumber'], false);
         $supplier->setContactName($validated['contactName'], false);
+        $supplier->setAddress($validated['address'], false);
 
         if (isset($validated['speciality'])) {
             $supplier->setSpeciality($validated['speciality'], false);
@@ -210,12 +215,12 @@ class SupplierController extends BaseController
             $supplier->setNote($validated['note'], false);
         }
 
-        // Gestion stricte du statut en fonction des droits réels de l'utilisateur connecté
+        // Sécurité Backend absolue : Gestion du statut selon les droits réels
         if ($canManage && $request->filled('isValid')) {
             $isValid = $request->input('isValid');
             $supplier->setValidity($isValid, false);
         } else {
-            // Règle d'or : Passage forcé en "En attente" pour les utilisateurs standards / demandeurs
+            // Règle d'or : Passage forcé en "En attente" pour les utilisateurs de département / demandeurs
             $supplier->setValidity(Supplier::VALIDITY_STATUS_PENDING, false);
         }
 
@@ -227,6 +232,7 @@ class SupplierController extends BaseController
             'message' => 'Le fournisseur a été créé avec succès.'
         ], 201);
     }
+
     // =========================================================================
     // INTERNAL UTILITY FUNCTIONS
     // =========================================================================

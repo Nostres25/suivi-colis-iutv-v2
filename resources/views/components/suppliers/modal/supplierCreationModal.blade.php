@@ -2,7 +2,7 @@
 @use(\Database\Seeders\PermissionValue)
 
 @php
-    // Remplacement de la logique stricte de rôle par les permissions associées
+    // Recalcul propre et sécurisé de la permission directement sur l'objet $user
     $canManageSupplier = $user->hasPermission(PermissionValue::GERER_FOURNISSEURS);
     $canCreateSupplier = $canManageSupplier || $user->hasPermission(PermissionValue::DEMANDER_AJOUT_FOURNISSEUR);
 @endphp
@@ -17,9 +17,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addSupplierForm" class="needs-validation">
-                @csrf
-                   <x-suppliers.fields.supplierCreationFields></x-suppliers.fields.supplierCreationFields>
+                <form id="addSupplierForm" class="needs-validation" novalidate>
+                    @csrf
+                    
+                    {{-- Inclusion de vos champs d'adresse et coordonnées --}}
+                    <x-suppliers.fields.supplierCreationFields :suffix="false" :notRequiered="false" />
+                    
                     <div class="mb-3">
                         <label for="speciality" class="form-label">Spécialité</label>
                         <input type="text" class="form-control" id="speciality" name="speciality" placeholder="Ex: Matériel informatique, Fournitures...">
@@ -30,15 +33,15 @@
                     </div>
                     <div class="mb-3">
                         <label for="supplier-status" class="form-label">Statut de validation</label>
-                        {{-- Seuls les utilisateurs avec la permission GERER_FOURNISSEURS ont accès au menu déroulant --}}
                         @if($canManageSupplier)
+                            {{-- S'affichera correctement pour l'ID 3 (Finance) et ID 1 (Admin) --}}
                             <select class="form-select" id="supplier-status" name="isValid" required>
                                 @foreach (Supplier::validityOptions() as $value => $label)
                                     <option value="{{ $value }}" @selected($value === Supplier::VALIDITY_STATUS_VALIDATED)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         @else
-                            {{-- Assignation automatique en tâche de fond au statut En attente pour les autres --}}
+                            {{-- S'affiche actuellement pour vous (Département Info - ID 4) --}}
                             <input type="hidden" name="isValid" value="{{ Supplier::VALIDITY_STATUS_PENDING }}" />
                             <input type="text" class="form-control text-muted bg-light" readonly value="{{ Supplier::validityOptions()[Supplier::VALIDITY_STATUS_PENDING] }} (Automatique)">
                         @endif
@@ -63,9 +66,8 @@ document.addEventListener('DOMContentLoaded', function () {
     
     if (addSupplierForm) {
         addSupplierForm.addEventListener('submit', function (e) {
-            e.preventDefault(); // Terminate default browser routing behaviors
+            e.preventDefault();
             
-            // Check basic required attributes criteria
             if (!this.checkValidity()) {
                 e.stopPropagation();
                 this.classList.add('was-validated');
@@ -74,34 +76,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const formData = new FormData(this);
 
-            // Execute processing request context
             fetch('/suppliers', { 
                 method: 'POST',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 },
                 body: formData
             })
-            .then(response => {
+            .then(async response => {
+                const isJson = response.headers.get('content-type')?.includes('application/json');
+                const data = isJson ? await response.json() : null;
+
                 if (!response.ok) {
-                    throw response;
+                    if (response.status === 422 && data && data.errors) {
+                        let errorMessage = "Erreurs de validation :\n";
+                        Object.keys(data.errors).forEach(field => {
+                            errorMessage += `- ${data.errors[field].join(', ')}\n`;
+                        });
+                        alert(errorMessage);
+                    } else {
+                        alert("Erreur : " + (data?.message || "Une erreur serveur est survenue."));
+                    }
+                    throw new Error('Validation or Server Failure');
                 }
-                return response.json();
+                
+                return data;
             })
             .then(data => {
-                if (data.success) {
-                    // Safe execution to clean up active modal components
+                if (data && data.success) {
                     const modalElement = document.getElementById('addSupplierModal');
                     const modalInstance = bootstrap.Modal.getInstance(modalElement);
                     if (modalInstance) {
                         modalInstance.hide();
                     }
                     
-                    // Clear out cached contextual inputs
                     this.reset();
                     this.classList.remove('was-validated');
 
-                    // Refresh table without layout breaks if helper exists, otherwise refresh the page
                     if (typeof fetchSuppliersTable === "function") {
                         fetchSuppliersTable();
                     } else {
@@ -109,14 +121,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
             })
-            .catch(async (error) => {
-                if (error instanceof Response) {
-                    const errorData = await error.json();
-                    alert("Erreur : " + (errorData.message || "Une erreur est survenue lors de l'enregistrement."));
-                } else {
-                    console.error('Submission Processing Failure:', error);
-                    alert("Une défaillance réseau ou système s'est produite.");
-                }
+            .catch(error => {
+                console.error('Submission Processing Failure:', error);
             });
         });
     }
