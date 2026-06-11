@@ -169,7 +169,15 @@ class OrderController extends BaseController
 
     public function modalUploadDeliveryNote($id) {}
 
-    public function modalSentToSupplier($id) {}
+    public function modalSentToSupplier($id) {
+        $order = Order::findOrFail($id);
+
+        return view('components.orders.modal.step-actions.sentToSupplier', [
+            'order' => $order,
+            'orderId' => $order->getId(),
+            'user' => Auth::user(),
+        ]);
+    }
 
     public function modalDeliveredPackage($id) {}
 
@@ -724,4 +732,37 @@ class OrderController extends BaseController
 
         return $query->distinct()->paginate(20, ['orders.*'], 'page', $page);
     }
+
+
+    public function actionSentToSupplier($id) {
+        $request = request();
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        $deliveryDelay = $request->input('delivery_delay');
+        $nextStep = $request->input('nextStep');
+
+        $oldStatus = null;
+
+        if ($nextStep && $order->getStatus() == Status::BON_DE_COMMANDE_SIGNE) {
+            $oldStatus = $order->getStatus();
+            $order->setStatus(Status::COMMANDE, false);
+        }
+
+        $order->save();
+
+        $message = "Le bon de commande a été envoyé au fournisseur.";
+
+        if (!empty($deliveryDelay)) {
+            $message .= " Délai de livraison annoncé : ".$deliveryDelay.".";
+        }
+
+        $logData = $order->sendLog($message, $user, $oldStatus);
+
+        session()->flash('success', $logData['model']->getContent());
+
+        return $this->modalViewDetails($id);
+    }
+
+
 }

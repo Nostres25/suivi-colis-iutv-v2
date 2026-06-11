@@ -16,7 +16,8 @@
                     a bien été envoyé au fournisseur.
                 </p>
 
-                <form id="sentToSupplier-{{$orderId}}" class="ajax-form" method="POST">
+                <form id="sentToSupplier-{{$orderId}}" class="ajax-form" method="POST" 
+                    action="{{ route('orders.step-actions.sent-to-supplier', ['id' => $orderId]) }}">
                     @csrf
 
                     <label for="deliveryDelay-{{$orderId}}" class="form-label">
