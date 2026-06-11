@@ -9,7 +9,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addSupplierForm" class="needs-validation" novalidate>
+                <form id="addSupplierForm" class="needs-validation">
                 @csrf
                    <x-suppliers.fields.supplierCreationFields></x-suppliers.fields.supplierCreationFields>
                     <div class="mb-3">

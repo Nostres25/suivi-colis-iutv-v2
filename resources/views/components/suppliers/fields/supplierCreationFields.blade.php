@@ -28,3 +28,9 @@
         <input type="text" class="form-control" id="contact-name" @required(!@$notRequiered)>
     </div>
 </div>
+
+<div class="mb-3">
+    <label for="address" class="form-label">Adresse @if(@$suffix) du fournisseur @endif <span title="champ requis"
+                                                                                                            class="text-danger">*</span></label>
+    <input type="text" class="form-control" id="address" @required(!@$notRequiered)>
+</div>

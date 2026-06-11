@@ -26,6 +26,7 @@ class SupplierFactory extends Factory
             'speciality' => fake()->domainWord(),
             'note' => fake()->sentences(rand(1, 15), true),
             'is_valid' => fake()->boolean(),
+            'address' => fake()->address(),
         ];
     }
 }
