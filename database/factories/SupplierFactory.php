@@ -28,8 +28,10 @@ class SupplierFactory extends Factory
             'is_valid' => fake()->randomElement([
                 'validated',
                 'pending',
-                'refused',
+                'refused'
             ]),
+            'address' => fake()->address(),
+
         ];
     }
 }
