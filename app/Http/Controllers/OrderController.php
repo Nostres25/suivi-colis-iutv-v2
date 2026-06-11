@@ -268,7 +268,7 @@ class OrderController extends BaseController
                 }
 
                 if ($request->hasFile('purchase_order')) {
-                    $order->uploadPurchaseOrder($request, false);
+                    $order->uploadPurchaseOrder($request, $request->has('signed'), false);
                 }
 
                 if ($request->hasFile('delivery_note')) {
@@ -342,6 +342,32 @@ class OrderController extends BaseController
     public function sendAutoMail(Request $request)
     {
         // TODO code pour envoyer un mail automatique
+    }
+
+    //supprimer une commande
+
+    public function deleteOrder(string $id): RedirectResponse|Redirector
+    {
+        $user = Auth::user();
+
+        /* @var Order $order */
+        $order = Order::where('id', $id)->firstOrFail();
+
+        $canDeleteOrder = $user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES)
+            || ($user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && $user->hasRole($order->getDepartment()));
+
+        if (! $canDeleteOrder) {
+            session()->flash('error', "Vous n'avez pas la permission de supprimer cette commande.");
+
+            return redirect('orders');
+        }
+
+        $orderNumber = $order->getOrderNumber();
+        $order->delete();
+
+        session()->flash('success', 'La commande N°'.$orderNumber.' a été supprimée avec succès.');
+
+        return redirect('orders');
     }
 
     // Routes pour le téléchargement des documents

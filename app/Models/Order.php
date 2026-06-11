@@ -164,6 +164,40 @@ class Order extends Model
     }
 
     /**
+     * Indique si un devis est enregistré pour la commande.
+     */
+    public function hasQuote(): bool
+    {
+        return !empty($this->getAttributeValue('path_quote'));
+    }
+
+    /**
+     * Indique si un bon de commande est enregistré pour la commande.
+     */
+    public function hasPurchaseOrder(): bool
+    {
+        return !empty($this->getAttributeValue('path_purchase_order'));
+    }
+
+    /**
+     * Indique si un bon de livraison est enregistré pour la commande.
+     */
+    public function hasDeliveryNote(): bool
+    {
+        return !empty($this->getAttributeValue('path_delivery_note'));
+    }
+
+    /**
+     * Indique si le bon de commande enregistré est signé.
+     */
+    public function hasSignedPurchaseOrder(): bool
+    {
+        $pathPurchaseOrder = $this->getAttributeValue('path_purchase_order');
+
+        return !empty($pathPurchaseOrder)
+            && str_contains(strtolower($pathPurchaseOrder), 'signe');
+    }
+    /**
      * Retourne la date de la dernière modification de la commande
      *
      * @return ?string // date
