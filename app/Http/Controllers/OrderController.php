@@ -44,7 +44,7 @@ class OrderController extends BaseController
         return view('orders', [
             'user' => $user,
             'orders' => $orders,
-            'validSupplierNames' => $suppliers->where('is_valid', true)->map(fn (Supplier $supplier) => $supplier->getCompanyName())->values()->toArray(),
+            'validSupplierNames' => $suppliers->where('is_valid', Supplier::VALIDITY_STATUS_VALIDATED)->map(fn (Supplier $supplier) => $supplier->getCompanyName())->values()->toArray(),
             'userDepartments' => $userDepartments,
             'search' => $search, // Variable pour la vue
         ]);

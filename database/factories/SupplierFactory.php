@@ -25,7 +25,11 @@ class SupplierFactory extends Factory
             'contact_name' => fake()->name(),
             'speciality' => fake()->domainWord(),
             'note' => fake()->sentences(rand(1, 15), true),
-            'is_valid' => fake()->boolean(),
+            'is_valid' => fake()->randomElement([
+                'validated',
+                'pending',
+                'refused',
+            ]),
         ];
     }
 }

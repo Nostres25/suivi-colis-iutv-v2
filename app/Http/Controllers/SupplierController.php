@@ -12,10 +12,17 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Http\JsonResponse;
 
 class SupplierController extends BaseController
 {
-    // Routes GET
+    // =========================================================================
+    // GET ROUTES (Listing & Views)
+    // =========================================================================
+
+    /**
+     * Renders the main suppliers list view page.
+     */
     public function viewSuppliers(): View|Response|RedirectResponse|Redirector
     {
         $request = request();
@@ -35,17 +42,18 @@ class SupplierController extends BaseController
         ]);
     }
 
+    /**
+     * Refreshes and returns just the HTMl table slice component via AJAX.
+     */
     public function fetchSuppliersTable()
     {
-        // Récupérer les informations de la requête
         $user = Auth::user();
         $request = request();
         $search = $request->input('search');
 
-        // Récupérer les fournisseurs
         $suppliers = $this->fetchSuppliers($user, $request->input('page'), $search);
 
-        // Redéfinition de l'URL des boutons de navigation afin de pointer vers la page des fournisseurs et non vers la route pour actualiser la table
+        // Redirect URL inside navigation items to point back to standard routing index
         $suppliers->withPath('/suppliers')->withQueryString();
 
         return view('components.suppliers.suppliers-table', [
@@ -53,7 +61,9 @@ class SupplierController extends BaseController
         ]);
     }
 
-    // Routes GET modal
+    /**
+     * Renders detailed profile data within a modal element frame.
+     */
     public function modalViewDetails(string $id)
     {
         $user = Auth::user();
@@ -71,7 +81,13 @@ class SupplierController extends BaseController
         ]);
     }
 
-    // Routes POST modal
+    // =========================================================================
+    // POST ROUTES (Data Modification Actions)
+    // =========================================================================
+
+    /**
+     * Updates an existing supplier record profile entry.
+     */
     public function editSupplier(string $id)
     {
         $user = Auth::user();
@@ -82,7 +98,6 @@ class SupplierController extends BaseController
         $edit = $request['edit'];
 
         if ($request->method() === 'POST') {
-            // TODO corriger le fait que le message erreur ou succès il disparait seulement au bout de 2 actualisations, pas une.
             if ($user->hasPermission(PermissionValue::NOTES_ET_COMMENTAIRES)) {
                 $note = $request['note'];
                 $supplier->setNote($note, false);
@@ -96,7 +111,7 @@ class SupplierController extends BaseController
                 $siret = $request['siret'];
                 $isValid = $request['isValid'];
                 $speciality = $request['speciality'];
-                $contactName = $request['contactName'] ?? null; // Ajout d'une sécurité si contactName n'est pas dans la requête
+                $contactName = $request['contactName'] ?? null;
 
                 if (isset($companyName)) {
                     $supplier->setCompanyName($companyName, false);
@@ -107,24 +122,24 @@ class SupplierController extends BaseController
                 if (isset($phoneNumber)) {
                     $supplier->setPhoneNumber($phoneNumber, false);
                 }
-
                 if (isset($contactName)) {
-                    $supplier->setContactName($contactName, false); // Correction: c'était setCompanyName avant
+                    $supplier->setContactName($contactName, false);
                 }
-
                 if (isset($speciality)) {
                     $supplier->setSpeciality($speciality, false);
                 }
 
                 if (isset($siret)) {
                     $siretLength = strlen($siret);
-                    if ($siretLength > 14 || $siretLength < 14) {
+                    if ($siretLength !== 14) {
                         session()->flash('supplierError-'.$supplier->getId(), 'Le siret doit faire exactement 14 chiffres et non '.$siretLength.' chiffres');
                     } else {
                         $supplier->setSiret($siret, false);
                     }
                 }
-                $supplier->setValidity((bool) $isValid, false);
+                if (is_string($isValid)) {
+                    $supplier->setValidity($isValid, false);
+                }
 
                 session()->flash('supplierSuccess', 'Fournisseur mis à jour !');
             } else {
@@ -146,19 +161,26 @@ class SupplierController extends BaseController
         ]);
     }
 
-    // Route POST - create supplier
-    public function create()
+    /**
+     * Route POST - Crée un nouveau fournisseur.
+     * Accessible par le Service financier/Admin BD (via GERER_FOURNISSEURS) 
+     * ou d'autres rôles disposant de la permission de demande d'ajout.
+     *
+     * @return JsonResponse
+     */
+    public function create(): JsonResponse
     {
+        /* @var User $user */
         $user = Auth::user();
         
-        // 1. VÉRIFICATION DES RÔLES
-        $roleNames = $user->getRoles()->pluck('name')->toArray();
-        $isAuthorized = in_array('Service financier', $roleNames) || in_array('Administrateur BD', $roleNames);
+        // Validation via Permissions uniquement
+        $canManage = $user->hasPermission(PermissionValue::GERER_FOURNISSEURS);
+        $canRequest = $user->hasPermission(PermissionValue::DEMANDER_AJOUT_FOURNISSEUR);
 
-        if (!$isAuthorized) {
+        if (! $canManage && ! $canRequest) {
             return response()->json([
-                'success' => false, 
-                'message' => "Accès refusé. Seul le Service financier ou l'Administrateur BD peut créer un fournisseur."
+                'success' => false,
+                'message' => "Accès refusé. Vous n'avez pas l'autorisation d'ajouter un fournisseur."
             ], 403);
         }
 
@@ -166,13 +188,12 @@ class SupplierController extends BaseController
 
         $validated = $request->validate([
             'companyName' => 'required|string|max:255',
-            'siret' => 'required|string|size:14',
-            'email' => 'required|email|max:255',
+            'siret'       => 'required|string|size:14',
+            'email'       => 'required|email|max:255',
             'phoneNumber' => 'required|string|max:50',
             'contactName' => 'required|string|max:255',
-            'speciality' => 'nullable|string|max:255',
-            'note' => 'nullable|string',
-            'isValid' => 'nullable|boolean',
+            'speciality'  => 'nullable|string|max:255',
+            'note'        => 'nullable|string',
         ]);
 
         $supplier = new Supplier();
@@ -189,42 +210,49 @@ class SupplierController extends BaseController
             $supplier->setNote($validated['note'], false);
         }
 
-        // Seuls les rôles autorisés arrivent ici, on peut donc valider directement si la checkbox est cochée
-        $isValid = false;
-        if (isset($validated['isValid'])) {
-            $isValid = (bool)$validated['isValid'];
+        // Gestion stricte du statut en fonction des droits réels de l'utilisateur connecté
+        if ($canManage && $request->filled('isValid')) {
+            $isValid = $request->input('isValid');
+            $supplier->setValidity($isValid, false);
+        } else {
+            // Règle d'or : Passage forcé en "En attente" pour les utilisateurs standards / demandeurs
+            $supplier->setValidity(Supplier::VALIDITY_STATUS_PENDING, false);
         }
-        $supplier->setValidity($isValid, false);
 
         $supplier->save();
 
-        return response()->json(['success' => true, 'data' => ['id' => $supplier->getId()], 'message' => 'Fournisseur créé']);
+        return response()->json([
+            'success' => true, 
+            'data' => ['id' => $supplier->getId()], 
+            'message' => 'Le fournisseur a été créé avec succès.'
+        ], 201);
     }
+    // =========================================================================
+    // INTERNAL UTILITY FUNCTIONS
+    // =========================================================================
 
-    // Autres fonctions
+    /**
+     * Query orchestrator containing complex sorting and pagination logic for suppliers lists.
+     */
     public function fetchSuppliers(User $user, int|string|null $page, ?string $search): LengthAwarePaginator
     {
-        $userRoles = $user->getRoles();
-        $userPermissions = Role::getPermissionsAsDict($userRoles);
-
-        // 1. Initialisation de la Query
         $query = Supplier::query();
 
         // ---------------------------------------------------------
-        // ETAPE 1 : TRI PAR VALIDITÉ
+        // STEP 1: SORT BY VALIDITY STATUS PREFERENCE RULES
         // ---------------------------------------------------------
         $isFinancier = $user->hasPermission(PermissionValue::GERER_FOURNISSEURS);
 
         if ($isFinancier) {
-            // Service Financier : Non validés en premier
-            $query->orderBy('is_valid', 'asc');
+            // Service Financier: Pending requests process first
+            $query->orderByRaw("CASE is_valid WHEN 'pending' THEN 0 WHEN 'refused' THEN 1 WHEN 'validated' THEN 2 ELSE 3 END", []);
         } else {
-            // Autres : Validés en premier
-            $query->orderBy('is_valid', 'desc');
+            // Basic User Roles: Validated accounts surface first
+            $query->orderByRaw("CASE is_valid WHEN 'validated' THEN 0 WHEN 'pending' THEN 1 WHEN 'refused' THEN 2 ELSE 3 END", []);
         }
 
         // ---------------------------------------------------------
-        // ETAPE 2 : LE TRI "MÉLANGÉ" (Activité Globale)
+        // STEP 2: ORDER BY SYSTEM ACTIVITY PATTERNS
         // ---------------------------------------------------------
         $sqlActivitySort = '
             GREATEST(
@@ -237,13 +265,14 @@ class SupplierController extends BaseController
         ';
 
         if ($search) {
-            $query->where('company_name', 'LIKE', "%{$search}%")
-                ->orWhere('contact_name', 'LIKE', "%{$search}%")
-                ->orWhere('siret', 'LIKE', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->where('company_name', 'LIKE', "%{$search}%")
+                  ->orWhere('contact_name', 'LIKE', "%{$search}%")
+                  ->orWhere('siret', 'LIKE', "%{$search}%");
+            });
         }
-        $query->orderByRaw($sqlActivitySort);
+        $query->orderByRaw($sqlActivitySort, []);
 
-        // return suppliers pagination
         if (is_string($page)) {
             $page = intval($page);
         }

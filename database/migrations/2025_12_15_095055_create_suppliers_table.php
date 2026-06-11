@@ -27,9 +27,9 @@ return new class extends Migration
                 ->nullable()
                 ->comment("Domaine d'expertise du fournisseur");
             $table->text('note')->nullable();
-            $table->boolean('is_valid')
-                ->default(false)
-                ->comment('Indique s\'il est possible de passer commande à ce fournisseur');
+            $table->string('is_valid')
+                ->default('pending')
+                ->comment('Statut du fournisseur: validated, pending, refused');
             $table->timestamps();
         });
     }
