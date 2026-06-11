@@ -167,17 +167,27 @@ class OrderController extends BaseController
         ]);
     }
 
-    public function modalUploadDeliveryNote($id) {}
-
-    public function modalSentToSupplier($id) {
+    public function modalUploadDeliveryNote($id) {
         $order = Order::findOrFail($id);
 
-        return view('components.orders.modal.step-actions.sentToSupplier', [
-            'order' => $order,
-            'orderId' => $order->getId(),
-            'user' => Auth::user(),
-        ]);
+        return view(
+            'components.orders.modal.step-actions.addDeliveryNoteModal',
+            [
+                'order' => $order,
+                'orderId' => $order->getId()
+            ]
+        );
     }
+
+    public function modalSentToSupplier($id){
+    $order = Order::findOrFail($id);
+
+    return view('components.orders.modal.step-actions.sentToSupplier', [
+        'order' => $order,
+        'orderId' => $order->getId(),
+        'user' => Auth::user(),
+    ]);
+}
 
     public function modalDeliveredPackage($id) {}
 
