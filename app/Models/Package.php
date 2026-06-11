@@ -46,6 +46,11 @@ class Package extends Model
         return $this->attributes['name'];
     }
 
+    public function getTrackingNumber(): ?string
+    {
+        return $this->attributes['tracking_number'];
+    }
+
     /**
      * Retourne le coût unitaire du colis
      *
@@ -88,6 +93,15 @@ class Package extends Model
             $this->setAttribute('name', $name);
         } else {
             $this->attributes['name'] = $name;
+        }
+    }
+
+    public function setTrackingNumber(string $tracking_number, bool $save = true): void
+    {
+        if ($save) {
+            $this->setAttribute('tracking_number', $tracking_number);
+        } else {
+            $this->attributes['tracking_number'] = $tracking_number;
         }
     }
 
