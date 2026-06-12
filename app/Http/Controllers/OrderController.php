@@ -786,6 +786,11 @@ class OrderController extends BaseController
                 false
             );
 
+            $package->setTrackingNumber(
+            request()->input('tracking_number_'.$package->getId()),
+            false
+        );
+
             $package->setCout(
                 request()->input('cost_'.$package->getId()),
                 false

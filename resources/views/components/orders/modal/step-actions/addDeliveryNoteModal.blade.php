@@ -34,6 +34,18 @@
                                     value="{{ $package->getName() }}">
                             </div>
 
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Numéro de suivi
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="tracking_number_{{$package->getId()}}"
+                                    value="{{ $package->getTrackingNumber() }}">
+                            </div>
+
 
                             <div class="mb-3">
                                 <label class="form-label">
