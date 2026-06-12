@@ -79,16 +79,42 @@ abstract class BaseController extends Controller
             $user =
                 User::all()->first(
                     function (User $user) {
+                        // Mettre un identifiant d'utilisateur spécifique ou mettre "null" pour rechercher un utilisateur avec des spécificités particulières.
+                        $specificUserId = null;
+
+                        if ($user->getId() == $specificUserId) {
+                            return true;
+                        }
                         $roles = $user->getRoles();
 
-                        // Rôle que l'utilisateur de test doit avoir (mettre null pour pas de rôle en particulier)
+                        // Rôle que l'utilisateur de test doit avoir (mettre null pour pas de rôle en particulier) ou plutôt chaîne quel le nom du/des rôles doit contenir
                         // Choix du rôle de l'utilisateur : Service financier, Directeur IUT, Département Info, Département SD, Département RT, Administrateur BD
-                        $roleToHave = 'Service financier';
+
+                        $researchedRoleName = 'Service financier';
+                        $nbRolesResearched = 1;
 
                         // Nombre de rôles que l'utilisateur de test doit avoir
-                        $roleNumber = 1;
+                        $minRoles = 1;
+                        $maxRoles = null;
 
-                        return (is_null($roleToHave) || $roles->first((fn (Role $role) => $role->getName() == $roleToHave))) && $roles->count() == $roleNumber;
+                        $currentNbMatchingRoles = 0;
+                        $isMatching = false;
+                        foreach ($roles as $role) {
+                            if (str_contains($role->getName(), $researchedRoleName)) {
+                                $currentNbMatchingRoles++;
+                            }
+
+                            $isMatching = $currentNbMatchingRoles == $nbRolesResearched && $minRoles <= $currentNbMatchingRoles;
+                            if ($isMatching && is_null($maxRoles)) {
+                                return true;
+                            }
+                        }
+
+                        if ($isMatching && $currentNbMatchingRoles <= $maxRoles) {
+                            return true;
+                        }
+
+                        return false;
 
                     }
                 );
