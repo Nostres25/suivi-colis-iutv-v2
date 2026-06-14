@@ -2,7 +2,6 @@
 @use(Database\Seeders\PermissionValue)
 
 @php
-    // Suppression complète de la dépendance aux noms textuels des rôles
     $canManageSupplier = $user->hasPermission(PermissionValue::GERER_FOURNISSEURS);
 @endphp
 
@@ -31,7 +30,6 @@
                     </div>
                 @endif
 
-                {{-- Changement ici : Remplacement de $isManager par la permission requise --}}
                 @if($canManageSupplier)
                     <div class="mb-3">
                         @if($edit)
@@ -55,6 +53,7 @@
                 <form id="editSupplier-{{$supplierId}}" class="ajax-form needs-validation" method="POST" enctype="multipart/form-data" action="{{ route('suppliers.modal.view-details', ['id' => $supplierId, 'edit' => $edit]) }}" autocomplete="off" novalidate>
                     @csrf
                     
+                    {{-- MODE LECTURE SEULE --}}
                     <div id="viewPart" style="display: {{ $edit ? 'none' : 'block' }}">
                         <div class="row mb-3">
                             <div class="col-6">
@@ -65,6 +64,10 @@
                                 <label class="text-muted small fw-bold text-uppercase">Spécialité</label>
                                 <p class="mb-0">{{ $supplier->getSpeciality() ?? 'N/A' }}</p>
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small fw-bold text-uppercase">Adresse</label>
+                            <p class="mb-0">{{ $supplier->getAddress() ?? 'Aucune adresse spécifiée' }}</p>
                         </div>
                         <div class="mb-3">
                             <label class="text-muted small fw-bold text-uppercase">Contact</label>
@@ -87,12 +90,17 @@
                         </div>
                     </div>
 
+                    {{-- MODE ÉDITION --}}
                     @if($canManageSupplier)
                         <div id="editPart" style="display: {{ $edit ? 'block' : 'none' }}">
                             <div class="mb-3">
                                 <label for="editSiret-{{$supplierId}}" class="text-muted small fw-bold text-uppercase ps-1">SIRET <span class="text-danger">*</span></label>
                                 <input type="text" id="editSiret-{{$supplierId}}" name="siret" class="form-control" pattern="[0-9]{14}" minlength="14" maxlength="14" value="{{ $supplier->getSiret() }}" @disabled(!$edit) required/>
                                 <div class="invalid-feedback">Le numéro SIRET doit comporter exactement 14 chiffres.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editAddress-{{$supplierId}}" class="text-muted small fw-bold text-uppercase ps-1">Adresse <span class="text-danger">*</span></label>
+                                <input type="text" id="editAddress-{{$supplierId}}" name="address" class="form-control" maxlength="255" value="{{ $supplier->getAddress() }}" @disabled(!$edit) required/>
                             </div>
                             <div class="mb-3">
                                 <label for="editSpeciality-{{$supplierId}}" class="text-muted small fw-bold text-uppercase">Spécialité</label>

@@ -45,6 +45,10 @@ class SupplierFormValidator {
         const phone = document.getElementById('phone')?.value.trim();
         if (phone && !/^[0-9+\s().'\-]{6,20}$/.test(phone)) errors.phone = 'Numéro de téléphone invalide';
 
+        const address = document.getElementById('address')?.value.trim();
+        if (!address) errors.address = 'L\'adresse est requise';
+        else if (address.length > 255) errors.address = 'L\'adresse est trop longue';
+
         const speciality = document.getElementById('speciality')?.value.trim();
         if (speciality && speciality.length > 255) errors.speciality = 'La spécialité est trop longue';
 
@@ -78,15 +82,19 @@ class SupplierFormValidator {
             const tokenInput = addSupplierForm.querySelector('input[name="_token"]');
             const token = tokenInput ? tokenInput.value : '';
 
+            const validityField = document.getElementById('supplier-status');
+            const validityValue = validityField ? validityField.value : 'pending';
+
             const payload = {
                 companyName: document.getElementById('company-name')?.value.trim(),
                 siret: document.getElementById('siret')?.value.trim(),
                 email: document.getElementById('email')?.value.trim(),
                 phoneNumber: document.getElementById('phone')?.value.trim(),
                 contactName: document.getElementById('contact-name')?.value.trim(),
+                address: document.getElementById('address')?.value.trim(),
                 speciality: document.getElementById('speciality')?.value.trim(),
                 note: document.getElementById('note')?.value.trim(),
-                isValid: document.getElementById('checkboxValidate') ? document.getElementById('checkboxValidate').checked : false
+                isValid: validityValue
             };
 
             fetch('/suppliers', {
@@ -98,15 +106,28 @@ class SupplierFormValidator {
                 },
                 body: JSON.stringify(payload)
             })
-                .then(response => {
-                    if (!response.ok) return response.json().then(err => Promise.reject(err));
-                    return response.json();
+                .then(async response => {
+                    const contentType = response.headers.get('content-type') || '';
+                    const isJson = contentType.includes('application/json');
+                    const data = isJson ? await response.json() : { message: await response.text() };
+
+                    if (!response.ok) {
+                        return Promise.reject(data);
+                    }
+
+                    return data;
                 })
                 .then(result => {
-                    displayAlert(result.message || 'Fournisseur ajouté', 'success');
-                    const modalEl = document.getElementById('addSupplierModal');
-                    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                    modal.hide();
+                    if (result && result.success) {
+                        displayAlert(result.message || 'Fournisseur ajouté', 'success');
+                        const modalEl = document.getElementById('addSupplierModal');
+                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        modal.hide();
+
+                        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                        document.body.classList.remove('modal-open');
+                        document.body.style.removeProperty('padding-right');
+                    }
                 })
                 .catch(err => {
                     console.error(err);

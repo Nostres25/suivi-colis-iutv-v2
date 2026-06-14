@@ -15,16 +15,7 @@ class Supplier extends Model
     public const VALIDITY_STATUS_PENDING = 'pending';
     public const VALIDITY_STATUS_REFUSED = 'refused';
 
-    // protected $fillable = [
-    //     'company_name',
-    //     'siret',
-    //     'email',
-    //     'phone_number',
-    //     'contact_name',
-    //     'is_valid',
-    // ];
-
-    // Pas remplissable
+   
     protected $guarded = [
 
     ];
@@ -89,9 +80,35 @@ class Supplier extends Model
         return $this->attributes['contact_name'];
     }
 
+   /**
+     * Définit l'adresse de l'entreprise du fournisseur.
+     *
+     * @param  string  $address  adresse de l'entreprise fournisseur
+     * @param  bool  $save  si la donnée doit directement être sauvegardée en base de données
+     */
+    /**
+     * Retourne l'adresse de l'entreprise du fournisseur.
+     *
+     * @return ?string // adresse de l'entreprise du fournisseur
+     */
     public function getAddress(): ?string
     {
-        return $this->attributes['address'];
+        return $this->attributes['address'] ?? null;
+    }
+
+    /**
+     * Définit l'adresse de l'entreprise du fournisseur.
+     *
+     * @param  string  $address  adresse de l'entreprise fournisseur
+     * @param  bool  $save  si la donnée doit directement être sauvegardée en base de données
+     */
+    public function setAddress(string $address, bool $save = true): void
+    {
+        $this->attributes['address'] = $address;
+
+        if ($save) {
+            $this->save();
+        }
     }
 
     /**
@@ -252,14 +269,6 @@ class Supplier extends Model
         }
     }
 
-    public function setAddress(string $address, bool $save = true): void
-    {
-        if ($save) {
-            $this->setAttribute('address', $address);
-        } else {
-            $this->attributes['address'] = $address;
-        }
-    }
 
     /**
      * Définit la description des spécialités de l'entreprise fournisseur.

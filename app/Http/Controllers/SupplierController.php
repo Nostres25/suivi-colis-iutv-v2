@@ -7,6 +7,7 @@ use App\Models\User;
 use Database\Seeders\PermissionValue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
@@ -80,10 +81,6 @@ class SupplierController extends BaseController
         ]);
     }
 
-    // =========================================================================
-    // POST ROUTES (Data Modification Actions)
-    // =========================================================================
-
     /**
      * Updates an existing supplier record profile entry.
      */
@@ -104,45 +101,26 @@ class SupplierController extends BaseController
             }
 
             if ($edit && $user->hasPermission(PermissionValue::GERER_FOURNISSEURS)) {
-                $companyName = $request['companyName'];
-                $email = $request['email'];
-                $phoneNumber = $request['phoneNumber'];
-                $siret = $request['siret'];
-                $isValid = $request['isValid'];
-                $speciality = $request['speciality'];
-                $contactName = $request['contactName'] ?? null;
-                $address = $request['address'];
+                
+                // Validation rapide des données entrantes pour éviter les crashs SQL
+                $validated = $request->validate([
+                    'siret' => 'required|string|size:14',
+                    'address' => 'required|string|max:255',
+                    'contactName' => 'required|string|max:255',
+                    'email' => 'required|email|max:255',
+                    'phoneNumber' => 'required|string|max:50',
+                    'speciality' => 'nullable|string|max:255',
+                    'isValid' => 'required|string',
+                ]);
 
-                if (isset($companyName)) {
-                    $supplier->setCompanyName($companyName, false);
-                }
-                if (isset($email)) {
-                    $supplier->setEmail($email, false);
-                }
-                if (isset($phoneNumber)) {
-                    $supplier->setPhoneNumber($phoneNumber, false);
-                }
-                if (isset($contactName)) {
-                    $supplier->setContactName($contactName, false);
-                }
-                if (isset($speciality)) {
-                    $supplier->setSpeciality($speciality, false);
-                }
-                if (isset($address)) {
-                    $supplier->setAddress($address, false);
-                }
-
-                if (isset($siret)) {
-                    $siretLength = strlen($siret);
-                    if ($siretLength !== 14) {
-                        session()->flash('supplierError-'.$supplier->getId(), 'Le siret doit faire exactement 14 chiffres et non '.$siretLength.' chiffres');
-                    } else {
-                        $supplier->setSiret($siret, false);
-                    }
-                }
-                if (is_string($isValid)) {
-                    $supplier->setValidity($isValid, false);
-                }
+                $supplier->setCompanyName($request->input('companyName', $supplier->getCompanyName()), false);
+                $supplier->setEmail($validated['email'], false);
+                $supplier->setPhoneNumber($validated['phoneNumber'], false);
+                $supplier->setContactName($validated['contactName'], false);
+                $supplier->setSpeciality($validated['speciality'], false);
+                $supplier->setAddress($validated['address'], false);
+                $supplier->setSiret($validated['siret'], false);
+                $supplier->setValidity($validated['isValid'], false);
 
                 session()->flash('supplierSuccess', 'Fournisseur mis à jour !');
             } else {
@@ -190,8 +168,8 @@ class SupplierController extends BaseController
         $request = request();
 
         $validated = $request->validate([
-            'companyName' => 'required|string|max:255',
-            'siret'       => 'required|string|size:14',
+            'companyName' => 'required|string|max:255|unique:suppliers,company_name',
+            'siret'       => 'required|string|size:14|unique:suppliers,siret',
             'email'       => 'required|email|max:255',
             'phoneNumber' => 'required|string|max:50',
             'contactName' => 'required|string|max:255',
@@ -200,37 +178,44 @@ class SupplierController extends BaseController
             'note'        => 'nullable|string',
         ]);
 
-        $supplier = new Supplier();
-        $supplier->setCompanyName($validated['companyName'], false);
-        $supplier->setSiret($validated['siret'], false);
-        $supplier->setEmail($validated['email'], false);
-        $supplier->setPhoneNumber($validated['phoneNumber'], false);
-        $supplier->setContactName($validated['contactName'], false);
-        $supplier->setAddress($validated['address'], false);
+        try {
+            $supplier = new Supplier();
+            $supplier->setCompanyName($validated['companyName'], false);
+            $supplier->setSiret($validated['siret'], false);
+            $supplier->setEmail($validated['email'], false);
+            $supplier->setPhoneNumber($validated['phoneNumber'], false);
+            $supplier->setContactName($validated['contactName'], false);
+            $supplier->setAddress($validated['address'], false);
 
-        if (isset($validated['speciality'])) {
-            $supplier->setSpeciality($validated['speciality'], false);
+            if (isset($validated['speciality'])) {
+                $supplier->setSpeciality($validated['speciality'], false);
+            }
+            if (isset($validated['note'])) {
+                $supplier->setNote($validated['note'], false);
+            }
+
+            // Sécurité Backend absolue : Gestion du statut selon les droits réels
+            if ($canManage && $request->filled('isValid')) {
+                $isValid = $request->input('isValid');
+                $supplier->setValidity($isValid, false);
+            } else {
+                // Règle d'or : Passage forcé en "En attente" pour les utilisateurs de département / demandeurs
+                $supplier->setValidity(Supplier::VALIDITY_STATUS_PENDING, false);
+            }
+
+            $supplier->save();
+
+            return response()->json([
+                'success' => true,
+                'data' => ['id' => $supplier->getId()],
+                'message' => 'Le fournisseur a été créé avec succès.'
+            ], 201);
+        } catch (QueryException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de créer le fournisseur. Le nom de l\'entreprise ou le SIRET existe déjà.'
+            ], 409);
         }
-        if (isset($validated['note'])) {
-            $supplier->setNote($validated['note'], false);
-        }
-
-        // Sécurité Backend absolue : Gestion du statut selon les droits réels
-        if ($canManage && $request->filled('isValid')) {
-            $isValid = $request->input('isValid');
-            $supplier->setValidity($isValid, false);
-        } else {
-            // Règle d'or : Passage forcé en "En attente" pour les utilisateurs de département / demandeurs
-            $supplier->setValidity(Supplier::VALIDITY_STATUS_PENDING, false);
-        }
-
-        $supplier->save();
-
-        return response()->json([
-            'success' => true, 
-            'data' => ['id' => $supplier->getId()], 
-            'message' => 'Le fournisseur a été créé avec succès.'
-        ], 201);
     }
 
     // =========================================================================

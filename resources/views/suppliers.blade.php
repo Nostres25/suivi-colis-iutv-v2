@@ -83,5 +83,5 @@
 
 
 @section('javascript')
-    <script src="{{ asset('js/suppliers.js') }}"></script>
+    <script src="{{ asset('js/suppliers.js') }}?v={{ filemtime(public_path('js/suppliers.js')) }}"></script>
 @endsection
