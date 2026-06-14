@@ -34,14 +34,12 @@
                     <div class="mb-3">
                         <label for="supplier-status" class="form-label">Statut de validation</label>
                         @if($canManageSupplier)
-                            {{-- S'affichera correctement pour l'ID 3 (Finance) et ID 1 (Admin) --}}
                             <select class="form-select" id="supplier-status" name="isValid" required>
                                 @foreach (Supplier::validityOptions() as $value => $label)
                                     <option value="{{ $value }}" @selected($value === Supplier::VALIDITY_STATUS_VALIDATED)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         @else
-                            {{-- S'affiche actuellement pour vous (Département Info - ID 4) --}}
                             <input type="hidden" name="isValid" value="{{ Supplier::VALIDITY_STATUS_PENDING }}" />
                             <input type="text" class="form-control text-muted bg-light" readonly value="{{ Supplier::validityOptions()[Supplier::VALIDITY_STATUS_PENDING] }} (Automatique)">
                         @endif
@@ -60,4 +58,81 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const addSupplierForm = document.getElementById('addSupplierForm');
+    
+    if (addSupplierForm) {
+        addSupplierForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            
+            if (!this.checkValidity()) {
+                e.stopPropagation();
+                this.classList.add('was-validated');
+                return;
+            }
+
+            const formData = new FormData(this);
+
+            // 1. Récupération ou création de l'instance du Modal de Bootstrap
+            const modalElement = document.getElementById('addSupplierModal');
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+            fetch('/suppliers', { 
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(async response => {
+                const isJson = response.headers.get('content-type')?.includes('application/json');
+                const data = isJson ? await response.json() : null;
+
+                if (!response.ok) {
+                    if (response.status === 422 && data && data.errors) {
+                        let errorMessage = "Erreurs de validation :\n";
+                        Object.keys(data.errors).forEach(field => {
+                            errorMessage += `- ${data.errors[field].join(', ')}\n`;
+                        });
+                        alert(errorMessage);
+                    } else {
+                        alert("Erreur : " + (data?.message || "Une erreur serveur est survenue."));
+                    }
+                    throw new Error('Validation or Server Failure');
+                }
+                
+                return data;
+            })
+            .then(data => {
+                if (data && data.success) {
+                    // 2. Le serveur a répondu OK : On ferme proprement le formulaire visuellement
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                    
+                    this.reset();
+                    this.classList.remove('was-validated');
+
+                    if (typeof fetchSuppliersTable === "function") {
+                        fetchSuppliersTable();
+                    } else {
+                        window.location.reload();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Submission Processing Failure:', error);
+                
+                // 3. Sécurité supplémentaire : Si le serveur renvoie une erreur 500,
+                // on force quand même la fermeture du modal pour débloquer l'écran
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            });
+        });
+    }
+});
+</script>
 @endif
