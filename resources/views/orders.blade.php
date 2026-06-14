@@ -17,25 +17,51 @@
 
     <section class="mb-4">
     <form method="GET" action="{{ url('/orders') }}">
+        @foreach(($options['filters']['status'] ?? []) as $status)
+            <input type="hidden" name="filters[status][]" value="{{ $status }}">
+        @endforeach
+        @foreach(($options['filters']['department_id'] ?? []) as $departmentId)
+            <input type="hidden" name="filters[department_id][]" value="{{ $departmentId }}">
+        @endforeach
+        @foreach(($options['filters']['author_id'] ?? []) as $authorId)
+            <input type="hidden" name="filters[author_id][]" value="{{ $authorId }}">
+        @endforeach
+        <input type="hidden" name="filters[order_num]" value="{{ $options['filters']['order_num'] ?? '' }}">
+        <input type="hidden" name="filters[title]" value="{{ $options['filters']['title'] ?? '' }}">
+        <input type="hidden" name="filters[quote_num]" value="{{ $options['filters']['quote_num'] ?? '' }}">
+        <input type="hidden" name="filters[created_from]" value="{{ $options['filters']['created_from'] ?? '' }}">
+        <input type="hidden" name="filters[created_to]" value="{{ $options['filters']['created_to'] ?? '' }}">
+        <input type="hidden" name="filters[inactive_days]" value="{{ $options['filters']['inactive_days'] ?? '' }}">
+        <input type="hidden" name="sort" value="{{ $options['sort'] ?? 'priority' }}">
         <div class="row justify-content-center">
-            <div class="search-container flex-column flex-sm-row">
+            <div class="search-container flex-column flex-sm-row gap-2 align-items-stretch">
                 <div class="search-wrapper">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search search-icon" viewBox="0 0 16 16">
                         <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                     </svg>
                     <input type="text" name="search" class="form-control search-input"
-                           placeholder="Rechercher une commande..."
+                           placeholder="Rechercher (N°, titre, devis, statut)..."
                            autocomplete="off"
-                           value="{{ @$options['search'] ?? '' }}">
+                           value="{{ $options['search'] ?? '' }}">
                 </div>
-                <button type="submit" class="btn btn-outline-primary search-button" style="display:none">Rechercher</button>
-                @if(@$options['search'])
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary search-button" style="display:none">Rechercher</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#ordersFiltersOffcanvas" aria-controls="ordersFiltersOffcanvas">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel-fill me-1" viewBox="0 0 16 16">
+                            <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .39.812L10 8.333V13.5a.5.5 0 0 1-.8.4l-2-1.5a.5.5 0 0 1-.2-.4V8.333L1.61 1.812A.5.5 0 0 1 1.5 1.5z"/>
+                        </svg>
+                        Filtres
+                    </button>
+                </div>
+                @if($options['search'])
                     <a href="{{ url('/orders') }}" class="btn btn-secondary ms-2">Effacer</a>
                 @endif
             </div>
         </div>
     </form>
 </section>
+
+<x-orders.order-filters :user="$user" :options="$options" :filterData="$filterData" />
 
 {{-- TODO Peut-être afficher un aperçu de ce qu'il y a dans la commande (colis) --}}
 {{-- TODO format mobile : afficher les commandes comme la solution 1 ou 2 mais juste cliquer dessus ça fonctionne donc pas prioritaire : https://www.behance.net/gallery/95240691/Responsive-Data-Table-Designs# --}}
