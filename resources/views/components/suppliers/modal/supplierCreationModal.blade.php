@@ -11,7 +11,7 @@
             <div class="modal-body">
                 <form id="addSupplierForm" class="needs-validation">
                 @csrf
-                   <x-suppliers.fields.supplierCreationFields></x-suppliers.fields.supplierCreationFields>
+                   <x-suppliers.fields.supplierCreationFields :errors="$errors"></x-suppliers.fields.supplierCreationFields>
                     <div class="mb-3">
                         <label for="speciality" class="form-label">Spécialité</label>
                         <input type="text" class="form-control" id="speciality"
