@@ -156,7 +156,7 @@ abstract class BaseController extends Controller
 
         $rolesToStrring = implode(', ', $user->getRoles()->map(fn (Role $role) => $role->getName())->toArray());
         session()->flash(
-            'success',
+            'success-login',
             "Connecté en tant que {$user->getFullName()} avec le(s) rôle(s) {$rolesToStrring}"
         );
 

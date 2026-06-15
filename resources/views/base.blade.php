@@ -23,6 +23,13 @@
     <div id="navbar-container">
         <x-base.nav></x-base.nav>
         <x-base.alert></x-base.alert>
+        <div class="alert-container">
+            @if (session()->exists('success-login'))
+                <div class="alert alert-success mb-0">
+                    {{session('success-login')}}
+                </div>
+            @endif
+        </div>
         @yield('alert')
     </div>
 
