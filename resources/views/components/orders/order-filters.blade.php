@@ -8,7 +8,7 @@
     <div class="offcanvas-header">
         <div>
             <h5 class="offcanvas-title mb-1" id="ordersFiltersOffcanvasLabel">Filtres avancés</h5>
-            <p class="text-muted mb-0">Filtrer par champ précis sans alourdir la recherche générale.</p>
+           
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
     </div>
@@ -52,7 +52,7 @@
                         <option value="{{ $statusValue }}" @selected(in_array($statusValue, $currentFilters['status'] ?? [], true))>{{ $statusLabel }}</option>
                     @endforeach
                 </select>
-                <div class="form-text">Maintiens `Ctrl` ou `Cmd` pour sélectionner plusieurs statuts.</div>
+                
             </div>
 
             <div>
