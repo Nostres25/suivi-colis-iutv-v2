@@ -38,16 +38,16 @@
 
     <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
         <a href="{{ url('/orders') }}" class="btn btn-outline-secondary {{ empty($options['search']) && empty($options['recentOnly']) ? 'active' : '' }}">
-            Afficher toutes les commandes
+           Commandes
         </a>
         <a href="{{ url('/orders?recentOnly=true') }}" class="btn btn-outline-secondary {{ !empty($options['recentOnly']) ? 'active' : '' }}">
-            Afficher les commandes récentes
+            Commandes récentes
         </a>
         <a href="{{ url('/orders?search=DEVIS') }}" class="btn btn-outline-secondary {{ ($options['search'] ?? '') === 'DEVIS' ? 'active' : '' }}">
-            Afficher uniquement les devis
+            Devis
         </a>
         <a href="{{ url('/orders?search=BON_DE_COMMANDE') }}" class="btn btn-outline-secondary {{ ($options['search'] ?? '') === 'BON_DE_COMMANDE' ? 'active' : '' }}">
-            Afficher uniquement les bons de commande
+           Bons de commande
         </a>
     </div>
 </section>
