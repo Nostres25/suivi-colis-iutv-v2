@@ -82,6 +82,6 @@
 @endsection
 
 
-@section('javascript')
+@section('js')
     <script src="{{ asset('js/suppliers.js') }}"></script>
 @endsection

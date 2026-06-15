@@ -67,6 +67,6 @@
     </div>
 @endsection
 
-@section('javascript')
+@section('js')
     <script src="{{asset('js/orders.js')}}"></script>
 @endsection

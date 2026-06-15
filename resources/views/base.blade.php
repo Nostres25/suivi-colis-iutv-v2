@@ -83,5 +83,5 @@
 </script>
 <script src="{{asset('js/global_functions.js')}}"></script>
 <script src="{{asset('js/base.js')}}"></script>
-@yield('javascript')
+@yield('js')
 </html>
