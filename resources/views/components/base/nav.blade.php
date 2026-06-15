@@ -32,19 +32,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-xl-0">
                 <li class="nav-item">
-                    <div class="d-flex">
-                        <a class="nav-link pe-0 active" href="/">Commandes</a>
-                        <div class="dropdown">
-                            <a class="nav-link dropdown-toggle ps-2" href="/" role="button" data-bs-toggle="dropdown"
-                               aria-expanded="false"></a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item active" href="/">Voir les commandes</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+                    <a class="nav-link active" href="/">Commandes</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/suppliers">Fournisseurs</a>
