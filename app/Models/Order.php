@@ -380,18 +380,19 @@ class Order extends Model
      *
      * @param  Request  $request  : la requête HTTP issue du controlleur contenant le fichier à uploader
      * @param  bool  $save  : si la fonction sauvegarde en base de données (true par défaut)
-     * @return bool true si l'enregistrement du fichier a fonctionné, false sinon
+     * @return array true si l'enregistrement du fichier a fonctionné, false sinon
      */
-    public function uploadQuote(Request $request, bool $save = true): bool
+    public function uploadQuote(Request $request, bool $save = true, bool $checkValidator = true): array
     {
-        $request->validate([
-            'quote' => 'required|mimes:pdf,doc,docx|max:10240', // Max 10MB
-        ]);
-
         /* @var UploadedFile $file */
         $file = $request->file('quote');
-        if ($file) {
+        $validator = null;
 
+        if ($checkValidator) {
+            $validator = $this->checkQuote($request);
+        }
+
+        if ((! $validator || ! $validator->fails()) && $file) {
             try {
 
                 $fileName = $file->getClientOriginalName();
@@ -408,20 +409,20 @@ class Order extends Model
                     } else {
                         $this->attributes['path_quote'] = $path_quote;
                     }
-
-                    return true;
+                } else {
+                    return ['validator' => @$validator, 'otherError' => 'Une erreur est survenue lors de la sauvegarde du fichier de bon de commande'];
                 }
 
             } catch (\Throwable $th) {
                 error_log("Une erreur est survenue lors de l'enregistrement d'un devis : \n".$th->getMessage());
                 report($th);
 
-                return false;
-            }
+                return ['validator' => @$validator, 'otherError' => "Une erreur est survenue lors de l'enregistrement d'un bon de commande"];
 
+            }
         }
 
-        return false;
+        return ['validator' => @$validator];
     }
 
     /**
@@ -432,26 +433,30 @@ class Order extends Model
      * @param  bool  $save  : si la fonction sauvegarde en base de données (true par défaut)
      * @return array Dictionnaire contenant un validator et potentiellement une autre erreur
      */
-    public function uploadPurchaseOrder(Request $request, ?bool $is_signed = false, bool $save = true): array
+    public function uploadPurchaseOrder(Request $request, ?bool $is_signed = false, bool $save = true, bool $checkValidator = true): array
     {
         /* @var UploadedFile $file */
         $file = $request->file('purchase_order');
+        $validator = null;
 
-        $validator = $this->checkPurchaseOrder($request);
-        if (! $validator->fails()) {
+        if ($checkValidator) {
+            $validator = $this->checkPurchaseOrder($request);
+        }
+
+        if ((! $validator || ! $validator->fails()) && $file) {
             try {
                 $fileName = $file->getClientOriginalName();
 
-            if (! stripos($fileName, 'BonDeCommande')) {
-                $fileName = 'BonDeCommande'.$fileName;
-            }
+                if (! stripos($fileName, 'BonDeCommande')) {
+                    $fileName = 'BonDeCommande'.$fileName;
+                }
 
-            if ($is_signed) {
-                $ext = $file->getExtension();
-                $fileName = str_replace('.'.$ext, '(signe).'.$ext, $fileName);
-            }
+                if ($is_signed) {
+                    $ext = $file->getExtension();
+                    $fileName = str_replace('.'.$ext, '(signe).'.$ext, $fileName);
+                }
 
-            $purchase_order = $file->storeAs('uploads/orders/'.$this->getOrderNumber(), $fileName, 'public'); // public -> le dossier
+                $purchase_order = $file->storeAs('uploads/orders/'.$this->getOrderNumber(), $fileName, 'public'); // public -> le dossier
 
                 if ($purchase_order) {
                     if ($save) {
@@ -460,18 +465,18 @@ class Order extends Model
                         $this->attributes['path_purchase_order'] = $purchase_order;
                     }
                 } else {
-                    return ['validator' => $validator, 'otherError' => 'Une erreur est survenue lors de la sauvegarde du fichier de bon de commande'];
+                    return ['validator' => @$validator, 'otherError' => 'Une erreur est survenue lors de la sauvegarde du fichier de bon de commande'];
                 }
 
             } catch (\Throwable $th) {
                 error_log("Une erreur est survenue lors de l'enregistrement d'un bon de commande : \n".$th->getMessage());
                 report($th);
 
-                return ['validator' => $validator, 'otherError' => "Une erreur est survenue lors de l'enregistrement d'un bon de commande"];
+                return ['validator' => @$validator, 'otherError' => "Une erreur est survenue lors de l'enregistrement d'un bon de commande"];
             }
         }
 
-        return ['validator' => $validator];
+        return ['validator' => @$validator];
     }
 
     /**
@@ -527,6 +532,13 @@ class Order extends Model
     {
         return Validator::make($request->all(), [
             'purchase_order' => 'required|mimes:pdf,doc,docx|max:10240', // Max 10MB
+        ]);
+    }
+
+    public function checkQuote(Request $request): \Illuminate\Validation\Validator
+    {
+        return Validator::make($request->all(), [
+            'quote' => 'required|mimes:pdf,doc,docx|max:10240', // Max 10MB
         ]);
     }
 
