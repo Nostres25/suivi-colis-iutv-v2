@@ -1,5 +1,10 @@
 @extends('base')
 
+@section('head')
+    <script>
+        let suppliers = null;
+    </script>
+@endsection
 
 @section('header')
     <div class="container d-block">

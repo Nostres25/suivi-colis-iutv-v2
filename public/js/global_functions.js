@@ -1,5 +1,7 @@
 function displayAlert(message, type = 'success') {
 
+    if (type === 'error' && !message) message = 'Une erreur inconnue est survenue';
+
     const alertContainers = document.getElementsByClassName('alert-container');
 
     for (let i = 0; i < alertContainers.length; i++) {
@@ -23,8 +25,6 @@ function displayAlert(message, type = 'success') {
                 break;
             }
         }
-
-        console.log(alertContainer);
 
         divAlert.textContent = message;
         alertContainer.append(divAlert);

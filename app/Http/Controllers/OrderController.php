@@ -19,13 +19,14 @@ use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class OrderController extends BaseController
 {
     // TODO Annotation pour utiliser la fonction auth() de AuthController pour chaque page
     // Routes GET
-    public function viewOrders(?string $alertMsg = null): View|Response|RedirectResponse|Redirector
+    public function viewOrders(): View|Response|RedirectResponse|Redirector
     {
         $request = request();
         $search = $request->input('search');
@@ -47,7 +48,7 @@ class OrderController extends BaseController
 
         $options['page'] = $orders->currentPage();
 
-        $suppliers = Supplier::all(['id', 'company_name', 'is_valid']); // Récupération uniquement des informations utiles à propos des fournisseurs
+        $suppliers = Supplier::all(['id', 'company_name', 'is_valid', 'siret']); // Récupération uniquement des informations utiles à propos des fournisseurs
 
         // TODO flash messages: redirect('urls.create')->with('success', 'URL has been added');
         return view('orders', [
@@ -79,7 +80,7 @@ class OrderController extends BaseController
         // Récupération de valeurs supplémentaires
         $userDepartments = $user->getRoles()->filter(fn (Role $role) => $role->isDepartment());
 
-        $suppliers = Supplier::all(['id', 'company_name', 'is_valid']); // Récupération uniquement des informations utiles à propos des fournisseurs
+        $suppliers = Supplier::all(['id', 'company_name', 'is_valid', 'siret']); // Récupération uniquement des informations utiles à propos des fournisseurs
 
         // TODO flash messages, ex: redirect('urls.create')->with('success', 'URL has been added');
         return view('components.orders.orders-table', [
@@ -175,46 +176,131 @@ class OrderController extends BaseController
 
     // Routes POST
 
-    public function submitNewOrder(): RedirectResponse|Redirector
+    public function submitNewOrder(): RedirectResponse|Response|Redirector|View
     {
 
+        /* @var Request|mixed|mixed[]|object $request */
         $request = request();
         $user = Auth::user();
+        $userDepartments = $user->getDepartments();
+        $title = $request['title'];
         $orderNum = $request['order_num'];
+        $status = $request['status'];
+        $department = $request['department'];
+        $description = $request['description'];
+        $quote_num = $request['quote_num'];
+        $cost = $request['cost'];
+        $isSigned = $request['isSigned'] == 'on';
+        $department = count($userDepartments) == 1
+            ? $userDepartments->first()
+            : $userDepartments->first(function ($dept) use ($department) {
+                return $dept->getId() == $department;
+            });
+
+        $order = null;
+        $supplier = null;
+
+        $componentVars = array_merge([
+            'users' => $user,
+            'userDepartments' => $userDepartments,
+            'suppliers' => Supplier::all('id', 'company_name', 'is_valid', 'siret'),
+            'retry' => true,
+        ], $request->all());
+
+        // ça ne fonctionne pas
+        //        $request_files = $request->allFiles();
+        //        $fileInputNames = array_keys($request_files);
+        //        foreach ($fileInputNames as $fileInputName) {
+        //            $componentVars[$fileInputName] = $request_files[$fileInputName]->getClientOriginalPath();
+        //        }
 
         try {
             // 1) VALIDATION
 
-            $validated = $request->validate([
+            $hasExistantSupplier = $request['newOrExistantSupplierRadio'] == 'existant';
+            $createNewSupplier = ! $hasExistantSupplier;
+            $rulesValidator = [
                 'title' => 'required|string|max:255',
-                'supplier_name' => 'required|exists:suppliers,company_name',
-                'order_num' => 'required|string|max:255',
-                'quote_num' => 'required|string|max:255',
-                'department_name' => 'nullable|exists:roles,name',
-                'description' => 'nullable|string',
-                'status' => 'required|string',
-                'cost' => 'nullable|numeric',
-                'quote' => 'nullable|file|mimes:pdf|max:20480',
-                'purchase_order' => 'nullable|file|mimes:pdf|max:20480',
-            ]);
+                'order_num' => 'required|string|max:255|unique:orders,order_num',
+                'quote_num' => 'required|string|max:255|',
+                'department' => 'nullable|exists:roles,id',
+                'description' => 'nullable|string|max:16777215',
+                'status' => [Rule::enum(Status::class), 'required'],
+                'cost' => 'nullable|decimal:0,2|max:2147483647',
+                'quote' => 'nullable|mimes:pdf,doc,docx|max:10240',
+                'purchase_order' => 'nullable|mimes:pdf,doc,docx|max:10240',
+            ];
 
-            $userDepartment = $user->getDepartments()->first();
-            $departmentName = $request['department_name'];
+            // if ($hasExistantSupplier) {
+            // Cette règle de validator a été remplacée par une vérification manuelle
+            //                $rulesForNewSupplier = [
+            //                    'supplier_name' => 'required|exists:suppliers,company_name',
+            //                ];
+            //                $rulesValidator = array_merge($rulesValidator, $rulesForNewSupplier);
 
-            $description = $request['description'];
-            $quote_num = $request['quote_num'];
-            $status = $request['status'];
-            $cost = $request['cost'];
-            $isSigned = $request['signed'];
+            if ($createNewSupplier) {
 
-            $department = Role::where('name', $departmentName ? $departmentName : $userDepartment->getName())->firstOrFail();
-            $supplier = Supplier::where('company_name', $request['supplier_name'])->firstOrFail();
+                $rulesForExistantSupplier = [
+                    'companyName' => 'required|string|max:255|unique:suppliers,company_name',
+                    'siret' => 'required|number|max:14|min:14|unique:suppliers,siret',
+                    'phoneNumber' => 'required|string|max:255',
+                    'email' => 'required|string|max:255',
+                    'contactName' => 'required|string|max:255',
+                    'address' => 'required|string|max:255',
+                ];
+                $rulesValidator = array_merge($rulesValidator, $rulesForExistantSupplier);
+            }
+
+            $validator = Validator::make($request->all(), $rulesValidator);
+
+            if ($validator->fails()) {
+                return view('components.orders.modal.orderCreationModal', $componentVars)->withErrors($validator);
+            }
+
+            if (! $department) {
+                return view('components.orders.modal.orderCreationModal', $componentVars)->withErrors('Le département indiqué est invalide. Vous devez faire partie de ce département.');
+            }
+
+            if ($hasExistantSupplier) {
+                /* @var Supplier $supplier */
+                $supplier = Supplier::where(function ($query) use ($request) {
+                    $query->where('company_name', '=', $request['supplier_name'])
+                        ->orWhere('siret', '=', $request['supplier_name']);
+                })->first();
+
+                if ($supplier && ! $supplier->isValid() && $status != Status::BROUILLON->value) {
+                    $status = Status::EN_ATTENTE_VALIDATION_FOURNISSEUR;
+                    // TODO avertir le service financier ?
+                }
+
+            } else {
+                // TODO is_valid ne va plus être un boolean mais un string où il faut mettre la bonne valeur
+                $supplier = new Supplier([
+                    'company_name' => $request['companyName'],
+                    'siret' => $request['siret'],
+                    'email' => $request['email'],
+                    'phone_number' => $request['phoneNumber'],
+                    'contact_name' => $request['contactName'],
+                    'address' => $request['address'],
+                    'is_valid' => false,
+                ]);
+
+                $isSavedSupplier = $supplier->save();
+                if (! $isSavedSupplier) {
+                    return view('components.orders.modal.orderCreationModal', $componentVars)->withErrors('Une erreur inattendue est survenue lors de la sauvegarde du fournisseur de la commande N°'.$orderNum.'.');
+                }
+
+            }
+
+            if (! $supplier) {
+                return view('components.orders.modal.orderCreationModal', $componentVars)->withErrors(['supplier_name' => "Le fournisseur \"{$request['supplier_name']}\" n'a pas été trouvé pour la création de la commande N°$orderNum."]);
+            }
 
             // 2 CRÉATION DE LA COMMANDE
             $order = new Order([
-                'title' => $validated['title'],
-                'order_num' => $validated['order_num'],
-                'status' => $validated['status'],
+                'title' => $title,
+                'order_num' => $orderNum,
+                'status' => $status,
                 'author_id' => $user->getId(),
                 'department_id' => $department->getId(),
                 'supplier_id' => $supplier->getId(),
@@ -237,23 +323,35 @@ class OrderController extends BaseController
 
             // 4 UPLOAD DU DEVIS
             if ($request->hasFile('quote')) {
-                $order->uploadQuote($request, false);
+                $order->uploadQuote($request, false, false);
             }
 
             // 5 UPLOAD DU DEVIS
             if ($request->hasFile('purchase_order')) {
-                $order->uploadPurchaseOrder($request, $isSigned, false);
+                $order->uploadPurchaseOrder($request, $isSigned, false, false);
             }
 
             // 6 SAUVEGARDE
-            $order->save();
-            session()->flash('success', 'La commande N°'.$order->getOrderNumber().' a été créée avec succès.');
+            $isSaved = $order->save();
+            if (! $isSaved) {
+                return view('components.orders.modal.orderCreationModal', $componentVars)->withErrors("Une erreur est survenue lors de la sauvegarde de la commande N°$orderNum.");
+            }
+
+            $logData = $order->sendLog("La commande $orderNum a été créée !".($createNewSupplier ? " Avec l'ajout d'un nouveau fournisseur : {$supplier->getCompanyName()}." : ''), $user);
+            /* @var Log $log */
+            $log = $logData['model'];
+            session()->flash('success', $log->getContent());
+
+            return $this->viewOrders()->withErrors($logData['success'] ? null : "Le journal d'activité n'a pas pas été envoyé à cause d'un erreur");
 
         } catch (\Throwable $t) {
-            session()->flash('error', 'Une erreur est survenue lors de la création de la commande commande N°'.$orderNum.'.');
-        }
+            if (config('app.debug')) {
+                error_log($t->getMessage());
+                error_log($t->getTraceAsString());
+            }
 
-        return redirect('orders');
+            return view('components.orders.modal.orderCreationModal', $componentVars)->withErrors('Une erreur inattendue est survenue à la création de la commande N°'.$orderNum.'.');
+        }
     }
 
     // Routes POST modal
@@ -496,6 +594,7 @@ class OrderController extends BaseController
             $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request['mailContent']);
             error_log($mailContent);
         }
+
         return $this->modalViewDetails($id);
     }
 

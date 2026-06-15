@@ -24,8 +24,6 @@ Route::get('suppliers', [SupplierController::class, 'viewSuppliers']);
 Route::get('/suppliers/fetch/table', [SupplierController::class, 'fetchSuppliersTable'])
     ->name('suppliers.fetch.table');
 
-
-
 // orders modals get
 Route::get('/order/{id}/step-actions/upload-purchase-order', [OrderController::class, 'modalUploadPurchaseOrder'])
     ->name('orders.step-actions.upload-purchase-order');
@@ -62,17 +60,13 @@ Route::post('/orders/create', [OrderController::class, 'submitNewOrder'])
 Route::get('/order/{id}/document/{type}', [OrderController::class, 'downloadDocument'])
     ->name('orders.download');
 
-
 // suppliers modals get
 Route::get('/supplier/{id}/view-details', [SupplierController::class, 'modalViewDetails'])
     ->name('suppliers.modal.view-details');
 
-
-
 // suppliers modals post
 Route::post('/supplier/{id}/view-details', [SupplierController::class, 'editSupplier'])
     ->name('suppliers.modal.view-details');
-
 
 // seulement pour les tests sur le serveur de l'IUT
 Route::get('/cookies', function (Request $request) {
@@ -83,7 +77,9 @@ Route::get('/cookies', function (Request $request) {
 
 Route::get('/logout', function (Request $request) {
 
-    error_log('cookies avant déconnexion : '.implode(', ', array_keys($request->cookie())));
+    if (config('app.debug')) {
+        error_log('cookies avant déconnexion : '.implode(', ', array_keys($request->cookie())));
+    }
     info($request->cookie());
     // Cookies à supprimer pour se déconnecter² et rediriger automatiquement vers le CAS avec apache2
     Cookie::queue(Cookie::forget('MOD_AUTH_CAS'));
@@ -93,7 +89,9 @@ Route::get('/logout', function (Request $request) {
     Auth::logout();
 
     info($request->cookie());
-    error_log('cookies après déconnexion : '.implode(', ', array_keys($request->cookie())));
+    if (config('app.debug')) {
+        error_log('cookies après déconnexion : '.implode(', ', array_keys($request->cookie())));
+    }
 
     return back();
 
@@ -105,7 +103,6 @@ Route::post('/account/profile', [ProfileController::class, 'update'])->name('pro
 
 // Page "À propos"
 Route::get('/about', [AboutController::class, 'about']);
-
 
 // Refuser devis POST
 
