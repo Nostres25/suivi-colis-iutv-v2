@@ -37,19 +37,63 @@
     </form>
 
     <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
-        <a href="{{ url('/orders') }}" class="btn btn-outline-secondary {{ empty($options['search']) && empty($options['recentOnly']) ? 'active' : '' }}">
-           Commandes
-        </a>
-        <a href="{{ url('/orders?recentOnly=true') }}" class="btn btn-outline-secondary {{ !empty($options['recentOnly']) ? 'active' : '' }}">
-            Commandes récentes
-        </a>
-        <a href="{{ url('/orders?search=DEVIS') }}" class="btn btn-outline-secondary {{ ($options['search'] ?? '') === 'DEVIS' ? 'active' : '' }}">
-            Devis
-        </a>
-        <a href="{{ url('/orders?search=BON_DE_COMMANDE') }}" class="btn btn-outline-secondary {{ ($options['search'] ?? '') === 'BON_DE_COMMANDE' ? 'active' : '' }}">
-           Bons de commande
-        </a>
-    </div>
+    @php
+        // 1. On récupère les filtres "search" sous forme de tableau pour gérer le cumul
+        $currentSearch = request()->input('search', []);
+        if (!is_array($currentSearch)) {
+            // Si c'est une chaîne de texte venant de la barre de recherche, on l'isole
+            $currentSearch = $currentSearch ? [$currentSearch] : [];
+        }
+        
+        // 2. On vérifie si le filtre récent est actif
+        $isRecent = request()->has('recentOnly') && request()->input('recentOnly') === 'true';
+
+        // Fonction pour ajouter/retirer un statut de l'URL sans effacer le reste
+        $toggleSearchUrl = function($statusValue) use ($currentSearch, $isRecent) {
+            $params = $currentSearch;
+            if (in_array($statusValue, $params)) {
+                $params = array_diff($params, [$statusValue]); // On le retire si déjà actif
+            } else {
+                $params[] = $statusValue; // On l'ajoute si absent
+            }
+            
+            $urlParams = [];
+            if (!empty($params)) $urlParams['search'] = array_values($params);
+            if ($isRecent) $urlParams['recentOnly'] = 'true';
+            
+            return url('/orders?' . http_build_query($urlParams));
+        };
+
+        // Fonction pour activer/désactiver le filtre récent
+        $toggleRecentUrl = function() use ($currentSearch, $isRecent) {
+            $urlParams = [];
+            if (!empty($currentSearch)) $urlParams['search'] = $currentSearch;
+            if (!$isRecent) $urlParams['recentOnly'] = 'true';
+            
+            return url('/orders?' . http_build_query($urlParams));
+        };
+    @endphp
+
+    {{-- Bouton pour tout réinitialiser --}}
+    <a href="{{ url('/orders') }}" class="btn btn-outline-secondary {{ empty($currentSearch) && !$isRecent ? 'active' : '' }}">
+       Toutes les commandes
+    </a>
+
+    {{-- Commande récente --}}
+    <a href="{{ $toggleRecentUrl() }}" class="btn btn-outline-secondary {{ $isRecent ? 'active' : '' }}">
+        Commandes récentes
+    </a>
+
+    {{-- Devis --}}
+    <a href="{{ $toggleSearchUrl('DEVIS') }}" class="btn btn-outline-secondary {{ in_array('DEVIS', $currentSearch) ? 'active' : '' }}">
+        Devis
+    </a>
+
+    {{-- Bons de commande --}}
+    <a href="{{ $toggleSearchUrl('BON_DE_COMMANDE') }}" class="btn btn-outline-secondary {{ in_array('BON_DE_COMMANDE', $currentSearch) ? 'active' : '' }}">
+       Bons de commande
+    </a>
+</div>
 </section>
 
 {{-- TODO Peut-être afficher un aperçu de ce qu'il y a dans la commande (colis) --}}
