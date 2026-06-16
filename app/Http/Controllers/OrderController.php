@@ -582,9 +582,7 @@ class OrderController extends BaseController
 
     // Autres fonctions
 
-    public function fetchOrders(User $user, ?array $options): AbstractPaginator
-    {
-
+    public function fetchOrders(User $user, ?array $options): AbstractPaginator{
         // TODO réduire le nombre de requêtes et voir à propos du cache (je pense qu'on ne fera pas de cache mais on opti les requêtes)
         // TODO factoriser avec un déctorateur le code pour l'utilisateur et si possible factoriser l'envoi des variables courantes (ex: $suerPermissions)
         $userRoles = $user->getRoles(); // Récupération des rôles en base de données
@@ -593,6 +591,14 @@ class OrderController extends BaseController
 
         // Initialisation de la requête
         $query = Order::query();
+
+        // 🌟 RÈGLE N°1 PARFAITE : Force l'ordre d'affichage exigé des Bons de commande partout
+        $query->orderByRaw("CASE 
+            WHEN orders.status = 'BON_DE_COMMANDE_NON_SIGNE' THEN 1
+            WHEN orders.status = 'BON_DE_COMMANDE_SIGNE' THEN 2
+            WHEN orders.status = 'BON_DE_COMMANDE_REFUSE' THEN 3
+            ELSE 4
+        END");
 
         $userId = $user->getId();
         $recentOnly = @$options['recentOnly'];
@@ -608,9 +614,7 @@ class OrderController extends BaseController
             });
         }
 
-        // --- 2. TRI INTELLIGENT AVEC ENUMS ---
-
-        // Définition des rôles
+        // --- 2. TRI INTELLIGENT AVEC ENUMS (Rôles) ---
         $isDirecteur = $user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES);
         $isFinancier = $user->hasPermission(PermissionValue::GERER_PAIEMENT_FOURNISSEURS);
         $isResponsableColis = $user->hasPermission(PermissionValue::GERER_COLIS_LIVRES);
@@ -647,10 +651,6 @@ class OrderController extends BaseController
 
             } elseif ($isResponsableColis) {
                 // TRI RESPONSABLE COLIS
-                // 1. En attente de livraison (Réponse reçue ou Partiel)
-                // 2. Commande envoyée (Potentiellement en attente)
-                // 3. Le reste
-
                 $p1_Colis = implode("','", [
                     Status::COMMANDE_AVEC_REPONSE->value,
                     Status::PARTIELLEMENT_LIVRE->value,
@@ -689,39 +689,69 @@ class OrderController extends BaseController
                 END";
 
                 $query->orderByRaw($sqlSort, [$user->getId()]);
-                $query->orderByRaw($sqlSort, [$user->getId()]);
             }
         }
 
-        // 2.1 Filtre de recherche (si rempli)
+        // --- 2.1 FILTRES DES BOUTONS DE RECHERCHE ---
         $search = @$options['search'];
         if ($search) {
-            $query->where(function (Builder $q) use ($search) {
-                $q->where('order_num', 'LIKE', "%{$search}%")
-                    ->orWhere('title', 'LIKE', "%{$search}%")
-                    ->orWhere('status', 'LIKE', "%{$search}%")
-                    ->orWhere('quote_num', 'LIKE', "%{$search}%");
+            if (is_string($search) && $search === 'BON_DE_COMMANDE') {
+                $search = ['BON_DE_COMMANDE_NON_SIGNE', 'BON_DE_COMMANDE_SIGNE', 'BON_DE_COMMANDE_REFUSE'];
+            }
+
+            if (!$recentOnly) {
+                $query->where(function (Builder $q) use ($search) {
+                    if (is_array($search)) {
+                        $q->whereIn('status', $search);
+                    } else {
+                        $q->where('order_num', 'LIKE', "%{$search}%")
+                        ->orWhere('title', 'LIKE', "%{$search}%")
+                        ->orWhere('status', 'LIKE', "%{$search}%")
+                        ->orWhere('quote_num', 'LIKE', "%{$search}%");
+                    }
+                });
+            } else {
+                if (!is_array($search)) {
+                    $query->where(function (Builder $q) use ($search) {
+                        $q->where('order_num', 'LIKE', "%{$search}%")
+                        ->orWhere('title', 'LIKE', "%{$search}%")
+                        ->orWhere('status', 'LIKE', "%{$search}%")
+                        ->orWhere('quote_num', 'LIKE', "%{$search}%");
+                    });
+                }
+            }
+        }
+
+        // --- 2.2 GESTION DU FILTRE CUMULÉ : RECENT / CLES SÉLECTIONNÉES ---
+        if ($recentOnly) {
+            $query->leftJoin('logs', 'logs.order_id', '=', 'orders.id');
+            $query->where(function (Builder $innerQuery) use ($search, $user) {
+                // Condition A : Logs de moins de 5 jours créés par l'utilisateur connecté
+                $innerQuery->where(function ($qLog) use ($user) {
+                    $qLog->whereDate('logs.created_at', '>', \Carbon\Carbon::today()->subDays(5))
+                        ->where('logs.author_id', '=', $user->getId());
+                });
+
+                // Condition B : Ou correspond à un des types cochés
+                if ($search && is_array($search)) {
+                    $innerQuery->orWhereIn('orders.status', $search);
+                }
             });
         }
 
+        // --- 3. TRI FINAL DE SÉCURITÉ (Par date) ---
         if ($recentOnly) {
-            $query->join('logs', 'logs.order_id', '=', 'orders.id')
-                ->whereDate('logs.created_at', '>', Carbon::today()->subDays(5))
-                ->where('logs.author_id', '=', $user->getId())
-                ->orderBy('orders.updated_at', 'desc');
+            $query->orderBy('orders.updated_at', 'desc');
         } else {
             $query->orderBy('orders.updated_at', 'asc');
         }
 
-        // --- 3. TRI SECONDAIRE (Date) ---
-        // Les plus anciennes (date lointaine) en premier
-
-        // Commandes retournées
+        // Pagination et renvoi de la liste
         $page = @$options['page'];
         if (is_string($page)) {
             $page = intval($page);
         }
 
         return $query->distinct()->paginate(20, ['orders.*'], 'page', $page);
-    }
+    }   
 }
