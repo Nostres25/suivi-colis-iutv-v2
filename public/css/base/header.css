@@ -1,3 +1,20 @@
+header.sticky-top {
+    top: 0;
+    z-index: 1035;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+}
+
+.navbar-container {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+}
+
+.navbar-container .alert-container {
+    position: relative;
+    z-index: 1036;
+}
+
 .page-header {
     background-color: var(--primary-color);
     padding: 20px 0;
@@ -7,27 +24,6 @@
 .page-header .container {
     display: flex;
     align-items: center;
-}
-
-/*.page-header .subtitle {
-    margin-top: 8px;
-    font-size: 1rem;
-    opacity: 0.9;
-}*/
-
-.navbar-container {
-    top: 0;
-    position: sticky;
-    width: 100%;
-    z-index: 1035;
-    background-color: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
-}
-
-.navbar-container .alert-container {
-    position: relative;
-    z-index: 1036;
 }
 
 @media (max-width: 991.98px) {
