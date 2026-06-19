@@ -31,7 +31,7 @@ abstract class BaseController extends Controller
      * @param  Request  $request  Requête
      * @return array // dictionnaire au format ['success' => bool, 'response' => Response|ResponseFactory|null].
      */
-    public function auth(Request $request): array
+    public static function auth(Request $request): array
     {
         // Connexion de l'utilisateur
         if (Auth::check()) {
@@ -175,7 +175,7 @@ abstract class BaseController extends Controller
         // Charger l'utilisateur connecté pour être recupérable avec `Auth::user()`
         // S'il y a une erreur dans le processus d'authentification, retourner pour afficher la vue d'erreur
 
-        $result = $this->auth(request());
+        $result = BaseController::auth(request());
         if (! $result['success']) {
             return $result['response'];
         }
