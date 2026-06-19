@@ -27,6 +27,8 @@
 
                         <div class="border rounded p-3 mb-3">
 
+                            <h6>{{ $package->getName() }}</h6>
+
                             <div class="mb-3">
                                 <label class="form-label">
                                     Nom du colis
@@ -41,7 +43,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label">
-                                    Numéro de suivi
+                                    Numéro de suivi (facultatif)
                                 </label>
 
                                 <input
@@ -54,7 +56,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label">
-                                    Coût
+                                    Coût (facultatif)
                                 </label>
 
                                 <input
@@ -67,7 +69,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label">
-                                    Délai de livraison estimé
+                                    Délai de livraison estimé (facultatif)
                                 </label>
 
                                 <input
