@@ -19,15 +19,16 @@
     @yield('head')
 </head>
 <body>
-<header class="mb-5">
-    <div id="navbar-container">
+
+<header class="sticky-top bg-white">
+    <div id="navbar-container" class="navbar-container">
         <x-base.nav></x-base.nav>
         <x-base.alert></x-base.alert>
         @yield('alert')
     </div>
+</header>
 
-    {{--Bannière bleue--}}
-<div class="page-header">
+<div class="page-header mb-5">
     <div class="container d-flex flex-row-reverse align-items-center justify-content-between">
         <img src="{{ asset('217.png') }}" alt="Logo Sorbonne" style="height: 70px; width: auto; margin-left: 20px;">
         <div>
@@ -35,18 +36,19 @@
         </div>
     </div>
 </div>
-</header>
+
 <main>
     @yield('content')
     <div id="modal-container"></div>
 </main>
+
 <footer>
     @yield('footer')
     <div class="bg-gray-50 px-8 py-5 text-center border-t">
         <p class="text-sm font-semibold text-gray-700">BUT2 Informatique - IUT de Villetaneuse</p>
         <p class="text-xs text-gray-500 mt-1">Projet SAE - Suivi de Colis • 2025-2026</p>
     </div>
-{{--    <div class="min-h-screen bg-gray-50 py-8">--}}
+    {{--    <div class="min-h-screen bg-gray-50 py-8">--}}
 {{--        <div class="mx-auto max-w-5xl">--}}
 
 {{--            <div class="bg-white shadow-lg rounded-xl overflow-hidden">--}}
@@ -57,14 +59,8 @@
 {{--    </div>--}}
 </footer>
 </body>
-<script>
-    {{--let modalToOpenId = '{{$modalToOpen}}';--}}
-    {{--if (modalToOpenId) {--}}
-    {{--    console.debug(modalToOpenId);--}}
-    {{--    let modalToOpen = new bootstrap.Modal(document.getElementById(modalToOpenId));--}}
-    {{--    modalToOpen.show();--}}
-    {{--}--}}
 
+<script>
     // --------------------------------------------------------------------------------
     // CONFIGURATION : Mapping des Enums PHP vers JS avec synchronisation automatique
     // --------------------------------------------------------------------------------
