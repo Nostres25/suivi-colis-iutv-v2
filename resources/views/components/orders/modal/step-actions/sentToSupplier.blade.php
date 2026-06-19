@@ -1,3 +1,4 @@
+@use(App\Http\Controllers\BaseController)
 <div class="modal fade" id="sentToSupplierModal-{{$orderId}}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
@@ -45,6 +46,11 @@
                             Passer la commande au statut suivant
                         </label>
                     </div>
+
+                    <x-orders.modal.modal-fields.auto-mail-field
+                        :orderId="$orderId"
+                        :defaultMailContent="BaseController::getDefaultMailContent('sent_to_supplier', $order, $user)"
+                    ></x-orders.modal.modal-fields.auto-mail-field>
                 </form>
 
             </div>

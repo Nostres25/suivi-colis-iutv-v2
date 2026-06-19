@@ -196,6 +196,14 @@ abstract class BaseController extends Controller
                 'IUT de Villetaneuse, Sorbonne Paris Nord';
         }
 
+        if ($type === 'sent_to_supplier') {
+            return "Madame, monsieur,\n".
+                "Le bon de commande de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été envoyé au fournisseur.\n\n".
+                "{$user->getFullName()}\n".
+                "{$signature_roles},\n".
+                'IUT de Villetaneuse, Sorbonne Paris Nord';
+        }
+
         return null;
     }
 }
