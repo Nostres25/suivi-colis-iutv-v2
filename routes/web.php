@@ -4,6 +4,8 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Middleware\CustomAdminAccess;
+use Database\Seeders\PermissionValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -109,23 +111,27 @@ Route::get('/about', [AboutController::class, 'about']);
 Route::post('/order/{id}/step-actions/refuse', [OrderController::class, 'actionRefuse'])
     ->name('orders.step-actions.refuse');
 
-
 // Commande commandé POST
 Route::post('/order/{id}/step-actions/sent-to-supplier', [OrderController::class, 'actionSentToSupplier'])
     ->name('orders.step-actions.sent-to-supplier');
-// Adminer - console SQL
-Route::any('/adminer', function () {
+
+// Fonctionnement adminer + restrictions d'accès
+Route::any('adminer/{any?}', function ($any = null) {
+
+    $user = Auth::user();
+    if (! $user->hasPermission(PermissionValue::ADMIN)) {
+        return redirect('/');
+    }
     $adminerDir = base_path('vendor/vrana/adminer/adminer');
 
     if (is_dir($adminerDir)) {
         chdir($adminerDir);
         require 'index.php';
+
         return '';
     }
 
     return "Erreur : Le paquet Composer 'vrana/adminer' n'est pas trouvé. Avez-vous fait 'composer require vrana/adminer' ?";
-});
 
-Route::get('/admin/login', function (Request $request) {
-    return redirect('/');
-});
+})->where('any', '.*')
+    ->middleware([CustomAdminAccess::class]);

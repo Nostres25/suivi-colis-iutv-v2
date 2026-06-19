@@ -1,5 +1,9 @@
 @extends('base')
 
+@php
+    $user = Auth::user();
+@endphp
+
 @section('header')
     <div class="container d-block">
         <h1 class="h1">À propos du projet</h1>

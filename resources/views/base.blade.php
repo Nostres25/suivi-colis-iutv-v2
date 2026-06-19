@@ -22,7 +22,7 @@
 
 <header class="sticky-top bg-white">
     <div id="navbar-container" class="navbar-container">
-        <x-base.nav></x-base.nav>
+        <x-base.nav :user="$user"></x-base.nav>
         <x-base.alert></x-base.alert>
         <div class="alert-container">
             @if (session()->exists('success-login'))
