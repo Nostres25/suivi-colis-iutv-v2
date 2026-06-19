@@ -21,17 +21,26 @@
                     action="{{ route('orders.step-actions.sent-to-supplier', ['id' => $orderId]) }}">
                     @csrf
 
-                    <label for="deliveryDelay-{{$orderId}}" class="form-label">
-                        Délai de livraison estimé (facultatif)
+                    <label class="form-label">
+                        Délai de livraison estimé par colis (facultatif)
                     </label>
 
-                    <input
-                        type="text"
-                        id="deliveryDelay-{{$orderId}}"
-                        name="delivery_delay"
-                        class="form-control"
-                        placeholder="Ex : 15 jours, 2 semaines..."
-                    >
+                    @foreach($order->getPackages() as $package)
+                        <div class="mb-2">
+                            <label for="deliveryDelay-{{$orderId}}-{{$package->getId()}}" class="form-label">
+                                {{ $package->getName() }}
+                            </label>
+
+                            <input
+                                type="text"
+                                id="deliveryDelay-{{$orderId}}-{{$package->getId()}}"
+                                name="delivery_delay[{{$package->getId()}}]"
+                                class="form-control"
+                                placeholder="Ex : 15 jours, 2 semaines..."
+                                value="{{ $package->getExpectedDeliveryTime() }}"
+                            >
+                        </div>
+                    @endforeach
 
                     <div class="mt-2">
                         <input

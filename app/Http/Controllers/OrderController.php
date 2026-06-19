@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Log;
 use App\Models\Order;
+use App\Models\Package;
 use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\User;
@@ -739,7 +740,7 @@ class OrderController extends BaseController
         $order = Order::findOrFail($id);
         $user = Auth::user();
 
-        $deliveryDelay = $request->input('delivery_delay');
+        $deliveryDelays = $request->input('delivery_delay', []);
         $nextStep = $request->input('nextStep');
 
         $oldStatus = null;
@@ -753,8 +754,12 @@ class OrderController extends BaseController
 
         $message = "Le bon de commande a été envoyé au fournisseur.";
 
-        if (!empty($deliveryDelay)) {
-            $message .= " Délai de livraison annoncé : ".$deliveryDelay.".";
+        foreach ($deliveryDelays as $packageId => $deliveryDelay) {
+            if (!empty($deliveryDelay)) {
+                $package = Package::find($packageId);
+                $package->setExpectedDeliveryTime($deliveryDelay);
+                $message .= " Délai de livraison annoncé pour le colis \"".$package->getName()."\" : ".$deliveryDelay.".";
+            }
         }
 
         $logData = $order->sendLog($message, $user, $oldStatus);
