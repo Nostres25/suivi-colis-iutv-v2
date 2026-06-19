@@ -31,26 +31,25 @@
                         class="form-control"
                         placeholder="Ex : 15 jours, 2 semaines..."
                     >
+
+                    <div class="mt-2">
+                        <input
+                            class="form-check-input me-2"
+                            name="nextStep"
+                            type="checkbox"
+                            id="checkboxNextStep-{{$orderId}}"
+                            checked
+                        >
+
+                        <label class="form-check-label" for="checkboxNextStep-{{$orderId}}">
+                            Passer la commande au statut suivant
+                        </label>
+                    </div>
                 </form>
 
             </div>
 
             <div class="modal-footer">
-
-                <div class="me-auto">
-                    <input
-                        class="form-check-input me-2"
-                        name="nextStep"
-                        type="checkbox"
-                        id="checkboxNextStep-{{$orderId}}"
-                        form="sentToSupplier-{{$orderId}}"
-                        checked
-                    >
-
-                    <label class="form-check-label" for="checkboxNextStep-{{$orderId}}">
-                        Passer la commande au statut suivant
-                    </label>
-                </div>
 
                 <button type="button" class="btn btn-secondary m-1" data-bs-dismiss="modal">
                     Annuler
