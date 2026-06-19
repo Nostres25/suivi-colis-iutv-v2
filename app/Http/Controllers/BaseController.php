@@ -189,7 +189,7 @@ abstract class BaseController extends Controller
 
         if ($type === 'refuse_signature') {
             return "Madame, monsieur,\n".
-                "La signature du bon de commande pour la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été refusée pour la raison suivante :\n".
+                "La signature du bon de commande désigné \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été refusée pour la raison suivante :\n".
                 "{raison}\n\n".
                 "{$user->getFullName()}\n".
                 "{$signature_roles},\n".

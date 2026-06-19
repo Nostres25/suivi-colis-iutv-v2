@@ -35,6 +35,21 @@
             </div>
         </div>
     </form>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
+        <a href="{{ url('/orders') }}" class="btn btn-outline-secondary {{ empty($options['search']) && empty($options['recentOnly']) ? 'active' : '' }}">
+           Commandes
+        </a>
+        <a href="{{ url('/orders?recentOnly=true') }}" class="btn btn-outline-secondary {{ !empty($options['recentOnly']) ? 'active' : '' }}">
+            Commandes récentes
+        </a>
+        <a href="{{ url('/orders?search=DEVIS') }}" class="btn btn-outline-secondary {{ ($options['search'] ?? '') === 'DEVIS' ? 'active' : '' }}">
+            Devis
+        </a>
+        <a href="{{ url('/orders?search=BON_DE_COMMANDE') }}" class="btn btn-outline-secondary {{ ($options['search'] ?? '') === 'BON_DE_COMMANDE' ? 'active' : '' }}">
+           Bons de commande
+        </a>
+    </div>
 </section>
 
 {{-- TODO Peut-être afficher un aperçu de ce qu'il y a dans la commande (colis) --}}

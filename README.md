@@ -310,6 +310,39 @@ Pour arrêter le serveur local de développement, appuyez sur CTRL + C
 
 > ✅ Vous pouvez maintenant commencer le développement. Attention toutefois, travailler à plusieurs sur un même problème amène des problématiques qui peuvent faire perdre du temps de travail. Pour éviter tout problème, nous utilisons git avec github mais il faut également respecter une certaine organisation afin de garantir un développement fluide. Les détails de cette organisation sont ci-dessous.
 
+## Page administrateur
+
+### Filament
+
+Le panel d'administration utilise [Filament](https://filamentphp.com/), accessible sur `/admin`.
+
+Il a été mis en place avec les commandes suivantes :
+
+```bash
+# Installation du panel
+composer require filament/filament
+php artisan filament:install --panels
+
+# Génération d'une resource pour une table (à faire pour chaque modèle)
+php artisan make:filament-resource NomDuModele --generate
+```
+
+Le modèle `User` (`app/Models/User.php`) implémente `FilamentUser` et `HasName` pour que Filament fonctionne.
+
+> [!WARNING]
+> Dans `app/Models/User.php` ligne 26, `canAccessPanel()` retourne `true` (tout le monde peut accéder au panel).
+> **En production**, remplacer `return true;` par la ligne commentée en dessous qui vérifie la permission administrateur.
+
+### Adminer
+
+[Adminer](https://www.adminer.org/) est une console SQL accessible sur `/adminer`, installée via :
+
+```bash
+composer require vrana/adminer
+```
+
+C'est un équivalent de phpMyAdmin en un seul fichier. Il demande les identifiants de la base de données à chaque connexion.
+
 ## Déploiement de l'application
 
 ### Environnement de tests
