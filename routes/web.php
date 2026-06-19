@@ -108,3 +108,7 @@ Route::get('/about', [AboutController::class, 'about']);
 
 Route::post('/order/{id}/step-actions/refuse', [OrderController::class, 'actionRefuse'])
     ->name('orders.step-actions.refuse');
+
+Route::get('/admin/login', function (Request $request) {
+    return redirect('/');
+});
