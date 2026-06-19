@@ -310,11 +310,156 @@ Pour arrêter le serveur local de développement, appuyez sur CTRL + C
 
 > ✅ Vous pouvez maintenant commencer le développement. Attention toutefois, travailler à plusieurs sur un même problème amène des problématiques qui peuvent faire perdre du temps de travail. Pour éviter tout problème, nous utilisons git avec github mais il faut également respecter une certaine organisation afin de garantir un développement fluide. Les détails de cette organisation sont ci-dessous.
 
-## Déploiement de l'application
-La mise en production de l'application nécessite une approche légèrement différente.
+## Page administrateur
+
+### Filament
+
+Le panel d'administration utilise [Filament](https://filamentphp.com/), accessible sur `/admin`.
+
+Il a été mis en place avec les commandes suivantes :
+
+```bash
+# Installation du panel
+composer require filament/filament
+php artisan filament:install --panels
+
+# Génération d'une resource pour une table (à faire pour chaque modèle)
+php artisan make:filament-resource NomDuModele --generate
+```
+
+Le modèle `User` (`app/Models/User.php`) implémente `FilamentUser` et `HasName` pour que Filament fonctionne.
 
 > [!WARNING]
-> Cette partie n'a pas encore été rédigée. En l'absence d'une rédaction complète, vous trouverez les autres informations nécéssaires à la mise en production dans la partie précédente qui concerne la [mise en place de l'environnement](##mise-en-place-de-lenvironnement).
+> Dans `app/Models/User.php` ligne 26, `canAccessPanel()` retourne `true` (tout le monde peut accéder au panel).
+> **En production**, remplacer `return true;` par la ligne commentée en dessous qui vérifie la permission administrateur.
+
+### Adminer
+
+[Adminer](https://www.adminer.org/) est une console SQL accessible sur `/adminer`, installée via :
+
+```bash
+composer require vrana/adminer
+```
+
+C'est un équivalent de phpMyAdmin en un seul fichier. Il demande les identifiants de la base de données à chaque connexion.
+
+## Déploiement de l'application
+
+### Environnement de tests
+
+Les tests utilisent SQLite en mémoire, ce qui veut dire qu'il n'y a pas besoin d'une vraie base de données pour les faire tourner. Tout est configuré dans `phpunit.xml`.
+
+Pour lancer les tests en local :
+
+```bash
+cp .env.example .env
+php artisan key:generate
+php artisan test
+```
+
+C'est tout. Pas besoin de configurer MariaDB ou quoi que ce soit d'autre.
+
+### CI/CD - Intégration et déploiement continus
+
+Le projet utilise GitHub Actions pour automatiser les tests et le déploiement. Il y a deux fichiers dans `.github/workflows/` :
+
+- `ci.yml` : s'occupe des tests et de la construction de l'image Docker
+- `cd.yml` : s'occupe du déploiement sur le VPS (appelé par `ci.yml`)
+
+#### Ce qui se passe à chaque push ou pull request sur `main`
+
+La CI lance trois choses en parallèle :
+
+- les tests Pest (avec SQLite en mémoire)
+- les migrations sur une vraie base MySQL (pour s'assurer qu'elles ne cassent rien)
+- la construction de l'image Docker suivie d'un scan de sécurité avec Trivy (qui fait échouer la CI si une faille CVE critique ou haute est trouvée)
+
+#### Ce qui se passe uniquement lors d'un merge sur `main`
+
+Si les trois étapes ci-dessus passent et que c'est bien un merge sur `main` (pas juste une PR), alors le déploiement se déclenche automatiquement :
+
+1. L'image Docker est construite et poussée sur le registre GitHub (`ghcr.io/at9ph/suivi-colis-iutv:latest`)
+2. GitHub Actions se connecte au VPS en SSH
+3. Il exécute `make prod-suivi-colis-iutv` depuis le dossier `DeployConfig/` sur le VPS
+
+En résumé : **dès qu'une PR est mergée sur `main`, l'application se met à jour en production automatiquement**, à condition que tous les tests passent.
+
+> [!IMPORTANT]
+> Le nom d'utilisateur `at9ph` est celui du compte GitHub qui héberge l'image Docker sur le registre (`ghcr.io`). Si le projet change de mains, il faut remplacer `at9ph` par le pseudo GitHub du nouveau responsable dans les fichiers suivants :
+> - `.github/workflows/cd.yml` (les lignes `docker tag` et `docker push`)
+> - `.github/workflows/ci.yml` (la ligne `docker login-action` et le `username`)
+> - `Makefile` (la ligne `docker pull ghcr.io/at9ph/...`)
+> - `colis.yaml` (la ligne `image: ghcr.io/at9ph/...`)
+>
+> Le nouveau responsable devra aussi s'assurer que son compte GitHub a les droits pour publier des packages sur le dépôt (Settings > Collaborators and teams).
+
+Pour que ça fonctionne, les secrets suivants doivent être configurés dans les paramètres GitHub du dépôt (Settings > Secrets and variables > Actions) :
+
+- `GITHUBTOKEN` : token d'accès GitHub avec les droits `packages:write`
+- `VPS_HOST` : adresse IP ou domaine du VPS
+- `VPS_PORT` : port SSH du VPS
+- `VPS_USER` : utilisateur SSH
+- `VPS_SSH_KEY` : clé privée SSH
+- `VPS_SSH_PASSPHRASE` : passphrase de la clé SSH si elle en a une
+- `VPS_SUDO_PASSWORD` : mot de passe sudo de l'utilisateur sur le VPS
+
+### Mise en production sur le VPS
+
+#### Prérequis
+
+Le VPS doit avoir :
+
+- Docker avec le mode Swarm activé (`docker swarm init`)
+- Un reverse proxy Traefik déjà en place, connecté au réseau externe `reverse_proxy2`
+- Accès au registre GitHub Container Registry (se connecter avec `docker login ghcr.io`)
+
+#### Structure des fichiers sur le VPS
+
+Le déploiement s'appuie sur un dossier `DeployConfig/` à placer sur le VPS. Les fichiers `Makefile` et `colis.yaml` sont disponibles à la racine du dépôt.
+
+```
+DeployConfig/
+├── Makefile
+└── sae/
+    ├── colis.yaml
+    ├── .env
+    └── cacert.pem
+```
+
+- `colis.yaml` : fichier Docker Swarm qui décrit le service (image, ressources, réseau, secrets, volumes)
+- `.env` : variables d'environnement de l'application Laravel (APP_KEY, DB_*, etc.)
+- `cacert.pem` : certificat CA nécessaire pour les connexions HTTPS sortantes (CAS de l'université par exemple)
+- `Makefile` : contient la commande `prod-suivi-colis-iutv` qui pull l'image et redéploie le stack
+
+Pour déployer manuellement (sans passer par la CI) :
+
+```bash
+cd DeployConfig/
+sudo make prod-suivi-colis-iutv
+```
+
+#### Reverse proxy et Traefik
+
+Le fichier `colis.yaml` contient des labels Traefik qui indiquent au reverse proxy comment router le trafic vers le conteneur :
+
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.sae-jupiter.rule=Host(`sae.nom.domaine`)"
+  - "traefik.http.routers.sae-jupiter.tls=true"
+  - "traefik.http.routers.sae-jupiter.tls.certresolver=prodresolver"
+  - "traefik.http.routers.sae-jupiter.entrypoints=websecure"
+  - "traefik.http.services.sae-jupiter.loadbalancer.server.port=80"
+```
+
+Il faut changer `sae.nom.domaine` par le vrai nom de domaine utilisé.
+
+Le `certresolver=prodresolver` correspond au nom du résolveur Let's Encrypt configuré dans Traefik. Si le nom est différent sur votre installation, modifiez-le.
+
+Si vous utilisez un autre reverse proxy que Traefik (nginx, Caddy, etc.), supprimez ces labels et configurez votre reverse proxy pour qu'il pointe vers le conteneur sur le port 80. Dans ce cas, pensez aussi à retirer le réseau `reverse_proxy2` dans `colis.yaml` et à le remplacer par celui de votre propre configuration.
+
+> [!IMPORTANT]
+> Comme le reverse proxy termine le SSL et forward les requêtes en HTTP interne, Laravel doit être configuré pour faire confiance au proxy. C'est déjà fait dans `bootstrap/app.php` avec `$middleware->trustProxies(at: '*')`. Si vous changez de reverse proxy, gardez cette ligne telle quelle, elle fonctionne avec n'importe quel proxy.
 
 ### Page de connexion - Fonctionnement du CAS
 Cette application utilise la page de connexion de l'université Sorbonne Paris Nord utilisée par plusieurs services au sein de l'organisation.  
