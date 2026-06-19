@@ -111,3 +111,16 @@ Route::get('/about', [AboutController::class, 'about']);
 
 Route::post('/order/{id}/step-actions/refuse', [OrderController::class, 'actionRefuse'])
     ->name('orders.step-actions.refuse');
+
+// Adminer - console SQL
+Route::any('/adminer', function () {
+    $adminerDir = base_path('vendor/vrana/adminer/adminer');
+
+    if (is_dir($adminerDir)) {
+        chdir($adminerDir);
+        require 'index.php';
+        return '';
+    }
+
+    return "Erreur : Le paquet Composer 'vrana/adminer' n'est pas trouvé. Avez-vous fait 'composer require vrana/adminer' ?";
+});
