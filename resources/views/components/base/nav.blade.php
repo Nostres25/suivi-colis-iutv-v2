@@ -57,6 +57,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/about">À propos</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin">Panel administrateur</a>
+                </li>
             </ul>
             <div class="p-xl-2">
                 <div class="btn-group">
