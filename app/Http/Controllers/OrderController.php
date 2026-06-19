@@ -174,7 +174,8 @@ class OrderController extends BaseController
             'components.orders.modal.step-actions.addDeliveryNoteModal',
             [
                 'order' => $order,
-                'orderId' => $order->getId()
+                'orderId' => $order->getId(),
+                'user' => Auth::user(),
             ]
         );
     }

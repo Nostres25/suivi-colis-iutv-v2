@@ -196,6 +196,14 @@ abstract class BaseController extends Controller
                 'IUT de Villetaneuse, Sorbonne Paris Nord';
         }
 
+        if ($type === 'package_infos_updated') {
+            return "Madame, monsieur,\n".
+                "Les informations des colis de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, ont été mises à jour.\n\n".
+                "{$user->getFullName()}\n".
+                "{$signature_roles},\n".
+                'IUT de Villetaneuse, Sorbonne Paris Nord';
+        }
+
         return null;
     }
 }

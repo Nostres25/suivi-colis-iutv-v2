@@ -1,3 +1,4 @@
+@use(App\Http\Controllers\BaseController)
 <div class="modal fade" id="packageInfosModal-{{$orderId}}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -79,6 +80,11 @@
                         </div>
 
                     @endforeach
+
+                    <x-orders.modal.modal-fields.auto-mail-field
+                        :orderId="$orderId"
+                        :defaultMailContent="BaseController::getDefaultMailContent('package_infos_updated', $order, $user)"
+                    ></x-orders.modal.modal-fields.auto-mail-field>
 
                 </div>
 
