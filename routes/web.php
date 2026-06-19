@@ -112,6 +112,10 @@ Route::get('/about', [AboutController::class, 'about']);
 Route::post('/order/{id}/step-actions/refuse', [OrderController::class, 'actionRefuse'])
     ->name('orders.step-actions.refuse');
 
+
+// Commande commandé POST
+Route::post('/order/{id}/step-actions/sent-to-supplier', [OrderController::class, 'actionSentToSupplier'])
+    ->name('orders.step-actions.sent-to-supplier');
 // Adminer - console SQL
 Route::any('/adminer', function () {
     $adminerDir = base_path('vendor/vrana/adminer/adminer');
