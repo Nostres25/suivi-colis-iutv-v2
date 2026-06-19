@@ -742,12 +742,13 @@ class OrderController extends BaseController
 
         $deliveryDelays = $request->input('delivery_delay', []);
         $nextStep = $request->input('nextStep');
+        $withResponse = $request->input('withResponse');
 
         $oldStatus = null;
 
         if ($nextStep && $order->getStatus() == Status::BON_DE_COMMANDE_SIGNE) {
             $oldStatus = $order->getStatus();
-            $order->setStatus(Status::COMMANDE, false);
+            $order->setStatus($withResponse ? Status::COMMANDE_AVEC_REPONSE : Status::COMMANDE, false);
         }
 
         $order->save();
