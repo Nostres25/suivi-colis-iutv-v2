@@ -26,7 +26,7 @@
                     <input type="text" name="search" class="form-control search-input"
                            placeholder="Rechercher une commande..."
                            autocomplete="off"
-                           value="{{ isset($options['search']) && !is_array($options['options']['search'] ?? $options['search']) && !is_array($options['search']) ? $options['search'] : '' }}"
+                           value="{{ isset($options['search']) && !is_array($options['options']['search'] ?? $options['search']) && !is_array($options['search']) ? $options['search'] : '' }}">
                 </div>
                 <button type="submit" class="btn btn-outline-primary search-button" style="display:none">Rechercher</button>
                 @if(!empty($options['search']) || !empty($options['recentOnly']))
@@ -87,7 +87,7 @@
                 $isBcActive = !empty(array_intersect($allBcStatuses, $currentSearch));
             @endphp
 
-            {{-- Bouton pour tout réinitialiser --}}
+            {{-- effacer--}}
             <a href="{{ url('/orders') }}" class="btn btn-outline-secondary {{ empty($currentSearch) && !$isRecent ? 'active' : '' }}">
             Toutes les commandes
             </a>
@@ -102,7 +102,7 @@
                 Devis
             </a>
 
-            {{-- Bons de commande (s'allume si au moins un des statuts BC est actif) --}}
+            {{-- Bons de commande --}}
             <a href="{{ $toggleBcUrl() }}" class="btn btn-outline-secondary {{ $isBcActive ? 'active' : '' }}">
             Bons de commande
             </a>
