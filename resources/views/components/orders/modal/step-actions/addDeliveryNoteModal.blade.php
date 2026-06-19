@@ -18,6 +18,10 @@
 
                 <div class="modal-body">
 
+                    <p>
+                        Modifier les informations des colis de la commande N°{{$order->getOrderNumber()}}.
+                    </p>
+
                     @foreach($order->getPackages() as $package)
 
                         <div class="border rounded p-3 mb-3">
