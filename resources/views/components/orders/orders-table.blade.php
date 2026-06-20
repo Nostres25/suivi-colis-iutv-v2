@@ -74,8 +74,14 @@
 
                     @if($userDepartments->contains($order->getDepartment()))
                         @if($order->getStatus() == Status::COMMANDE)
-                            <button class="btn btn-primary btn-action mb-2 btn-load-modal" title="Ajouter un délai de livraison" type="button" data-url="{{ route('orders.step-actions.upload-delivery-note', ['id' => $order->getId()]) }}">
-                                + Ajouter un délai de livraison
+                            <button class="btn btn-primary btn-action mb-2 btn-load-modal" title="Informations sur les colis" type="button" data-url="{{ route('orders.step-actions.package-infos', ['id' => $order->getId()]) }}">
+
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                                </svg>
+                                Infos colis / Réponse fournisseur
                             </button>
                             <button class="btn btn-danger btn-action mb-2 btn-load-modal" title="Marquer la commande comme refusée par le fournisseur" type="button" data-url="{{ route('orders.step-actions.refuse', ['id' => $order->getId(), 'about' => 'supplier']) }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
