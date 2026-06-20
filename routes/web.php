@@ -52,7 +52,8 @@ Route::post('/order/{id}/step-actions/upload-purchase-order', [OrderController::
     ->name('orders.step-actions.upload-purchase-order');
 Route::post('/order/{id}/step-actions/paid', [OrderController::class, 'actionOrderPaid'])
     ->name('orders.step-actions.paid');
-
+Route::post('/order/{id}/step-actions/packaged-delivered', [OrderController::class, 'actionDeliveredPackages'])
+    ->name('orders.step-actions.packages-delivered');
 // EDIT ORDER
 Route::post('/order/{id}/view-details', [OrderController::class, 'editOrder'])
     ->name('orders.modal.view-details');

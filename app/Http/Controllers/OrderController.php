@@ -208,9 +208,31 @@ class OrderController extends BaseController
         ]);
     }
 
-    public function modalDeliveredPackage($id) {}
+    public function modalDeliveredPackages($id)
+    {
+        $order = Order::findOrFail($id);
 
-    public function modalDeliveredAll(string $id) {}
+        return view('components.orders.modal.step-actions.deliveredPackagesModal', [
+            'order' => $order,
+            'orderId' => $order->getId(),
+            'user' => Auth::user(),
+            'packages' => $order->getPackages(true),
+            'checkAll' => false,
+        ]);
+    }
+
+    public function modalDeliveredAll(string $id)
+    {
+        $order = Order::findOrFail($id);
+
+        return view('components.orders.modal.step-actions.deliveredPackagesModal', [
+            'order' => $order,
+            'orderId' => $order->getId(),
+            'user' => Auth::user(),
+            'packages' => $order->getPackages(true),
+            'checkAll' => true,
+        ]);
+    }
 
     // Routes POST
 
@@ -391,6 +413,7 @@ class OrderController extends BaseController
             return view('components.orders.modal.orderCreationModal', $componentVars)->withErrors('Une erreur inattendue est survenue à la création de la commande N°'.$orderNum.'.');
         }
     }
+
 
     // Routes POST modal
     public function editOrder(string $id)
@@ -588,6 +611,59 @@ class OrderController extends BaseController
         }
     }
 
+    public function actionDeliveredPackages(string $id)
+    {
+        $request = request();
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        if (! $user->hasPermission(PermissionValue::GERER_COLIS_LIVRES)) {
+            return $this->modalDeliveredPackages($id)->withErrors("Vous n'avez pas la permission de marquer des colis comme livrés.");
+        }
+
+        $packageIds = $request->input('packages', []);
+
+        if (empty($packageIds)) {
+            return $this->modalDeliveredPackages($id)->withErrors('Veuillez sélectionner au moins un colis.');
+        }
+
+        $deliveryDate = $request->input('shipping_date') ?: now()->toDateString();
+
+        $packages = $order->getPackages(true);
+
+        foreach ($packages as $package) {
+            if (in_array($package->getId(), $packageIds)) {
+                $package->setShippingDate($deliveryDate);
+            }
+        }
+
+        $allPackagesDelivered = true;
+
+        foreach ($packages as $package) {
+            if (empty($package->getShippingDate())) {
+                $allPackagesDelivered = false;
+                break;
+            }
+        }
+
+        $oldStatus = $order->getStatus();
+
+        if ($allPackagesDelivered) {
+            $order->setStatus(Status::SERVICE_FAIT, false);
+            $message = 'Tous les colis ont été marqués comme livrés.';
+        } else {
+            $order->setStatus(Status::PARTIELLEMENT_LIVRE, false);
+            $message = 'Des colis ont été marqués comme livrés.';
+        }
+
+        $order->save();
+
+        $logData = $order->sendLog($message.' Date de livraison : '.$deliveryDate.'.', $user, $oldStatus);
+        session()->flash('success', $logData['model']->getContent());
+
+        return $this->modalViewDetails($id);
+    }
+
     public function actionRefuse($id)
     {
         $request = request();
@@ -642,7 +718,7 @@ class OrderController extends BaseController
             }
             $message = 'Le devis a été refusé. Raison : '.$reason;
         }
-      
+
       // Sauvegarde des changements
         $order->save();
 
@@ -723,11 +799,11 @@ class OrderController extends BaseController
     // 1. Récupération sécurisée et typée des options
     $recentOnly = (bool)($options['recentOnly'] ?? false);
     $page = isset($options['page']) ? (int)$options['page'] : 1;
-    
+
     // Sécurisation de la recherche (
     $search = $options['search'] ?? null;
     if (!is_string($search) && !is_array($search)) {
-        $search = null; 
+        $search = null;
     }
 
     $userRoles = $user->getRoles();
@@ -738,7 +814,7 @@ class OrderController extends BaseController
     $query = Order::query()->select('orders.*');
 
     // Ordre d'affichage global des Bons de commande
-    $query->orderByRaw("CASE 
+    $query->orderByRaw("CASE
         WHEN orders.status = 'BON_DE_COMMANDE_NON_SIGNE' THEN 1
         WHEN orders.status = 'BON_DE_COMMANDE_SIGNE' THEN 2
         WHEN orders.status = 'BON_DE_COMMANDE_REFUSE' THEN 3
@@ -1023,5 +1099,5 @@ class OrderController extends BaseController
         return $this->modalViewDetails($id);
     }
 
-    public function modalDeliveredPackages(string $id) {}
+
 }
