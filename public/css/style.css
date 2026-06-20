@@ -640,5 +640,338 @@ section {
     }
 }
 
+body {
+    background: linear-gradient(135deg, #f5f8ff 0%, #eef3fb 45%, #ffffff 100%);
+}
+
+.page-header {
+    padding: 46px 0;
+    background:
+        radial-gradient(circle at 85% 20%, rgba(255,255,255,0.22), transparent 28%),
+        linear-gradient(135deg, #18264b 0%, #293358 55%, #435178 100%);
+}
+
+.orders-hero-content {
+    max-width: 760px;
+}
+
+.hero-kicker {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.orders-hero-content h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.4rem);
+    font-weight: 800;
+    color: #fff;
+}
+
+.orders-hero-content p {
+    margin-top: 10px;
+    margin-bottom: 0;
+    color: rgba(255,255,255,0.82);
+    font-size: 1.05rem;
+}
+
+.dashboard-shell {
+    margin-top: -34px;
+    border: 1px solid rgba(41, 51, 88, 0.08);
+    border-radius: 26px;
+    box-shadow: 0 24px 60px rgba(20, 32, 70, 0.12);
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(12px);
+}
+
+.dashboard-welcome {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.dashboard-label {
+    color: #4f7cff;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: .78rem;
+    letter-spacing: .08em;
+}
+
+.dashboard-welcome h2 {
+    margin: 6px 0;
+    color: #172345;
+    font-weight: 800;
+}
+
+.dashboard-welcome p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.dashboard-date {
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: #f3f6ff;
+    color: #293358;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.dashboard-card {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 22px;
+    border-radius: 22px;
+    background: #fff;
+    border: 1px solid #edf1f7;
+    box-shadow: 0 12px 28px rgba(20, 32, 70, 0.08);
+}
+
+.dashboard-icon {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #4f7cff, #7fa2ff);
+    font-size: 1.5rem;
+}
+
+.dashboard-icon.green {
+    background: linear-gradient(135deg, #34c98f, #86e3b8);
+}
+
+.dashboard-icon.orange {
+    background: linear-gradient(135deg, #ff9f3f, #ffc078);
+}
+
+.dashboard-icon.red {
+    background: linear-gradient(135deg, #ff5c75, #ff9aad);
+}
+
+.dashboard-card p {
+    margin: 0;
+    color: #667085;
+    font-size: .9rem;
+}
+
+.dashboard-card strong {
+    display: block;
+    margin-top: 2px;
+    color: #172345;
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.dashboard-actions {
+    margin-top: 22px;
+    padding: 20px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #f8faff, #ffffff);
+    border: 1px solid #edf1f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+}
+
+.dashboard-actions h3 {
+    margin: 0;
+    color: #172345;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.dashboard-actions p {
+    margin: 4px 0 0;
+    color: #6b7280;
+}
+
+.dashboard-action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-actions,
+    .dashboard-welcome {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
 
 
+/*amelioration tableau de bord */
+
+.dashboard-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin-top: 22px;
+}
+
+.dashboard-panel {
+    padding: 22px;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid #edf1f7;
+    box-shadow: 0 12px 30px rgba(20, 32, 70, 0.07);
+}
+
+.panel-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.panel-title h3 {
+    margin: 0;
+    color: #172345;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.panel-title span {
+    min-width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #eef3ff;
+    color: #4f7cff;
+    font-weight: 800;
+}
+
+.priority-item,
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid #edf1f7;
+}
+
+.priority-item:first-of-type,
+.activity-item:first-of-type {
+    border-top: 0;
+}
+
+.priority-item strong,
+.activity-item strong {
+    color: #172345;
+}
+
+.priority-item p,
+.activity-item p {
+    margin: 3px 0 0;
+    color: #6b7280;
+    font-size: .9rem;
+}
+
+.priority-item > span {
+    color: #4f7cff;
+    font-weight: 700;
+    font-size: .9rem;
+}
+
+.activity-item {
+    justify-content: flex-start;
+}
+
+.activity-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: #4f7cff;
+    box-shadow: 0 0 0 6px #eef3ff;
+}
+
+.empty-dashboard {
+    margin: 0;
+    color: #6b7280;
+}
+
+@media (max-width: 992px) {
+    .dashboard-panels {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+.dashboard-welcome {
+    align-items: center;
+}
+
+.dashboard-top-search {
+    flex: 1;
+    max-width: 560px;
+}
+
+.dashboard-top-search form {
+    height: 54px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #dfe6f2;
+    box-shadow: 0 12px 30px rgba(20, 32, 70, 0.08);
+}
+
+.dashboard-top-search span {
+    color: #7b8498;
+    font-size: 1.4rem;
+}
+
+.dashboard-top-search input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #172345;
+    font-size: .95rem;
+}
+
+.dashboard-top-search input::placeholder {
+    color: #7b8498;
+}
+
+.dashboard-top-search kbd {
+    border: 1px solid #dfe6f2;
+    background: #f5f7fb;
+    color: #172345;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: .75rem;
+    font-weight: 700;
+}
