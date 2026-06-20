@@ -56,9 +56,14 @@ class Package extends Model
      *
      * @return ?int // coût unitaire du colis
      */
-    public function getCout(): ?int
+    public function getCost(): ?int
     {
         return $this->attributes['cost'];
+    }
+
+    public function getCostFormatted(): string
+    {
+        return Order::getFormattedCost($this->getCost());
     }
 
     /**
@@ -111,7 +116,7 @@ class Package extends Model
      * @param  int  $cost  coût unitaire du colis.
      * @param  bool  $save  si la donnée doit directement être sauvegardée en base de données.
      */
-    public function setCout(int $cost, bool $save = true): void
+    public function setCost(int $cost, bool $save = true): void
     {
         if ($save) {
             $this->setAttribute('cost', $cost);

@@ -538,7 +538,7 @@ class Order extends Model
      * @param  ?Status  $oldStatus  : Ancien statut à indiquer s'il y a un changement de statut afin d'indiquer automatiquement le changement de statut
      * @return array dictionnaire indiquant si la sauvegarde du log a été réussie ou non avec la valeur booléenne à la clé `success` et transmettant le model du log à la clé `model`
      */
-    public function sendLog(string $content, User $author, ?Status $oldStatus = null): array
+    public function sendLog(string $content, User $author, ?Status $oldStatus = null, ?bool $save = true): array
     {
         /* @var Log $log */
 
@@ -548,7 +548,7 @@ class Order extends Model
 
         $log->author()->associate($author);
 
-        return ['success' => $log->save(), 'model' => $log];
+        return ['success' => $save ? $log->save() : isset($log), 'model' => $log];
     }
 
     /**
