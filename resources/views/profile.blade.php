@@ -82,7 +82,7 @@
 </div>
 @endsection
 
-@section('javascript')
+@section('js')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const el = document.getElementById('profileToast');

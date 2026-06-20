@@ -22,8 +22,15 @@
 
 <header class="sticky-top bg-white">
     <div id="navbar-container" class="navbar-container">
-        <x-base.nav></x-base.nav>
+        <x-base.nav :user="$user"></x-base.nav>
         <x-base.alert></x-base.alert>
+        <div class="alert-container">
+            @if (session()->exists('success-login'))
+                <div class="alert alert-success mb-0">
+                    {{session('success-login')}}
+                </div>
+            @endif
+        </div>
         @yield('alert')
     </div>
 </header>
@@ -72,5 +79,5 @@
 </script>
 <script src="{{asset('js/global_functions.js')}}"></script>
 <script src="{{asset('js/base.js')}}"></script>
-@yield('javascript')
+@yield('js')
 </html>

@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('contact_name')
                 ->nullable()
                 ->comment('Nom du contact dans l\'entreprise fournisseur');
+            $table->string('address')
+                ->comment("Adresse de l'entreprise");
             $table->string('speciality')
                 ->nullable()
                 ->comment("Domaine d'expertise du fournisseur");

@@ -49,7 +49,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // GESTION DU POST (Formulaire)
-    modalContainer.addEventListener('submit', function (e) {
+    modalContainer.addEventListener('submit', modalsSubmitActions);
+    document.getElementById('createOrderModalContainer')?.addEventListener('submit', modalsSubmitActions);
+
+
+    function modalsSubmitActions(e) {
         if (e.target && e.target.classList.contains('ajax-form')) {
             e.preventDefault();
 
@@ -92,12 +96,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (result.type === 'json') {
                         // Comme Laravel a mis un message en session()->flash(),
                         // il s'affichera au rechargement.
-
-                        if (result.data.status === 'success') {
+                        console.debug(result);
+                        if (result.data.message === 'success') {
                             window.location.reload();
                         } else {
                             // Pour les erreurs de validators par exemple
                             displayAlert(result.data.message, 'error');
+                            e.target.parentNode.parentNode.parentNode.querySelector('.modal-body').scrollTop = 0;
                         }
                         return;
                     }
@@ -117,18 +122,54 @@ document.addEventListener('DOMContentLoaded', function () {
                         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
                         document.body.classList.remove('modal-open');
 
-                        // Injection
-                        modalContainer.innerHTML = html;
+                        let scripts;
 
-                        // Réouverture
-                        const newModalEl = modalContainer.querySelector('.modal');
-                        if (newModalEl) {
-                            const newModal = new bootstrap.Modal(newModalEl);
-                            newModal.show();
+                        if (form.id === 'createOrderForm') {
+                            const createOrderModalContainer = document.getElementById('createOrderModalContainer');
+                            // Injection
+                            createOrderModalContainer.innerHTML = html;
+
+                            scripts = createOrderModalContainer.querySelectorAll('script');
+
+                            // Réouverture
+                            const newModalEl = createOrderModalContainer.querySelector('.modal');
+                            if (newModalEl) {
+                                const newModal = new bootstrap.Modal(newModalEl);
+                                newModal.show();
+                            }
+
+                        } else {
+                            // Injection
+                            modalContainer.innerHTML = html;
+                            scripts = modalContainer.querySelectorAll('script');
+
+                            // Réouverture
+                            const newModalEl = modalContainer.querySelector('.modal');
+                            if (newModalEl) {
+                                const newModal = new bootstrap.Modal(newModalEl);
+                                newModal.show();
+                            }
                         }
+
+                        scripts.forEach(oldScript => {
+                            // On crée une toute nouvelle balise <script>
+                            const newScript = document.createElement('script');
+
+                            // On copie tous les attributs (très important s'il y a un src="...", type="module", etc.)
+                            Array.from(oldScript.attributes).forEach(attr => {
+                                newScript.setAttribute(attr.name, attr.value);
+                            });
+
+                            // On copie le texte (le code JS) à l'intérieur de la balise
+                            newScript.text = oldScript.innerHTML;
+
+                            // On remplace l'ancien script mort par le nouveau.
+                            // C'est CETTE action préc ise qui déclenche l'exécution du code par le navigateur !
+                            oldScript.parentNode.replaceChild(newScript, oldScript);
+                        });
                     }
                 })
-                .catch(error => console.error('Erreur AJAX:', error));
+                .catch(error => console.error('Erreur AJAX au chargement du modal : ', error));
 
             // --- GESTION DYNAMIQUE DE LA CHECKBOX MAIL ---
             // On écoute l'événement 'change' sur tout le conteneur du modal
@@ -154,8 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
-    });
-
+    }
 
     // -------------------------------------------------------------------------
     // LOGIQUE D'AUTOMATISATION

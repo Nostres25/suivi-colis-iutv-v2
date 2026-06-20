@@ -4,6 +4,8 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Middleware\CustomAdminAccess;
+use Database\Seeders\PermissionValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -79,7 +81,9 @@ Route::get('/cookies', function (Request $request) {
 
 Route::get('/logout', function (Request $request) {
 
-    error_log('cookies avant déconnexion : '.implode(', ', array_keys($request->cookie())));
+    if (config('app.debug')) {
+        error_log('cookies avant déconnexion : '.implode(', ', array_keys($request->cookie())));
+    }
     info($request->cookie());
     // Cookies à supprimer pour se déconnecter² et rediriger automatiquement vers le CAS avec apache2
     Cookie::queue(Cookie::forget('MOD_AUTH_CAS'));
@@ -89,7 +93,9 @@ Route::get('/logout', function (Request $request) {
     Auth::logout();
 
     info($request->cookie());
-    error_log('cookies après déconnexion : '.implode(', ', array_keys($request->cookie())));
+    if (config('app.debug')) {
+        error_log('cookies après déconnexion : '.implode(', ', array_keys($request->cookie())));
+    }
 
     return back();
 
@@ -121,15 +127,19 @@ Route::get(
     '/order/{id}/step-actions/upload-delivery-note',
     [OrderController::class, 'modalUploadDeliveryNote']
 )->name('orders.step-actions.upload-delivery-note');
-// Adminer - console SQL
+
+// Fonctionnement adminer + restrictions d'accès
 Route::any('/adminer', function () {
     $adminerDir = base_path('vendor/vrana/adminer/adminer');
 
     if (is_dir($adminerDir)) {
         chdir($adminerDir);
         require 'index.php';
+
         return '';
     }
 
     return "Erreur : Le paquet Composer 'vrana/adminer' n'est pas trouvé. Avez-vous fait 'composer require vrana/adminer' ?";
-});
+
+})->where('any', '.*')
+    ->middleware([CustomAdminAccess::class]);

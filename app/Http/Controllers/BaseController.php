@@ -31,7 +31,7 @@ abstract class BaseController extends Controller
      * @param  Request  $request  Requête
      * @return array // dictionnaire au format ['success' => bool, 'response' => Response|ResponseFactory|null].
      */
-    public function auth(Request $request): array
+    public static function auth(Request $request): array
     {
         // Connexion de l'utilisateur
         if (Auth::check()) {
@@ -79,16 +79,42 @@ abstract class BaseController extends Controller
             $user =
                 User::all()->first(
                     function (User $user) {
+                        // Mettre un identifiant d'utilisateur spécifique ou mettre "null" pour rechercher un utilisateur avec des spécificités particulières.
+                        $specificUserId = null;
+
+                        if ($user->getId() == $specificUserId) {
+                            return true;
+                        }
                         $roles = $user->getRoles();
 
-                        // Rôle que l'utilisateur de test doit avoir (mettre null pour pas de rôle en particulier)
+                        // Rôle que l'utilisateur de test doit avoir (mettre null pour pas de rôle en particulier) ou plutôt chaîne quel le nom du/des rôles doit contenir
                         // Choix du rôle de l'utilisateur : Service financier, Directeur IUT, Département Info, Département SD, Département RT, Administrateur BD
-                        $roleToHave = 'Département Info';
+
+                        $researchedRoleName = 'Service financier';
+                        $nbRolesResearched = 1;
 
                         // Nombre de rôles que l'utilisateur de test doit avoir
-                        $roleNumber = 1;
+                        $minRoles = 1;
+                        $maxRoles = null;
 
-                        return (is_null($roleToHave) || $roles->first((fn (Role $role) => $role->getName() == $roleToHave))) && $roles->count() == $roleNumber;
+                        $currentNbMatchingRoles = 0;
+                        $isMatching = false;
+                        foreach ($roles as $role) {
+                            if (str_contains($role->getName(), $researchedRoleName)) {
+                                $currentNbMatchingRoles++;
+                            }
+
+                            $isMatching = $currentNbMatchingRoles == $nbRolesResearched && $minRoles <= $currentNbMatchingRoles;
+                            if ($isMatching && is_null($maxRoles)) {
+                                return true;
+                            }
+                        }
+
+                        if ($isMatching && $currentNbMatchingRoles <= $maxRoles) {
+                            return true;
+                        }
+
+                        return false;
 
                     }
                 );
@@ -130,7 +156,7 @@ abstract class BaseController extends Controller
 
         $rolesToStrring = implode(', ', $user->getRoles()->map(fn (Role $role) => $role->getName())->toArray());
         session()->flash(
-            'success',
+            'success-login',
             "Connecté en tant que {$user->getFullName()} avec le(s) rôle(s) {$rolesToStrring}"
         );
 
@@ -149,7 +175,7 @@ abstract class BaseController extends Controller
         // Charger l'utilisateur connecté pour être recupérable avec `Auth::user()`
         // S'il y a une erreur dans le processus d'authentification, retourner pour afficher la vue d'erreur
 
-        $result = $this->auth(request());
+        $result = BaseController::auth(request());
         if (! $result['success']) {
             return $result['response'];
         }

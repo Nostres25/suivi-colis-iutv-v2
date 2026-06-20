@@ -1,5 +1,12 @@
 @extends('base')
 
+@section('head')
+    <script>
+        let suppliers = null;
+        let orders = null;
+    </script>
+@endsection
+
 @section('header')
     <div class="container d-block">
         <h1 class="h1"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-box-seam-fill" preserveAspectRatio="xMidYMid meet" width="32" height="32" viewBox="0 0 16 16">
@@ -112,7 +119,6 @@
 {{-- TODO Peut-être afficher un aperçu de ce qu'il y a dans la commande (colis) --}}
 {{-- TODO format mobile : afficher les commandes comme la solution 1 ou 2 mais juste cliquer dessus ça fonctionne donc pas prioritaire : https://www.behance.net/gallery/95240691/Responsive-Data-Table-Designs# --}}
 <section class="table-section table-responsive">
-
     {{--Pour pouvoir créer une commande il faut appartenir à un département et avoir la permission de créer une commande--}}
     @if ($user->hasPermission(PermissionValue::CREER_COMMANDES) && !empty($userDepartments))
         <button type="button" class="btn btn-primary erasure-alert" style="display: table-row" data-bs-toggle="modal"
@@ -124,7 +130,9 @@
             </svg>
             Ajouter une commande
         </button>
-        <x-orders.modal.orderCreationModal :user="$user" :userDepartments="$userDepartments" :validSupplierNames="$validSupplierNames"/>
+        <div id="createOrderModalContainer">
+            <x-orders.modal.orderCreationModal :user="$user" :userDepartments="$userDepartments" :suppliers="$suppliers"/>
+        </div>
     @endif
 
     <div class="table-header mt-4">
@@ -137,8 +145,9 @@
     <div id="orders-table-container" data-url="{{ route('orders.fetch.table', $options) }}">
         <x-orders.orders-table :orders="$orders" :user="$user" :userDepartments="$userDepartments"></x-orders.orders-table>
     </div>
+</section>
 @endsection
 
-@section('javascript')
+@section('js')
     <script src="{{asset('js/orders.js')}}"></script>
 @endsection

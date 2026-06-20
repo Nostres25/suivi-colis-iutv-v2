@@ -50,10 +50,8 @@ class ProfileController extends BaseController
 
         $user->save();
 
-        error_log('email ?');
         // Envoi d'un mail uniquement si on a une adresse email
         if (! empty($user->getEmail())) {
-            error_log('a bien un email');
             $changes = [];
             foreach (['email', 'phone_number'] as $field) {
                 if (($before[$field] ?? null) !== ($user->$field ?? null)) {
@@ -61,7 +59,9 @@ class ProfileController extends BaseController
                 }
             }
 
-            error_log('envoi de l email à '.$user->getEmail());
+            if (config('app.debug')) {
+                error_log('envoi de l email à '.$user->getEmail());
+            }
 
             // Mail simple (sans Mailable pour rester léger)
             Mail::raw($this->formatChangesMail($user, $changes), function ($message) use ($user) {

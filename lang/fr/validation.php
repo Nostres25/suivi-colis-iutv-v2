@@ -285,5 +285,15 @@ return [
         'work' => 'travail',
         'year' => 'année',
         'purchase_order' => 'bon de commande',
+        'quote' => 'devis',
+        'cost' => 'coût',
+        'order_num' => 'numéro de commande',
+        'quote_num' => 'numéro de devis',
+        'department' => 'département',
+        'supplier_name' => 'nom du fournisseur',
+        'companyName' => "nom de l'entreprise",
+        'contactName' => 'nom du contact',
+        'phoneNumber' => 'numéro de téléphone',
+
     ],
 ];

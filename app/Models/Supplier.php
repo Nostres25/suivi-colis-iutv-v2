@@ -85,6 +85,11 @@ class Supplier extends Model
         return $this->attributes['contact_name'];
     }
 
+    public function getAddress(): ?string
+    {
+        return $this->attributes['address'];
+    }
+
     /**
      * Retourne la description des spécialités de l'entreprise fournisseur.
      *
@@ -188,6 +193,15 @@ class Supplier extends Model
             $this->setAttribute('contact_name', $contact_name);
         } else {
             $this->attributes['contact_name'] = $contact_name;
+        }
+    }
+
+    public function setAddress(string $address, bool $save = true): void
+    {
+        if ($save) {
+            $this->setAttribute('address', $address);
+        } else {
+            $this->attributes['address'] = $address;
         }
     }
 
