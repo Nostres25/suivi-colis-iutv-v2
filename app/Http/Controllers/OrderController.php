@@ -582,13 +582,12 @@ class OrderController extends BaseController
 
     // Autres fonctions
 
-    public function fetchOrders(User $user, ?array $options): AbstractPaginator 
-{
+   public function fetchOrders(User $user, ?array $options): AbstractPaginator {
     // 1. Récupération sécurisée et typée des options
     $recentOnly = (bool)($options['recentOnly'] ?? false);
     $page = isset($options['page']) ? (int)$options['page'] : 1;
     
-    // Sécurisation de la recherche (string, array, ou null)
+    // Sécurisation de la recherche (
     $search = $options['search'] ?? null;
     if (!is_string($search) && !is_array($search)) {
         $search = null; 
@@ -598,10 +597,10 @@ class OrderController extends BaseController
     $userPermissions = $user->getPermissions();
     $userDepartments = $userRoles->filter(fn (Role $role) => $role->isDepartment());
 
-    // Initialisation de la requête (On spécifie orders.* dès le départ)
+    // Initialisation sql
     $query = Order::query()->select('orders.*');
 
-    // 🌟 RÈGLE N°1 PARFAITE : Ordre d'affichage global des Bons de commande
+    // Ordre d'affichage global des Bons de commande
     $query->orderByRaw("CASE 
         WHEN orders.status = 'BON_DE_COMMANDE_NON_SIGNE' THEN 1
         WHEN orders.status = 'BON_DE_COMMANDE_SIGNE' THEN 2
@@ -621,7 +620,7 @@ class OrderController extends BaseController
         });
     }
 
-    // --- 2. TRI INTELLIGENT SELON LE RÔLE (Uniquement si pas recentOnly) ---
+    // --- 2. TRI SELON LE RÔLE ---
     if (!$recentOnly) {
         $isDirecteur = $user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES);
         $isFinancier = $user->hasPermission(PermissionValue::GERER_PAIEMENT_FOURNISSEURS);
@@ -680,14 +679,12 @@ class OrderController extends BaseController
 
     // --- 2.1 FILTRES DES BOUTONS DE RECHERCHE SECURISÉS ---
     if ($search) {
-        // Remplacement de l'alias de groupe par un vrai tableau de status valides
         if (is_string($search) && $search === 'BON_DE_COMMANDE') {
             $search = ['BON_DE_COMMANDE_NON_SIGNE', 'BON_DE_COMMANDE_SIGNE', 'BON_DE_COMMANDE_REFUSE'];
         }
 
-        $query->where(function (Builder $q) use ($search, $recentOnly) {
+        $query->where(function (Builder $q) use ($search) {
             if (is_array($search)) {
-                // On filtre pour s'assurer qu'il n'y a que des chaînes de caractères dans le tableau
                 $cleanSearch = array_filter($search, 'is_string');
                 if (!empty($cleanSearch)) {
                     $q->whereIn('orders.status', $cleanSearch);
@@ -705,15 +702,13 @@ class OrderController extends BaseController
     // --- 2.2 GESTION DU FILTRE CUMULÉ  ---
     if ($recentOnly) {
         $query->where(function (Builder $innerQuery) use ($search, $user) {
-            $innerQuery->whereExists(function ($subQuery) use ($user) {
-                $subQuery->select(Raw('1'))
+            $innerQuery->whereIn('orders.id', function ($subQuery) use ($user) {
+                $subQuery->select('logs.order_id')
                     ->from('logs')
-                    ->whereColumn('logs.order_id', 'orders.id')
-                    ->whereDate('logs.created_at', '>', Carbon::today()->subDays(5))
+                    ->whereDate('logs.created_at', '>', \Carbon\Carbon::today()->subDays(5))
                     ->where('logs.author_id', $user->getId());
             });
 
-        
             if ($search && is_array($search)) {
                 $cleanSearch = array_filter($search, 'is_string');
                 if (!empty($cleanSearch)) {
@@ -726,6 +721,7 @@ class OrderController extends BaseController
     // --- 3. TRI FINAL DE SÉCURITÉ ---
     $direction = $recentOnly ? 'desc' : 'asc';
     $query->orderBy('orders.updated_at', $direction);
+
     return $query->paginate(20, ['orders.*'], 'page', $page);
-    }
+}
 }
