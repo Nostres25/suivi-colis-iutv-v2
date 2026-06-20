@@ -198,7 +198,7 @@ abstract class BaseController extends Controller
 
         if ($type === 'package_infos_updated') {
             return "Madame, monsieur,\n".
-                "Les informations des colis de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, ont été mises à jour.\n\n".
+                "Les informations des colis de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, ont été mises à jour suite à une réponse du fournisseur.\n\n".
                 "{$user->getFullName()}\n".
                 "{$signature_roles},\n".
                 'IUT de Villetaneuse, Sorbonne Paris Nord';

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Log;
 use App\Models\Order;
+use App\Models\Package;
 use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\User;
@@ -167,7 +168,8 @@ class OrderController extends BaseController
         ]);
     }
 
-    public function modalUploadDeliveryNote($id) {
+    public function modalUploadDeliveryNote($id)
+    {
         $order = Order::findOrFail($id);
 
         return view(
@@ -180,15 +182,16 @@ class OrderController extends BaseController
         );
     }
 
-    public function modalSentToSupplier($id){
-    $order = Order::findOrFail($id);
+    public function modalSentToSupplier($id)
+    {
+        $order = Order::findOrFail($id);
 
-    return view('components.orders.modal.step-actions.sentToSupplier', [
-        'order' => $order,
-        'orderId' => $order->getId(),
-        'user' => Auth::user(),
-    ]);
-}
+        return view('components.orders.modal.step-actions.sentToSupplier', [
+            'order' => $order,
+            'orderId' => $order->getId(),
+            'user' => Auth::user(),
+        ]);
+    }
 
     public function modalDeliveredPackage($id) {}
 
@@ -488,12 +491,12 @@ class OrderController extends BaseController
         // Vérification des permissions selon ce qu'on refuse
         if ($about === 'purchaseOrderSignature') {
             // Pour refuser la signature, il faut avoir le droit de signer ou de gérer les bons de commande
-            if (!$user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES) && !$user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
+            if (! $user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES) && ! $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
                 return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser la signature.");
             }
         } else {
             // Par défaut (refus de devis), il faut avoir le droit de gérer les bons de commande
-            if (!$user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
+            if (! $user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
                 return $this->modalRefuse($id)->withErrors("Vous n'avez pas la permission de refuser.");
             }
         }
@@ -513,8 +516,8 @@ class OrderController extends BaseController
                 $oldStatus = $order->getStatus();
                 $order->setStatus(Status::BON_DE_COMMANDE_REFUSE, false);
             }
-            $message = 'La signature du bon de commande a été refusée. Raison : ' . $reason;
-        } 
+            $message = 'La signature du bon de commande a été refusée. Raison : '.$reason;
+        }
         // --- CAS 2 : Refus du devis (par défaut) ---
         else {
             if ($order->getStatus() != Status::DEVIS) {
@@ -525,7 +528,7 @@ class OrderController extends BaseController
                 $oldStatus = $order->getStatus();
                 $order->setStatus(Status::DEVIS_REFUSE, false);
             }
-            $message = 'Le devis a été refusé. Raison : ' . $reason;
+            $message = 'Le devis a été refusé. Raison : '.$reason;
         }
 
         // Sauvegarde des changements (statut)
@@ -538,7 +541,7 @@ class OrderController extends BaseController
         // Simulation d'envoi de mail si demandé (comme dans le reste du projet)
         if ($sendMail) {
             $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request->input('mailContent'));
-            error_log("Mail de refus : " . $mailContent);
+            error_log('Mail de refus : '.$mailContent);
         }
 
         // Retourne vers la vue détaillée de la commande
@@ -744,8 +747,8 @@ class OrderController extends BaseController
         return $query->distinct()->paginate(20, ['orders.*'], 'page', $page);
     }
 
-
-    public function actionSentToSupplier($id) {
+    public function actionSentToSupplier($id)
+    {
         $request = request();
         $order = Order::findOrFail($id);
         $user = Auth::user();
@@ -762,10 +765,10 @@ class OrderController extends BaseController
 
         $order->save();
 
-        $message = "Le bon de commande a été envoyé au fournisseur.";
+        $message = 'Le bon de commande a été envoyé au fournisseur.';
 
-        if (!empty($deliveryDelay)) {
-            $message .= " Délai de livraison annoncé : ".$deliveryDelay.".";
+        if (! empty($deliveryDelay)) {
+            $message .= ' Délai de livraison annoncé : '.$deliveryDelay.'.';
         }
 
         $logData = $order->sendLog($message, $user, $oldStatus);
@@ -775,47 +778,129 @@ class OrderController extends BaseController
         return $this->modalViewDetails($id);
     }
 
-
-    public function actionUpdatePackageInfos($id) {
+    public function actionUpdatePackageInfos($id)
+    {
+        /* @var Order $order */
         $order = Order::findOrFail($id);
         $user = Auth::user();
+        $orderDepartment = $order->getDepartment();
 
-        foreach ($order->getPackages() as $package) {
-
-            $package->setName(
-                request()->input('name_'.$package->getId()),
-                false
-            );
-
-            $package->setTrackingNumber(
-            request()->input('tracking_number_'.$package->getId()),
-            false
-        );
-
-            $package->setCout(
-                request()->input('cost_'.$package->getId()),
-                false
-            );
-
-            $package->setExpectedDeliveryTime(
-                request()->input('expected_delivery_time_'.$package->getId()),
-                false
-            );
-
-            $package->save();
+        if ($user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES) || ! $user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && ! $user->hasRole($orderDepartment)) {
+            return $this->viewOrders()->withErrors("Vous n'avez pas la permission de modifier les informations des colis de cette commande");
         }
 
-        $logData = $order->sendLog(
-            "Les informations des colis ont été mises à jour.",
-            $user
-        );
+        $failedPackages = [];
+        /* @var Package $package */
+        foreach ($order->getPackages() as $package) {
+
+            /* @var \Illuminate\Validation\Validator $validator */
+
+            $validator = Validator::make(request()->all(), [
+                'name_'.$package->getId() => 'required|string|max:255',
+                'tracking_number_'.$package->getId() => 'nullable|string|max:255',
+                'cost_'.$package->getId() => 'nullable|decimal:0,2|max:2147483647',
+                'expected_delivery_time_'.$package->getId() => 'nullable|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->modalUploadDeliveryNote($id)->withErrors($validator);
+            }
+
+            $logs = [];
+            $isPackageEdited = false;
+
+            $name = request()->input('name_'.$package->getId());
+            $tracking_number = request()->input('tracking_number_'.$package->getId());
+            $cost = request()->input('cost_'.$package->getId());
+            $expectedDeliveryTime = request()->input('expected_delivery_time_'.$package->getId());
+
+            if ($tracking_number && $tracking_number != $package->getTrackingNumber()) {
+                $logs[] = $order->sendLog("Le numéro de suivi du colis \"{$package->getName()}\" a été changé de \"{$package->getTrackingNumber()}\" à \"$tracking_number\".", $user, null, false)['model'];
+
+                $package->setTrackingNumber(
+                    $tracking_number,
+                    false
+                );
+                $isPackageEdited = true;
+            }
+
+            if ($name && $name != $package->getName()) {
+                $logs[] = $order->sendLog("Le nom du colis \"{$package->getName()}\" (N°{$package->getTrackingNumber()}) a été changé en \"$name\".", $user, null, false)['model'];
+
+                $package->setName(
+                    $name,
+                    false
+                );
+                $isPackageEdited = true;
+            }
+
+            if ($cost && $cost != $package->getCost()) {
+                $logs[] = $order->sendLog("Le coût du colis \"{$package->getName()}\" (N°{$package->getTrackingNumber()}) a été changé de {$package->getCostFormatted()} à ".Order::getFormattedCost($cost).'.', $user, null, false)['model'];
+
+                $package->setCost(
+                    $cost,
+                    false
+                );
+                $isPackageEdited = true;
+            }
+
+            if ($expectedDeliveryTime && $expectedDeliveryTime != $package->getExpectedDeliveryTime()) {
+                $logs[] = $order->sendLog("Le délai prévu de livraison du colis \"{$package->getName()}\" (N°{$package->getTrackingNumber()}) a été changé de \"{$package->getExpectedDeliveryTime()}\" à \"$expectedDeliveryTime\".", $user, null, false)['model'];
+
+                $package->setExpectedDeliveryTime(
+                    $expectedDeliveryTime,
+                    false
+                );
+                $isPackageEdited = true;
+            }
+
+            if ($isPackageEdited) {
+                $isSaved = $package->save();
+                if ($isSaved) {
+                    /* @var Log $log */
+                    foreach ($logs as $log) {
+                        $log->save();
+                    }
+                } else {
+                    $failedPackages[] = ["package-{$package->getId()}" => "La sauvegarde des informations du colis  \"{$package->getName()}\" (N°{$package->getTrackingNumber()}) a échouée."];
+                }
+            }
+        }
+
+        if (count($failedPackages) > 0) {
+            return $this->modalUploadDeliveryNote($id)->withErrors($failedPackages);
+        }
+
+        $oldStatus = $order->getStatus();
+        $nextStep = request()->input('nextStep');
+
+        if ($nextStep && $oldStatus == Status::COMMANDE) {
+            $order->setStatus(Status::COMMANDE_AVEC_REPONSE);
+            if ($order->save()) {
+                $order->sendLog('Les informations sur les colis ont été mises à jour suite à la réponse du fournisseur.', $user, $oldStatus);
+            } else {
+                return $this->modalUploadDeliveryNote($id)->withErrors("Une erreur est survenue lors de la sauvegarde de la commande N°{$order->getId()} pour le changement de statut.");
+
+            }
+        }
+
+        $sendMail = request()->input('sendMail');
+        if ($sendMail) {
+            $mailContent = request()->input('mailContent');
+            if (! $nextStep) {
+                $mailContent = str_replace(' suite à une réponse du fournisseur', '', $mailContent);
+            }
+            error_log($mailContent);
+
+            // TODO mettre code pour mail auto
+        }
 
         session()->flash(
             'success',
-            $logData['model']->getContent()
+            "Les informations des colis de la commande N°{$order->getOrderNumber()} ont été mises à jour.",
+
         );
 
         return $this->modalViewDetails($id);
     }
-
 }
