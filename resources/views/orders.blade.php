@@ -26,10 +26,10 @@
                     <input type="text" name="search" class="form-control search-input"
                            placeholder="Rechercher une commande..."
                            autocomplete="off"
-                           value="{{ @$options['search'] ?? '' }}">
+                           value="{{ isset($options['search']) && !is_array($options['options']['search'] ?? $options['search']) && !is_array($options['search']) ? $options['search'] : '' }}">
                 </div>
                 <button type="submit" class="btn btn-outline-primary search-button" style="display:none">Rechercher</button>
-                @if(@$options['search'])
+                @if(!empty($options['search']) || !empty($options['recentOnly']))
                     <a href="{{ url('/orders') }}" class="btn btn-secondary ms-2">Effacer</a>
                 @endif
             </div>
@@ -37,19 +37,76 @@
     </form>
 
     <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
-        <a href="{{ url('/orders') }}" class="btn btn-outline-secondary {{ empty($options['search']) && empty($options['recentOnly']) ? 'active' : '' }}">
-           Commandes
-        </a>
-        <a href="{{ url('/orders?recentOnly=true') }}" class="btn btn-outline-secondary {{ !empty($options['recentOnly']) ? 'active' : '' }}">
-            Commandes récentes
-        </a>
-        <a href="{{ url('/orders?search=DEVIS') }}" class="btn btn-outline-secondary {{ ($options['search'] ?? '') === 'DEVIS' ? 'active' : '' }}">
-            Devis
-        </a>
-        <a href="{{ url('/orders?search=BON_DE_COMMANDE') }}" class="btn btn-outline-secondary {{ ($options['search'] ?? '') === 'BON_DE_COMMANDE' ? 'active' : '' }}">
-           Bons de commande
-        </a>
-    </div>
+            @php
+                // 1. On récupère les filtres actuels sous forme de tableau
+                $currentSearch = request()->input('search', []);
+                if (!is_array($currentSearch)) {
+                    $currentSearch = $currentSearch ? [$currentSearch] : [];
+                }
+                
+                // 2. On vérifie si le filtre récent est actif
+                $isRecent = request()->has('recentOnly') && request()->input('recentOnly') === 'true';
+
+                // Définition de la liste complète des statuts pour les Bons de commande
+                $allBcStatuses = ['BON_DE_COMMANDE_NON_SIGNE', 'BON_DE_COMMANDE_SIGNE', 'BON_DE_COMMANDE_REFUSE'];
+
+                // Fonction pour gérer le clic sur "Devis"
+                $toggleDevisUrl = function() use ($currentSearch, $isRecent) {
+                    $params = $currentSearch;
+                    if (in_array('DEVIS', $params)) {
+                        $params = array_diff($params, ['DEVIS']);
+                    } else {
+                        $params[] = 'DEVIS';
+                    }
+                    return url('/orders?' . http_build_query(array_filter(['search' => array_values($params), 'recentOnly' => $isRecent ? 'true' : null])));
+                };
+
+                // Fonction pour gérer le clic sur "Bons de commande" (ajoute ou retire les 3 statuts d'un coup)
+                $toggleBcUrl = function() use ($currentSearch, $isRecent, $allBcStatuses) {
+                    $params = $currentSearch;
+                    
+                    // Si l'un des statuts BC est déjà présent, on considère qu'on veut désactiver le filtre BC
+                    $hasBc = urlencode(implode('', array_intersect($allBcStatuses, $params))) !== '';
+                    
+                    if ($hasBc) {
+                        // On retire les 3 statuts BC du tableau
+                        $params = array_diff($params, $allBcStatuses);
+                    } else {
+                        // On ajoute les 3 statuts BC au tableau
+                        $params = array_merge($params, $allBcStatuses);
+                    }
+                    return url('/orders?' . http_build_query(array_filter(['search' => array_values($params), 'recentOnly' => $isRecent ? 'true' : null])));
+                };
+
+                // Fonction pour activer/désactiver le filtre récent
+                $toggleRecentUrl = function() use ($currentSearch, $isRecent) {
+                    return url('/orders?' . http_build_query(array_filter(['search' => $currentSearch, 'recentOnly' => !$isRecent ? 'true' : null])));
+                };
+
+                // Vérification si le bouton BC doit être allumé (actif)
+                $isBcActive = !empty(array_intersect($allBcStatuses, $currentSearch));
+            @endphp
+
+            {{-- effacer--}}
+            <a href="{{ url('/orders') }}" class="btn btn-outline-secondary {{ empty($currentSearch) && !$isRecent ? 'active' : '' }}">
+            Toutes les commandes
+            </a>
+
+            {{-- Commande récente --}}
+            <a href="{{ $toggleRecentUrl() }}" class="btn btn-outline-secondary {{ $isRecent ? 'active' : '' }}">
+                Commandes récentes
+            </a>
+
+            {{-- Devis --}}
+            <a href="{{ $toggleDevisUrl() }}" class="btn btn-outline-secondary {{ in_array('DEVIS', $currentSearch) ? 'active' : '' }}">
+                Devis
+            </a>
+
+            {{-- Bons de commande --}}
+            <a href="{{ $toggleBcUrl() }}" class="btn btn-outline-secondary {{ $isBcActive ? 'active' : '' }}">
+            Bons de commande
+            </a>
+</div>
 </section>
 
 {{-- TODO Peut-être afficher un aperçu de ce qu'il y a dans la commande (colis) --}}
