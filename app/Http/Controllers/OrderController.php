@@ -182,6 +182,20 @@ class OrderController extends BaseController
         );
     }
 
+    public function modalSupplierReponseInfosPackages(string $id)
+    {
+        $order = Order::findOrFail($id);
+
+        return view(
+            'components.orders.modal.step-actions.supplierResponsePackagesInfos',
+            [
+                'order' => $order,
+                'orderId' => $order->getId(),
+                'user' => Auth::user(),
+            ]
+        );
+    }
+
     public function modalSentToSupplier($id)
     {
         $order = Order::findOrFail($id);
@@ -803,7 +817,7 @@ class OrderController extends BaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->modalUploadDeliveryNote($id)->withErrors($validator);
+                return $this->modalSupplierReponseInfosPackages($id)->withErrors($validator);
             }
 
             $logs = [];
@@ -834,7 +848,7 @@ class OrderController extends BaseController
                 $isPackageEdited = true;
             }
 
-            if ($cost && $cost != $package->getCost()) {
+            if ($cost != $package->getCost()) {
                 $logs[] = $order->sendLog("Le coût du colis \"{$package->getName()}\" (N°{$package->getTrackingNumber()}) a été changé de {$package->getCostFormatted()} à ".Order::getFormattedCost($cost).'.', $user, null, false)['model'];
 
                 $package->setCost(
@@ -844,7 +858,7 @@ class OrderController extends BaseController
                 $isPackageEdited = true;
             }
 
-            if ($expectedDeliveryTime && $expectedDeliveryTime != $package->getExpectedDeliveryTime()) {
+            if ($expectedDeliveryTime != $package->getExpectedDeliveryTime()) {
                 $logs[] = $order->sendLog("Le délai prévu de livraison du colis \"{$package->getName()}\" (N°{$package->getTrackingNumber()}) a été changé de \"{$package->getExpectedDeliveryTime()}\" à \"$expectedDeliveryTime\".", $user, null, false)['model'];
 
                 $package->setExpectedDeliveryTime(
@@ -868,7 +882,7 @@ class OrderController extends BaseController
         }
 
         if (count($failedPackages) > 0) {
-            return $this->modalUploadDeliveryNote($id)->withErrors($failedPackages);
+            return $this->modalSupplierReponseInfosPackages($id)->withErrors($failedPackages);
         }
 
         $oldStatus = $order->getStatus();
@@ -879,7 +893,7 @@ class OrderController extends BaseController
             if ($order->save()) {
                 $order->sendLog('Les informations sur les colis ont été mises à jour suite à la réponse du fournisseur.', $user, $oldStatus);
             } else {
-                return $this->modalUploadDeliveryNote($id)->withErrors("Une erreur est survenue lors de la sauvegarde de la commande N°{$order->getId()} pour le changement de statut.");
+                return $this->modalSupplierReponseInfosPackages($id)->withErrors("Une erreur est survenue lors de la sauvegarde de la commande N°{$order->getId()} pour le changement de statut.");
 
             }
         }
@@ -903,4 +917,6 @@ class OrderController extends BaseController
 
         return $this->modalViewDetails($id);
     }
+
+    public function modalDeliveredPackages(string $id) {}
 }

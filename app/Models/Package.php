@@ -113,10 +113,10 @@ class Package extends Model
     /**
      * Définit le coût unitaire du colis
      *
-     * @param  int  $cost  coût unitaire du colis.
+     * @param  ?int  $cost  coût unitaire du colis.
      * @param  bool  $save  si la donnée doit directement être sauvegardée en base de données.
      */
-    public function setCost(int $cost, bool $save = true): void
+    public function setCost(?int $cost, bool $save = true): void
     {
         if ($save) {
             $this->setAttribute('cost', $cost);
@@ -129,10 +129,10 @@ class Package extends Model
      * Définit le délai prévu de livraison
      * Généralement lorsque cela a été communiqué par le fournisseur après l'envoi du bon de commande
      *
-     * @param  string  $expected_delivery_time  délai prévu livraison
+     * @param  ?string  $expected_delivery_time  délai prévu livraison
      * @param  bool  $save  si la donnée doit directement être sauvegardée en base de données.
      */
-    public function setExpectedDeliveryTime(string $expected_delivery_time, bool $save = true): void
+    public function setExpectedDeliveryTime(?string $expected_delivery_time, bool $save = true): void
     {
         if ($save) {
             $this->setAttribute('expected_delivery_time', $expected_delivery_time);

@@ -74,7 +74,7 @@
 
                     @if($userDepartments->contains($order->getDepartment()))
                         @if($order->getStatus() == Status::COMMANDE)
-                            <button class="btn btn-primary btn-action mb-2 btn-load-modal" title="Informations sur les colis" type="button" data-url="{{ route('orders.step-actions.upload-delivery-note', ['id' => $order->getId()]) }}">
+                            <button class="btn btn-primary btn-action mb-2 btn-load-modal" title="Informations sur les colis" type="button" data-url="{{ route('orders.step-actions.package-infos', ['id' => $order->getId()]) }}">
 
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                     class="bi bi-pencil-square" viewBox="0 0 16 16">
