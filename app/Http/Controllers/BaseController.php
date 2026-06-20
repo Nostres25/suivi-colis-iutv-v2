@@ -222,6 +222,13 @@ abstract class BaseController extends Controller
                 'IUT de Villetaneuse, Sorbonne Paris Nord';
         }
 
+        if ($type === 'package_infos_updated') {
+            return "Madame, monsieur,\n".
+                "Les informations des colis de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, ont été mises à jour suite à une réponse du fournisseur.\n\n".
+                "{$user->getFullName()}\n".
+                "{$signature_roles},\n".
+                'IUT de Villetaneuse, Sorbonne Paris Nord';
+        }
         if ($type === 'sent_to_supplier') {
             return "Madame, monsieur,\n".
                 "Le bon de commande de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été envoyé au fournisseur.\n\n".

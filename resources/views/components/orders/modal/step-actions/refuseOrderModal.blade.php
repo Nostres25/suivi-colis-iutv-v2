@@ -36,7 +36,8 @@
                     <x-orders.modal.modal-fields.auto-mail-field
                         :orderId="$orderId"
                         :defaultMailContent="BaseController::getDefaultMailContent($about === 'purchaseOrderSignature' ? 'refuse_signature' : 'refuse', $order, $user)"
-                    ></x-orders.modal.modal-fields.auto-mail-field>
+      
+                        ></x-orders.modal.modal-fields.auto-mail-field>
                 </form>
             </div>
 

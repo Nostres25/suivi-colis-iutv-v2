@@ -41,6 +41,8 @@ Route::get('/order/{id}/step-actions/packaged-delivered', [OrderController::clas
     ->name('orders.step-actions.packages-delivered');
 Route::get('/order/{id}/step-actions/all-delivered', [OrderController::class, 'modalDeliveredAll'])
     ->name('orders.step-actions.all-delivered');
+Route::get('/order/{id}/step-actions/supplier-response-package-infos', [OrderController::class, 'modalSupplierReponseInfosPackages'])
+    ->name('orders.step-actions.package-infos');
 Route::get('/order/{id}/view-details', [OrderController::class, 'modalViewDetails'])
     ->name('orders.modal.view-details');
 
@@ -115,13 +117,19 @@ Route::post('/order/{id}/step-actions/refuse', [OrderController::class, 'actionR
 Route::post('/order/{id}/step-actions/sent-to-supplier', [OrderController::class, 'actionSentToSupplier'])
     ->name('orders.step-actions.sent-to-supplier');
 
-// Fonctionnement adminer + restrictions d'accès
-Route::any('adminer/{any?}', function ($any = null) {
+// Information colis POST
+Route::post(
+    '/order/{id}/step-actions/supplier-response-package-infos',
+    [OrderController::class, 'actionUpdatePackageInfos']
+)->name('orders.step-actions.package-infos');
 
-    $user = Auth::user();
-    if (! $user->hasPermission(PermissionValue::ADMIN)) {
-        return redirect('/');
-    }
+Route::get(
+    '/order/{id}/step-actions/upload-delivery-note',
+    [OrderController::class, 'modalUploadDeliveryNote']
+)->name('orders.step-actions.upload-delivery-note');
+
+// Fonctionnement adminer + restrictions d'accès
+Route::any('/adminer', function () {
     $adminerDir = base_path('vendor/vrana/adminer/adminer');
 
     if (is_dir($adminerDir)) {
