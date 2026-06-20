@@ -24,8 +24,6 @@ Route::get('suppliers', [SupplierController::class, 'viewSuppliers']);
 Route::get('/suppliers/fetch/table', [SupplierController::class, 'fetchSuppliersTable'])
     ->name('suppliers.fetch.table');
 
-
-
 // orders modals get
 Route::get('/order/{id}/step-actions/upload-purchase-order', [OrderController::class, 'modalUploadPurchaseOrder'])
     ->name('orders.step-actions.upload-purchase-order');
@@ -41,6 +39,8 @@ Route::get('/order/{id}/step-actions/packaged-delivered', [OrderController::clas
     ->name('orders.step-actions.packages-delivered');
 Route::get('/order/{id}/step-actions/all-delivered', [OrderController::class, 'modalDeliveredAll'])
     ->name('orders.step-actions.all-delivered');
+Route::get('/order/{id}/step-actions/supplier-response-package-infos', [OrderController::class, 'modalSupplierReponseInfosPackages'])
+    ->name('orders.step-actions.package-infos');
 Route::get('/order/{id}/view-details', [OrderController::class, 'modalViewDetails'])
     ->name('orders.modal.view-details');
 
@@ -62,17 +62,13 @@ Route::post('/orders/create', [OrderController::class, 'submitNewOrder'])
 Route::get('/order/{id}/document/{type}', [OrderController::class, 'downloadDocument'])
     ->name('orders.download');
 
-
 // suppliers modals get
 Route::get('/supplier/{id}/view-details', [SupplierController::class, 'modalViewDetails'])
     ->name('suppliers.modal.view-details');
 
-
-
 // suppliers modals post
 Route::post('/supplier/{id}/view-details', [SupplierController::class, 'editSupplier'])
     ->name('suppliers.modal.view-details');
-
 
 // seulement pour les tests sur le serveur de l'IUT
 Route::get('/cookies', function (Request $request) {
@@ -106,16 +102,25 @@ Route::post('/account/profile', [ProfileController::class, 'update'])->name('pro
 // Page "À propos"
 Route::get('/about', [AboutController::class, 'about']);
 
-
 // Refuser devis POST
 
 Route::post('/order/{id}/step-actions/refuse', [OrderController::class, 'actionRefuse'])
     ->name('orders.step-actions.refuse');
 
-
 // Commande commandé POST
 Route::post('/order/{id}/step-actions/sent-to-supplier', [OrderController::class, 'actionSentToSupplier'])
     ->name('orders.step-actions.sent-to-supplier');
+
+// Information colis POST
+Route::post(
+    '/order/{id}/step-actions/supplier-response-package-infos',
+    [OrderController::class, 'actionUpdatePackageInfos']
+)->name('orders.step-actions.package-infos');
+
+Route::get(
+    '/order/{id}/step-actions/upload-delivery-note',
+    [OrderController::class, 'modalUploadDeliveryNote']
+)->name('orders.step-actions.upload-delivery-note');
 // Adminer - console SQL
 Route::any('/adminer', function () {
     $adminerDir = base_path('vendor/vrana/adminer/adminer');
