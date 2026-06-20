@@ -1,3 +1,4 @@
+@use(App\Http\Controllers\BaseController)
 <div class="modal fade" id="sentToSupplierModal-{{$orderId}}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
@@ -20,37 +21,66 @@
                     action="{{ route('orders.step-actions.sent-to-supplier', ['id' => $orderId]) }}">
                     @csrf
 
-                    <label for="deliveryDelay-{{$orderId}}" class="form-label">
-                        Délai de livraison estimé (facultatif)
-                    </label>
+                    <div class="mt-2">
+                        <input
+                            class="form-check-input me-2"
+                            name="nextStep"
+                            type="checkbox"
+                            id="checkboxNextStep-{{$orderId}}"
+                            checked
+                        >
 
-                    <input
-                        type="text"
-                        id="deliveryDelay-{{$orderId}}"
-                        name="delivery_delay"
-                        class="form-control"
-                        placeholder="Ex : 15 jours, 2 semaines..."
-                    >
+                        <label class="form-check-label" for="checkboxNextStep-{{$orderId}}">
+                            Passer la commande au statut suivant
+                        </label>
+                    </div>
+
+                    <div class="mt-2">
+                        <input
+                            class="form-check-input me-2"
+                            name="withResponse"
+                            type="checkbox"
+                            id="checkboxWithResponse-{{$orderId}}"
+                            onchange="document.getElementById('deliveryDelayBlock-{{$orderId}}').style.display = this.checked ? 'block' : 'none'"
+                        >
+
+                        <label class="form-check-label" for="checkboxWithResponse-{{$orderId}}">
+                            Avec réponse du fournisseur
+                        </label>
+                    </div>
+
+                    <div id="deliveryDelayBlock-{{$orderId}}" class="mt-2" style="display:none">
+                        <label class="form-label">
+                            Délai de livraison estimé par colis (facultatif)
+                        </label>
+
+                        @foreach($order->getPackages() as $package)
+                            <div class="mb-2">
+                                <label for="deliveryDelay-{{$orderId}}-{{$package->getId()}}" class="form-label">
+                                    {{ $package->getName() }}
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="deliveryDelay-{{$orderId}}-{{$package->getId()}}"
+                                    name="delivery_delay[{{$package->getId()}}]"
+                                    class="form-control"
+                                    placeholder="Ex : 15 jours, 2 semaines..."
+                                    value="{{ $package->getExpectedDeliveryTime() }}"
+                                >
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <x-orders.modal.modal-fields.auto-mail-field
+                        :orderId="$orderId"
+                        :defaultMailContent="BaseController::getDefaultMailContent('sent_to_supplier', $order, $user)"
+                    ></x-orders.modal.modal-fields.auto-mail-field>
                 </form>
 
             </div>
 
             <div class="modal-footer">
-
-                <div class="me-auto">
-                    <input
-                        class="form-check-input me-2"
-                        name="nextStep"
-                        type="checkbox"
-                        id="checkboxNextStep-{{$orderId}}"
-                        form="sentToSupplier-{{$orderId}}"
-                        checked
-                    >
-
-                    <label class="form-check-label" for="checkboxNextStep-{{$orderId}}">
-                        Passer la commande au statut suivant
-                    </label>
-                </div>
 
                 <button type="button" class="btn btn-secondary m-1" data-bs-dismiss="modal">
                     Annuler

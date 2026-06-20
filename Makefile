@@ -6,8 +6,10 @@ prod-suivi-colis-iutv:
 	sudo docker pull ghcr.io/at9ph/suivi-colis-iutv:latest
 	@echo "Prod Sae Suivis Colis pulled successfully."
 	sudo docker images
+	# sudo docker ps
 	cd sae && sudo docker stack deploy --with-registry-auth -c colis.yaml ProdSuiviColisIutv
-	sleep 15
-	sudo docker exec $$(sudo docker ps -qf "name=sae-jupiter") a2dismod cas && sudo docker exec $$(sudo docker ps -qf "name=sae-jupiter") apache2ctl graceful
-	sudo docker images
-	sudo docker ps
+	# If you want to disable CAS with a2dismod in production, remove the comment
+	# sleep 15
+	# sudo docker exec $$(sudo docker ps -qf "name=sae-jupiter") a2dismod cas && sudo docker exec $$(sudo docker ps -qf "name=sae-jupiter") apache2ctl graceful
+	# sudo docker images
+	# sudo docker ps

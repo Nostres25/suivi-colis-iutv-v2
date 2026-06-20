@@ -13,7 +13,7 @@
 
             <div class="modal-body">
                 <p>
-                    {{ $about === 'purchaseOrderSignature' ? 'Vous allez refuser de signer le bon de commande' : 'Vous allez refuser le devis' }}
+                    {{ $about === 'purchaseOrderSignature' ? 'Marquer un refus de signer le bon de commande' : 'Marquer le refus du devis' }}
                     de la commande N°{{$order->getOrderNumber()}} : "{{ $order->getTitle() }}".
                 </p>
 

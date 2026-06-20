@@ -189,7 +189,7 @@ abstract class BaseController extends Controller
 
         if ($type === 'refuse_signature') {
             return "Madame, monsieur,\n".
-                "La signature du bon de commande pour la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été refusée pour la raison suivante :\n".
+                "La signature du bon de commande désigné \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été refusée pour la raison suivante :\n".
                 "{raison}\n\n".
                 "{$user->getFullName()}\n".
                 "{$signature_roles},\n".
@@ -199,6 +199,12 @@ abstract class BaseController extends Controller
         if ($type === 'package_infos_updated') {
             return "Madame, monsieur,\n".
                 "Les informations des colis de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, ont été mises à jour suite à une réponse du fournisseur.\n\n".
+                "{$user->getFullName()}\n".
+                "{$signature_roles},\n".
+                'IUT de Villetaneuse, Sorbonne Paris Nord';
+        if ($type === 'sent_to_supplier') {
+            return "Madame, monsieur,\n".
+                "Le bon de commande de la commande désignée \"{$order->getTitle()}\" et de numéro {$order->getOrderNumber()}, a été envoyé au fournisseur.\n\n".
                 "{$user->getFullName()}\n".
                 "{$signature_roles},\n".
                 'IUT de Villetaneuse, Sorbonne Paris Nord';

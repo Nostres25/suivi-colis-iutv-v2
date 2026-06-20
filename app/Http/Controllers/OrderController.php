@@ -767,22 +767,27 @@ class OrderController extends BaseController
         $order = Order::findOrFail($id);
         $user = Auth::user();
 
-        $deliveryDelay = $request->input('delivery_delay');
+        $deliveryDelays = $request->input('delivery_delay', []);
         $nextStep = $request->input('nextStep');
+        $withResponse = $request->input('withResponse');
 
         $oldStatus = null;
 
         if ($nextStep && $order->getStatus() == Status::BON_DE_COMMANDE_SIGNE) {
             $oldStatus = $order->getStatus();
-            $order->setStatus(Status::COMMANDE, false);
+            $order->setStatus($withResponse ? Status::COMMANDE_AVEC_REPONSE : Status::COMMANDE, false);
         }
 
         $order->save();
 
         $message = 'Le bon de commande a été envoyé au fournisseur.';
 
-        if (! empty($deliveryDelay)) {
-            $message .= ' Délai de livraison annoncé : '.$deliveryDelay.'.';
+        foreach ($deliveryDelays as $packageId => $deliveryDelay) {
+            if (!empty($deliveryDelay)) {
+                $package = Package::find($packageId);
+                $package->setExpectedDeliveryTime($deliveryDelay);
+                $message .= " Délai de livraison annoncé pour le colis \"".$package->getName()."\" : ".$deliveryDelay.".";
+            }
         }
 
         $logData = $order->sendLog($message, $user, $oldStatus);

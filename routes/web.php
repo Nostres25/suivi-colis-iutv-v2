@@ -121,3 +121,15 @@ Route::get(
     '/order/{id}/step-actions/upload-delivery-note',
     [OrderController::class, 'modalUploadDeliveryNote']
 )->name('orders.step-actions.upload-delivery-note');
+// Adminer - console SQL
+Route::any('/adminer', function () {
+    $adminerDir = base_path('vendor/vrana/adminer/adminer');
+
+    if (is_dir($adminerDir)) {
+        chdir($adminerDir);
+        require 'index.php';
+        return '';
+    }
+
+    return "Erreur : Le paquet Composer 'vrana/adminer' n'est pas trouvé. Avez-vous fait 'composer require vrana/adminer' ?";
+});
