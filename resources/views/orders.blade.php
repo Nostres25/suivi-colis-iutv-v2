@@ -1,5 +1,12 @@
 @extends('base')
 
+@section('head')
+    <script>
+        let suppliers = null;
+        let orders = null;
+    </script>
+@endsection
+
 @section('header')
     <div class="container d-block">
         <h1 class="h1"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-box-seam-fill" preserveAspectRatio="xMidYMid meet" width="32" height="32" viewBox="0 0 16 16">
@@ -15,7 +22,6 @@
     @use(App\Models\Role)
     @use(App\Models\Order)
 
-<section>
     <section class="mb-4">
     <form method="GET" action="{{ url('/orders') }}">
         <div class="row justify-content-center">
@@ -27,21 +33,92 @@
                     <input type="text" name="search" class="form-control search-input"
                            placeholder="Rechercher une commande..."
                            autocomplete="off"
-                           value="{{ $search ?? '' }}">
+                           value="{{ isset($options['search']) && !is_array($options['options']['search'] ?? $options['search']) && !is_array($options['search']) ? $options['search'] : '' }}">
                 </div>
                 <button type="submit" class="btn btn-outline-primary search-button" style="display:none">Rechercher</button>
-                @if(isset($search) && $search)
+                @if(!empty($options['search']) || !empty($options['recentOnly']))
                     <a href="{{ url('/orders') }}" class="btn btn-secondary ms-2">Effacer</a>
                 @endif
             </div>
         </div>
     </form>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
+            @php
+                // 1. On récupère les filtres actuels sous forme de tableau
+                $currentSearch = request()->input('search', []);
+                if (!is_array($currentSearch)) {
+                    $currentSearch = $currentSearch ? [$currentSearch] : [];
+                }
+                
+                // 2. On vérifie si le filtre récent est actif
+                $isRecent = request()->has('recentOnly') && request()->input('recentOnly') === 'true';
+
+                // Définition de la liste complète des statuts pour les Bons de commande
+                $allBcStatuses = ['BON_DE_COMMANDE_NON_SIGNE', 'BON_DE_COMMANDE_SIGNE', 'BON_DE_COMMANDE_REFUSE'];
+
+                // Fonction pour gérer le clic sur "Devis"
+                $toggleDevisUrl = function() use ($currentSearch, $isRecent) {
+                    $params = $currentSearch;
+                    if (in_array('DEVIS', $params)) {
+                        $params = array_diff($params, ['DEVIS']);
+                    } else {
+                        $params[] = 'DEVIS';
+                    }
+                    return url('/orders?' . http_build_query(array_filter(['search' => array_values($params), 'recentOnly' => $isRecent ? 'true' : null])));
+                };
+
+                // Fonction pour gérer le clic sur "Bons de commande" (ajoute ou retire les 3 statuts d'un coup)
+                $toggleBcUrl = function() use ($currentSearch, $isRecent, $allBcStatuses) {
+                    $params = $currentSearch;
+                    
+                    // Si l'un des statuts BC est déjà présent, on considère qu'on veut désactiver le filtre BC
+                    $hasBc = urlencode(implode('', array_intersect($allBcStatuses, $params))) !== '';
+                    
+                    if ($hasBc) {
+                        // On retire les 3 statuts BC du tableau
+                        $params = array_diff($params, $allBcStatuses);
+                    } else {
+                        // On ajoute les 3 statuts BC au tableau
+                        $params = array_merge($params, $allBcStatuses);
+                    }
+                    return url('/orders?' . http_build_query(array_filter(['search' => array_values($params), 'recentOnly' => $isRecent ? 'true' : null])));
+                };
+
+                // Fonction pour activer/désactiver le filtre récent
+                $toggleRecentUrl = function() use ($currentSearch, $isRecent) {
+                    return url('/orders?' . http_build_query(array_filter(['search' => $currentSearch, 'recentOnly' => !$isRecent ? 'true' : null])));
+                };
+
+                // Vérification si le bouton BC doit être allumé (actif)
+                $isBcActive = !empty(array_intersect($allBcStatuses, $currentSearch));
+            @endphp
+
+            {{-- effacer--}}
+            <a href="{{ url('/orders') }}" class="btn btn-outline-secondary {{ empty($currentSearch) && !$isRecent ? 'active' : '' }}">
+            Toutes les commandes
+            </a>
+
+            {{-- Commande récente --}}
+            <a href="{{ $toggleRecentUrl() }}" class="btn btn-outline-secondary {{ $isRecent ? 'active' : '' }}">
+                Commandes récentes
+            </a>
+
+            {{-- Devis --}}
+            <a href="{{ $toggleDevisUrl() }}" class="btn btn-outline-secondary {{ in_array('DEVIS', $currentSearch) ? 'active' : '' }}">
+                Devis
+            </a>
+
+            {{-- Bons de commande --}}
+            <a href="{{ $toggleBcUrl() }}" class="btn btn-outline-secondary {{ $isBcActive ? 'active' : '' }}">
+            Bons de commande
+            </a>
+</div>
 </section>
 
 {{-- TODO Peut-être afficher un aperçu de ce qu'il y a dans la commande (colis) --}}
 {{-- TODO format mobile : afficher les commandes comme la solution 1 ou 2 mais juste cliquer dessus ça fonctionne donc pas prioritaire : https://www.behance.net/gallery/95240691/Responsive-Data-Table-Designs# --}}
 <section class="table-section table-responsive">
-
     {{--Pour pouvoir créer une commande il faut appartenir à un département et avoir la permission de créer une commande--}}
     @if ($user->hasPermission(PermissionValue::CREER_COMMANDES) && !empty($userDepartments))
         <button type="button" class="btn btn-primary erasure-alert" style="display: table-row" data-bs-toggle="modal"
@@ -53,7 +130,9 @@
             </svg>
             Ajouter une commande
         </button>
-        <x-orders.modal.orderCreationModal :user="$user" :userDepartments="$userDepartments" :validSupplierNames="$validSupplierNames"/>
+        <div id="createOrderModalContainer">
+            <x-orders.modal.orderCreationModal :user="$user" :userDepartments="$userDepartments" :suppliers="$suppliers"/>
+        </div>
     @endif
 
     <div class="table-header mt-4">
@@ -63,13 +142,12 @@
         <p>Devis et bons de commandes</p>
     </div>
 
-    <div id="orders-table-container" data-url="{{ route('orders.fetch.table', ['search' => $search, 'page' => $orders->currentPage()]) }}">
+    <div id="orders-table-container" data-url="{{ route('orders.fetch.table', $options) }}">
         <x-orders.orders-table :orders="$orders" :user="$user" :userDepartments="$userDepartments"></x-orders.orders-table>
     </div>
-
 </section>
 @endsection
 
-@section('javascript')
+@section('js')
     <script src="{{asset('js/orders.js')}}"></script>
 @endsection

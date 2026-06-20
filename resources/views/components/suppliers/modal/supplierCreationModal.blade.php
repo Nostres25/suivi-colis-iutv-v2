@@ -17,12 +17,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addSupplierForm" class="needs-validation" novalidate>
-                    @csrf
-                    
-                    {{-- Inclusion de vos champs d'adresse et coordonnées --}}
-                    <x-suppliers.fields.supplierCreationFields :suffix="false" :notRequiered="false" />
-                    
+                <form id="addSupplierForm" class="needs-validation">
+                @csrf
+                   <x-suppliers.fields.supplierCreationFields :errors="$errors"></x-suppliers.fields.supplierCreationFields>
                     <div class="mb-3">
                         <label for="speciality" class="form-label">Spécialité</label>
                         <input type="text" class="form-control" id="speciality" name="speciality" placeholder="Ex: Matériel informatique, Fournitures...">

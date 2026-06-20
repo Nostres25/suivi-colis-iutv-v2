@@ -1,5 +1,10 @@
 @extends('base')
 
+@section('head')
+    <script>
+        let suppliers = null;
+    </script>
+@endsection
 
 @section('header')
     <div class="container d-block">
@@ -82,6 +87,6 @@
 @endsection
 
 
-@section('javascript')
-    <script src="{{ asset('js/suppliers.js') }}?v={{ filemtime(public_path('js/suppliers.js')) }}"></script>
+@section('js')
+    <script src="{{ asset('js/suppliers.js') }}"></script>
 @endsection
