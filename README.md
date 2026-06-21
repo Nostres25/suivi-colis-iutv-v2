@@ -460,6 +460,28 @@ Pour la manière dont l'application utilise cette page de connexion, aussi appel
 - L'authentification par le CAS de l'université Sorbonne Paris Nord ne fonctionnera que si l'application est hébergé sur un serveur de l'université.
 - Le CAS doit retourner vers la racine du site ("/")
 
+### Configuration de l'envoi d'emails
+
+L'application peut envoyer des emails via SMTP. Dans le fichier `.env`, configurez les variables suivantes pour la production.
+
+#### Exemple avec Hostinger :
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.hostinger.com
+MAIL_PORT=587
+MAIL_USERNAME="contact@sae.fr"
+MAIL_PASSWORD="votre_mot_de_passe"
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="contact@sae.fr"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+> [!IMPORTANT]
+> - `MAIL_MAILER` doit être à `smtp` pour envoyer de vrais emails. La valeur `log` écrit les emails dans `storage/logs/laravel.log` au lieu de les envoyer, utile en développement mais à ne pas utiliser en production. et pour `MAIL_USERNAME` correspond au mail de connexion au serveur SMTP et `MAIL_FROM_ADDRESS` étant l'email affiché, si le DKIM, SPF, DNMARC est mal gérer vous pouvez usurper un mail tiers, bon pour ne pas se prendre la tête les deux doivent avoir la même valeur.
+> - `MAIL_ENCRYPTION=tls` est nécessaire avec le port 587 (STARTTLS).
+> - En développement, vous pouvez garder `MAIL_MAILER=log` pour tester sans envoyer de vrais emails.
+
 ## Travailler avec git
 
 Étant donné que nous sommes plusieurs à travailler sur ce projet et qu'il n'y a pas de synchronisation automatique entre le dépôt local[^1] et le dépôt distant[^2], l'un d'entre nous pourrait avoir des modifications en cours pendant que vous travaillez sur le projet. Et ces modifications peuvent porter sur le même fichier voir le même bout de code. Ce qui peut causer des conflits, car vous avanceriez sur un projet non à jour et lorsque vous souhaiterez publier vos modifications, git ne saura pas choisir quelle modification est bonne à garder car les deux modifications sont incompatibles.
