@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // GESTION DU POST (Formulaire)
     modalContainer.addEventListener('submit', modalsSubmitActions);
     document.getElementById('createOrderModalContainer')?.addEventListener('submit', modalsSubmitActions);
+    document.getElementById('createSupplierModalContainer')?.addEventListener('submit', modalsSubmitActions)
 
 
     function modalsSubmitActions(e) {
@@ -124,31 +125,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         let scripts;
 
-                        if (form.id === 'createOrderForm') {
-                            const createOrderModalContainer = document.getElementById('createOrderModalContainer');
-                            // Injection
-                            createOrderModalContainer.innerHTML = html;
+                        const usedModalContainer =
+                            form.id === 'createOrderForm'
+                                ? document.getElementById('createOrderModalContainer')
+                                : form.id === 'addSupplierForm'
+                                    ? document.getElementById('createSupplierModalContainer')
+                                    : modalContainer;
 
-                            scripts = createOrderModalContainer.querySelectorAll('script');
+                        usedModalContainer.innerHTML = html;
+                        scripts = usedModalContainer.querySelectorAll('script');
 
-                            // Réouverture
-                            const newModalEl = createOrderModalContainer.querySelector('.modal');
-                            if (newModalEl) {
-                                const newModal = new bootstrap.Modal(newModalEl);
-                                newModal.show();
-                            }
-
-                        } else {
-                            // Injection
-                            modalContainer.innerHTML = html;
-                            scripts = modalContainer.querySelectorAll('script');
-
-                            // Réouverture
-                            const newModalEl = modalContainer.querySelector('.modal');
-                            if (newModalEl) {
-                                const newModal = new bootstrap.Modal(newModalEl);
-                                newModal.show();
-                            }
+                        // Réouverture
+                        const newModalEl = usedModalContainer.querySelector('.modal');
+                        if (newModalEl) {
+                            const newModal = new bootstrap.Modal(newModalEl);
+                            newModal.show();
                         }
 
                         scripts.forEach(oldScript => {

@@ -51,7 +51,6 @@ class OrderController extends BaseController
 
         $suppliers = Supplier::all(['id', 'company_name', 'is_valid', 'siret']); // Récupération uniquement des informations utiles à propos des fournisseurs
 
-        // TODO flash messages: redirect('urls.create')->with('success', 'URL has been added');
         return view('orders', [
             'user' => $user,
             'orders' => $orders,
@@ -280,9 +279,9 @@ class OrderController extends BaseController
 
                 $rulesForExistantSupplier = [
                     'companyName' => 'required|string|max:255|unique:suppliers,company_name',
-                    'siret' => 'required|number|max:14|min:14|unique:suppliers,siret',
-                    'phoneNumber' => 'required|string|max:255',
-                    'email' => 'required|string|max:255',
+                    'siret' => 'required|numeric|max_digits:14|min_digits:14|unique:suppliers,siret',
+                    'phoneNumber' => 'required|string|max:50',
+                    'email' => 'required|email|max:255',
                     'contactName' => 'required|string|max:255',
                     'address' => 'required|string|max:255',
                 ];
@@ -320,7 +319,6 @@ class OrderController extends BaseController
                     'phone_number' => $request['phoneNumber'],
                     'contact_name' => $request['contactName'],
                     'address' => $request['address'],
-                    'is_valid' => false,
                 ]);
 
                 $isSavedSupplier = $supplier->save();
@@ -642,12 +640,11 @@ class OrderController extends BaseController
             }
             $message = 'Le devis a été refusé. Raison : '.$reason;
         }
-      
-      // Sauvegarde des changements
+
+        // Sauvegarde des changements
         $order->save();
 
         $message = 'Le devis a été refusé pour la raison suivante : '.$reason;
-
 
         // Enregistrement du log avec la raison du refus
         $logData = $order->sendLog($message, $user, $oldStatus);
@@ -719,150 +716,152 @@ class OrderController extends BaseController
 
     // Autres fonctions
 
-   public function fetchOrders(User $user, ?array $options): AbstractPaginator {
-    // 1. Récupération sécurisée et typée des options
-    $recentOnly = (bool)($options['recentOnly'] ?? false);
-    $page = isset($options['page']) ? (int)$options['page'] : 1;
-    
-    // Sécurisation de la recherche (
-    $search = $options['search'] ?? null;
-    if (!is_string($search) && !is_array($search)) {
-        $search = null; 
-    }
+    public function fetchOrders(User $user, ?array $options): AbstractPaginator
+    {
+        // 1. Récupération sécurisée et typée des options
+        $recentOnly = (bool) ($options['recentOnly'] ?? false);
+        $page = isset($options['page']) ? (int) $options['page'] : 1;
 
-    $userRoles = $user->getRoles();
-    $userPermissions = $user->getPermissions();
-    $userDepartments = $userRoles->filter(fn (Role $role) => $role->isDepartment());
+        // Sécurisation de la recherche (
+        $search = $options['search'] ?? null;
+        if (! is_string($search) && ! is_array($search)) {
+            $search = null;
+        }
 
-    // Initialisation sql
-    $query = Order::query()->select('orders.*');
+        $userRoles = $user->getRoles();
+        $userPermissions = $user->getPermissions();
+        $userDepartments = $userRoles->filter(fn (Role $role) => $role->isDepartment());
 
-    // Ordre d'affichage global des Bons de commande
-    $query->orderByRaw("CASE 
+        // Initialisation sql
+        $query = Order::query()->select('orders.*');
+
+        // Ordre d'affichage global des Bons de commande
+        $query->orderByRaw("CASE
         WHEN orders.status = 'BON_DE_COMMANDE_NON_SIGNE' THEN 1
         WHEN orders.status = 'BON_DE_COMMANDE_SIGNE' THEN 2
         WHEN orders.status = 'BON_DE_COMMANDE_REFUSE' THEN 3
         ELSE 4
     END");
 
-    // Filtrage par droits / départements
-    if (!$user->hasPermission(PermissionValue::CONSULTER_TOUTES_COMMANDES)) {
-        $query->where(function (Builder $q) use ($userDepartments, $userPermissions) {
-            $userDepartments->each(function (Role $department) use ($q, $userPermissions) {
-                $permissionKey = PermissionValue::CONSULTER_COMMANDES_DEPARTMENT->value;
-                if (!empty($userPermissions[$permissionKey])) {
-                    $q->orWhere('orders.department_id', $department->getId());
-                }
+        // Filtrage par droits / départements
+        if (! $user->hasPermission(PermissionValue::CONSULTER_TOUTES_COMMANDES)) {
+            $query->where(function (Builder $q) use ($userDepartments, $userPermissions) {
+                $userDepartments->each(function (Role $department) use ($q, $userPermissions) {
+                    $permissionKey = PermissionValue::CONSULTER_COMMANDES_DEPARTMENT->value;
+                    if (! empty($userPermissions[$permissionKey])) {
+                        $q->orWhere('orders.department_id', $department->getId());
+                    }
+                });
             });
-        });
-    }
+        }
 
-    // --- 2. TRI SELON LE RÔLE ---
-    if (!$recentOnly) {
-        $isDirecteur = $user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES);
-        $isFinancier = $user->hasPermission(PermissionValue::GERER_PAIEMENT_FOURNISSEURS);
-        $isResponsableColis = $user->hasPermission(PermissionValue::GERER_COLIS_LIVRES);
-        $isDepartment = $userDepartments->isNotEmpty();
+        // --- 2. TRI SELON LE RÔLE ---
+        if (! $recentOnly) {
+            $isDirecteur = $user->hasPermission(PermissionValue::SIGNER_BONS_DE_COMMANDES);
+            $isFinancier = $user->hasPermission(PermissionValue::GERER_PAIEMENT_FOURNISSEURS);
+            $isResponsableColis = $user->hasPermission(PermissionValue::GERER_COLIS_LIVRES);
+            $isDepartment = $userDepartments->isNotEmpty();
 
-        if ($isDirecteur) {
-            $query->orderByRaw("CASE
+            if ($isDirecteur) {
+                $query->orderByRaw('CASE
                 WHEN orders.status = ? THEN 1
                 WHEN orders.status = ? THEN 2
                 ELSE 3
-            END", [Status::BON_DE_COMMANDE_NON_SIGNE->value, Status::DEVIS->value]);
+            END', [Status::BON_DE_COMMANDE_NON_SIGNE->value, Status::DEVIS->value]);
 
-        } elseif ($isFinancier) {
-            $query->orderByRaw("CASE
+            } elseif ($isFinancier) {
+                $query->orderByRaw('CASE
                 WHEN orders.status = ? THEN 1
                 WHEN orders.status = ? THEN 2
                 WHEN orders.status = ? THEN 3
                 WHEN orders.status = ? THEN 4
                 WHEN orders.status = ? THEN 5
                 ELSE 6
-            END", [
-                Status::SERVICE_FAIT->value,
-                Status::DEVIS->value,
-                Status::BON_DE_COMMANDE_NON_SIGNE->value,
-                Status::BON_DE_COMMANDE_REFUSE->value,
-                Status::LIVRE_ET_PAYE->value
-            ]);
+            END', [
+                    Status::SERVICE_FAIT->value,
+                    Status::DEVIS->value,
+                    Status::BON_DE_COMMANDE_NON_SIGNE->value,
+                    Status::BON_DE_COMMANDE_REFUSE->value,
+                    Status::LIVRE_ET_PAYE->value,
+                ]);
 
-        } elseif ($isResponsableColis) {
-            $query->orderByRaw("CASE
+            } elseif ($isResponsableColis) {
+                $query->orderByRaw('CASE
                 WHEN orders.status IN (?, ?) THEN 1
                 WHEN orders.status = ? THEN 2
                 ELSE 3
-            END", [
-                Status::COMMANDE_AVEC_REPONSE->value,
-                Status::PARTIELLEMENT_LIVRE->value,
-                Status::COMMANDE->value
-            ]);
+            END', [
+                    Status::COMMANDE_AVEC_REPONSE->value,
+                    Status::PARTIELLEMENT_LIVRE->value,
+                    Status::COMMANDE->value,
+                ]);
 
-        } elseif ($isDepartment) {
-            $sqlSort = "CASE
+            } elseif ($isDepartment) {
+                $sqlSort = 'CASE
                 WHEN orders.status = ? AND orders.author_id = ? THEN 1
                 WHEN orders.status IN (?, ?, ?) THEN 2
                 WHEN orders.status IN (?, ?, ?, ?) THEN 3
                 ELSE 4
-            END";
+            END';
 
-            $query->orderByRaw($sqlSort, [
-                Status::BROUILLON->value, $user->getId(),
-                Status::DEVIS_REFUSE->value, Status::BON_DE_COMMANDE_REFUSE->value, Status::COMMANDE_REFUSEE->value,
-                Status::BON_DE_COMMANDE_SIGNE->value, Status::COMMANDE->value, Status::COMMANDE_AVEC_REPONSE->value, Status::PARTIELLEMENT_LIVRE->value
-            ]);
-        }
-    }
-
-    // --- 2.1 FILTRES DES BOUTONS DE RECHERCHE SECURISÉS ---
-    if ($search) {
-        if (is_string($search) && $search === 'BON_DE_COMMANDE') {
-            $search = ['BON_DE_COMMANDE_NON_SIGNE', 'BON_DE_COMMANDE_SIGNE', 'BON_DE_COMMANDE_REFUSE'];
-        }
-
-        $query->where(function (Builder $q) use ($search) {
-            if (is_array($search)) {
-                $cleanSearch = array_filter($search, 'is_string');
-                if (!empty($cleanSearch)) {
-                    $q->whereIn('orders.status', $cleanSearch);
-                }
-            } else {
-                $s = "%{$search}%";
-                $q->where('orders.order_num', 'LIKE', $s)
-                  ->orWhere('orders.title', 'LIKE', $s)
-                  ->orWhere('orders.status', 'LIKE', $s)
-                  ->orWhere('orders.quote_num', 'LIKE', $s);
+                $query->orderByRaw($sqlSort, [
+                    Status::BROUILLON->value, $user->getId(),
+                    Status::DEVIS_REFUSE->value, Status::BON_DE_COMMANDE_REFUSE->value, Status::COMMANDE_REFUSEE->value,
+                    Status::BON_DE_COMMANDE_SIGNE->value, Status::COMMANDE->value, Status::COMMANDE_AVEC_REPONSE->value, Status::PARTIELLEMENT_LIVRE->value,
+                ]);
             }
-        });
-    }
+        }
 
-    // --- 2.2 GESTION DU FILTRE CUMULÉ  ---
-    if ($recentOnly) {
-        $query->where(function (Builder $innerQuery) use ($search, $user) {
-            $innerQuery->whereIn('orders.id', function ($subQuery) use ($user) {
-                $subQuery->select('logs.order_id')
-                    ->from('logs')
-                    ->whereDate('logs.created_at', '>', \Carbon\Carbon::today()->subDays(5))
-                    ->where('logs.author_id', $user->getId());
+        // --- 2.1 FILTRES DES BOUTONS DE RECHERCHE SECURISÉS ---
+        if ($search) {
+            if (is_string($search) && $search === 'BON_DE_COMMANDE') {
+                $search = ['BON_DE_COMMANDE_NON_SIGNE', 'BON_DE_COMMANDE_SIGNE', 'BON_DE_COMMANDE_REFUSE'];
+            }
+
+            $query->where(function (Builder $q) use ($search) {
+                if (is_array($search)) {
+                    $cleanSearch = array_filter($search, 'is_string');
+                    if (! empty($cleanSearch)) {
+                        $q->whereIn('orders.status', $cleanSearch);
+                    }
+                } else {
+                    $s = "%{$search}%";
+                    $q->where('orders.order_num', 'LIKE', $s)
+                        ->orWhere('orders.title', 'LIKE', $s)
+                        ->orWhere('orders.status', 'LIKE', $s)
+                        ->orWhere('orders.quote_num', 'LIKE', $s);
+                }
             });
+        }
 
-            if ($search && is_array($search)) {
-                $cleanSearch = array_filter($search, 'is_string');
-                if (!empty($cleanSearch)) {
-                    $innerQuery->orWhereIn('orders.status', $cleanSearch);
+        // --- 2.2 GESTION DU FILTRE CUMULÉ  ---
+        if ($recentOnly) {
+            $query->where(function (Builder $innerQuery) use ($search, $user) {
+                $innerQuery->whereIn('orders.id', function ($subQuery) use ($user) {
+                    $subQuery->select('logs.order_id')
+                        ->from('logs')
+                        ->whereDate('logs.created_at', '>', Carbon::today()->subDays(5))
+                        ->where('logs.author_id', $user->getId());
+                });
+
+                if ($search && is_array($search)) {
+                    $cleanSearch = array_filter($search, 'is_string');
+                    if (! empty($cleanSearch)) {
+                        $innerQuery->orWhereIn('orders.status', $cleanSearch);
+                    }
                 }
-            }
-        });
+            });
+        }
+
+        // --- 3. TRI FINAL DE SÉCURITÉ ---
+        $direction = $recentOnly ? 'desc' : 'asc';
+        $query->orderBy('orders.updated_at', $direction);
+
+        return $query->paginate(20, ['orders.*'], 'page', $page);
     }
 
-    // --- 3. TRI FINAL DE SÉCURITÉ ---
-    $direction = $recentOnly ? 'desc' : 'asc';
-    $query->orderBy('orders.updated_at', $direction);
-
-    return $query->paginate(20, ['orders.*'], 'page', $page);
-}
-
-    public function actionSentToSupplier($id) {
+    public function actionSentToSupplier($id)
+    {
         $request = request();
         $order = Order::findOrFail($id);
         $user = Auth::user();
@@ -883,10 +882,10 @@ class OrderController extends BaseController
         $message = 'Le bon de commande a été envoyé au fournisseur.';
 
         foreach ($deliveryDelays as $packageId => $deliveryDelay) {
-            if (!empty($deliveryDelay)) {
+            if (! empty($deliveryDelay)) {
                 $package = Package::find($packageId);
                 $package->setExpectedDeliveryTime($deliveryDelay);
-                $message .= " Délai de livraison annoncé pour le colis \"".$package->getName()."\" : ".$deliveryDelay.".";
+                $message .= ' Délai de livraison annoncé pour le colis "'.$package->getName().'" : '.$deliveryDelay.'.';
             }
         }
 

@@ -401,15 +401,13 @@
     supplierInput.addEventListener("blur", (event) => {
         const supplierName = event.target.value?.trim();
         event.target.value = supplierName;
-        console.log("supplier 0 : siret = "+suppliers[0].siret+" ; name = "+suppliers[0].company_name);
-        console.log("supplier name : "+supplierName);
         const supplierFound = suppliers.find((supplier) => supplier.company_name === supplierName || supplier.siret === supplierName);
         const supplierInputIsEmpty = supplierName === "";
 
         if (supplierInputIsEmpty || supplierFound) {
             document.getElementById('submitOrderCreation').disabled = false;
             unknownSupplierMessage.style.display = 'none';
-            if (supplierInputIsEmpty || supplierFound?.is_valid) {
+            if (supplierInputIsEmpty || supplierFound?.is_valid === '{{Supplier::VALIDITY_STATUS_VALIDATED}}') {
                 changeSupplierStatus(true);
                 askToAddSupplier.style.display = "none";
             } else if (!supplierInputIsEmpty) {
@@ -459,6 +457,6 @@
         const supplierFound = suppliers.find((supplier) => supplier.company_name === supplierName || supplier.siret === supplierName);
         const supplierInputIsEmpty = supplierName === "";
 
-        return newSupplierRadio.checked || (!supplierInputIsEmpty && !supplierFound?.is_valid);
+        return newSupplierRadio.checked || (!supplierInputIsEmpty && supplierFound?.is_valid !== '{{Supplier::VALIDITY_STATUS_VALIDATED}}');
     }
 </script>
