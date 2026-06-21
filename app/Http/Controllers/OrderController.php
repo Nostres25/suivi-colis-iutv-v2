@@ -17,6 +17,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Routing\Redirector;
+use App\Services\NotificationService;
+use App\Enums\NotificationReason;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -378,6 +380,8 @@ class OrderController extends BaseController
             $log = $logData['model'];
             session()->flash('success', $log->getContent());
 
+            NotificationService::notify(NotificationReason::COMMANDE_CREEE, $order, $user);
+
             return $this->viewOrders()->withErrors($logData['success'] ? null : "Le journal d'activité n'a pas pas été envoyé à cause d'un erreur");
 
         } catch (\Throwable $t) {
@@ -449,6 +453,8 @@ class OrderController extends BaseController
 
                 $order->save();
 
+                NotificationService::notify(NotificationReason::COMMANDE_MODIFIEE, $order, $user);
+
                 session()->flash('orderSuccess', 'La commande a été mise à jour !');
             } else {
                 session()->flash('orderError-'.$orderId, "Vous n'avez pas la permission de modifier cette commande");
@@ -517,6 +523,8 @@ class OrderController extends BaseController
             $log = $logData['model'];
             session()->flash('success', $log->getContent());
 
+            NotificationService::notify($isSigned ? NotificationReason::BON_DE_COMMANDE_SIGNE : NotificationReason::BON_DE_COMMANDE_PUBLIE, $order, $user);
+
             return $this->modalViewDetails($id)->withErrors($logData['success'] ? null : "Le journal d'activité n'a pas pas été envoyé à cause d'un erreur");
         } catch (\Throwable $th) {
             return $this->modalUploadPurchaseOrder($id)->withErrors('Une erreur inconnue est survenue à la publication du bon de commande.');
@@ -575,10 +583,7 @@ class OrderController extends BaseController
             $log = $logData['model'];
             session()->flash('success', $log->getContent());
 
-            if ($sendMail) {
-                $mailContent = str_replace('{coûtEnEuros}', Order::getFormattedCost($cost), $request['mailContent']);
-                error_log($mailContent);
-            }
+            NotificationService::notify(NotificationReason::COMMANDE_PAYEE, $order, $user);
 
             return $this->modalViewDetails($id)->withErrors($logData['success'] ? null : "Le journal d'activité n'a pas pas été envoyé à cause d'un erreur");
         } catch (\Throwable $th) {
@@ -650,13 +655,9 @@ class OrderController extends BaseController
         $logData = $order->sendLog($message, $user, $oldStatus);
         session()->flash('success', $message);
 
-        // Simulation d'envoi de mail si demandé (comme dans le reste du projet)
-        if ($sendMail) {
-            $mailContent = str_replace('{raison}', $reason ?? 'Raison non définie', $request->input('mailContent'));
-            error_log('Mail de refus : '.$mailContent);
-        }
+        $notifReason = ($about === 'purchaseOrderSignature') ? NotificationReason::SIGNATURE_REFUSEE : NotificationReason::DEVIS_REFUSE;
+        NotificationService::notify($notifReason, $order, $user, "Raison : $reason");
 
-        // Retourne vers la vue détaillée de la commande
         return $this->modalViewDetails($id);
     }
 
@@ -898,6 +899,8 @@ class OrderController extends BaseController
 
         session()->flash('success', $logData['model']->getContent());
 
+        NotificationService::notify(NotificationReason::ENVOYEE_FOURNISSEUR, $order, $user);
+
         return $this->modalViewDetails($id);
     }
 
@@ -1007,21 +1010,11 @@ class OrderController extends BaseController
             }
         }
 
-        $sendMail = request()->input('sendMail');
-        if ($sendMail) {
-            $mailContent = request()->input('mailContent');
-            if (! $nextStep) {
-                $mailContent = str_replace(' suite à une réponse du fournisseur', '', $mailContent);
-            }
-            error_log($mailContent);
-
-            // TODO mettre code pour mail auto
-        }
+        NotificationService::notify(NotificationReason::COLIS_MIS_A_JOUR, $order, $user);
 
         session()->flash(
             'success',
             "Les informations des colis de la commande N°{$order->getOrderNumber()} ont été mises à jour.",
-
         );
 
         return $this->modalViewDetails($id);
