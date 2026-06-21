@@ -46,9 +46,21 @@
                 @endif
 
 
-                {{-- BOUTON BASCULE VUE/EDITION --}}
-                @if($user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES) || ($user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && $userDepartments->contains($order->getDepartment())))
-                    <div class="d-flex justify-content-end mb-3">
+                {{-- BOUTONS D'ACTIONS --}}
+                <div class="d-flex justify-content-between mb-3">
+                    <div class="d-flex gap-2">
+                        @if(!$edit)
+                            <a href="{{ route('orders.generate.quote', ['id' => $order->getId()]) }}" class="btn btn-outline-primary btn-sm">
+                                <img src="{{ asset('icons/picture_as_pdf.svg') }}" alt="PDF" width="16" height="16" style="vertical-align: middle;">
+                                Generer le devis
+                            </a>
+                            <a href="{{ route('orders.generate.purchase-order', ['id' => $order->getId()]) }}" class="btn btn-outline-primary btn-sm">
+                                <img src="{{ asset('icons/picture_as_pdf.svg') }}" alt="PDF" width="16" height="16" style="vertical-align: middle;">
+                                Generer le bon de commande
+                            </a>
+                        @endif
+                    </div>
+                    @if($user->hasPermission(PermissionValue::MODIFIER_TOUTES_COMMANDES) || ($user->hasPermission(PermissionValue::MODIFIER_COMMANDES_DEPARTEMENT) && $userDepartments->contains($order->getDepartment())))
                         @if($edit)
                             <button class="btn btn-outline-secondary btn-sm btn-load-modal" id="returnViewOrderButton-{{$orderId}}" title="Annuler et retourner à l'affichage" type="button" data-url="{{ route('orders.modal.view-details', ['id' => $orderId, 'edit' => false]) }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
@@ -63,8 +75,8 @@
                                 </svg> Modifier
                             </button>
                         @endif
-                    </div>
-                @endif
+                    @endif
+                </div>
 
                 {{-- =================================================================== --}}
                 {{-- PARTIE VUE (LECTURE SEULE) --}}

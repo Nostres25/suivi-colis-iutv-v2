@@ -67,6 +67,12 @@ Route::post('/orders/create', [OrderController::class, 'submitNewOrder'])
 Route::get('/order/{id}/document/{type}', [OrderController::class, 'downloadDocument'])
     ->name('orders.download');
 
+// Routes de génération PDF
+Route::get('/order/{id}/generate/quote', [OrderController::class, 'generateQuotePdf'])
+    ->name('orders.generate.quote');
+Route::get('/order/{id}/generate/purchase-order', [OrderController::class, 'generatePurchaseOrderPdf'])
+    ->name('orders.generate.purchase-order');
+
 // suppliers modals get
 Route::get('/supplier/{id}/view-details', [SupplierController::class, 'modalViewDetails'])
     ->name('suppliers.modal.view-details');

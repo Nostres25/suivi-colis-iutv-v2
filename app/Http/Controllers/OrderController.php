@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderController extends BaseController
 {
@@ -1027,4 +1028,47 @@ class OrderController extends BaseController
     }
 
     public function modalDeliveredPackages(string $id) {}
+
+    public function generateQuotePdf(string $id)
+    {
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$this->canViewOrder($user, $order)) {
+            abort(403, "Vous n'avez pas accès à cette commande.");
+        }
+
+        $pdf = Pdf::loadView('pdf.quote', ['order' => $order]);
+
+        $filename = 'Devis_' . $order->getOrderNumber() . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    public function generatePurchaseOrderPdf(string $id)
+    {
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$this->canViewOrder($user, $order)) {
+            abort(403, "Vous n'avez pas accès à cette commande.");
+        }
+
+        $pdf = Pdf::loadView('pdf.purchase_order', ['order' => $order]);
+
+        $filename = 'BonDeCommande_' . $order->getOrderNumber() . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    private function canViewOrder(User $user, Order $order): bool
+    {
+        if ($user->hasPermission(PermissionValue::CONSULTER_TOUTES_COMMANDES)) {
+            return true;
+        }
+
+        $userDepartments = $user->getRoles()->filter(fn(Role $role) => $role->isDepartment());
+        return $user->hasPermission(PermissionValue::CONSULTER_COMMANDES_DEPARTMENT)
+            && $userDepartments->contains($order->getDepartment());
+    }
 }
