@@ -40,7 +40,11 @@ class LogResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('order.title')
-                    ->numeric()
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('content')
+                    ->searchable()
+                    ->limit(50)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('author.id')
                     ->numeric()
