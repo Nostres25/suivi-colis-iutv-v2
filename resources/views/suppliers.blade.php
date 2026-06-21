@@ -63,7 +63,9 @@
                 </svg>
                 Ajouter un fournisseur
             </button>
-            <x-suppliers.modal.supplierCreationModal :user="$user"/>
+            <div id="createSupplierModalContainer">
+                <x-suppliers.modal.supplierCreationModal :user="$user"/>
+            </div>
         @endif
 
         <div class="table-header mt-4">

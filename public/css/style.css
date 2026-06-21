@@ -279,3 +279,14 @@ section {
     color: white;
 }
 
+.fournisseurs-badge-pending {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background-color: #FFB300;
+    color: #212121;
+}
+
+

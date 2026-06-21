@@ -25,6 +25,9 @@ Route::post('/orders', [OrderController::class, 'submitNewOrder'])->name('orders
 Route::get('suppliers', [SupplierController::class, 'viewSuppliers']);
 Route::get('/suppliers/fetch/table', [SupplierController::class, 'fetchSuppliersTable'])
     ->name('suppliers.fetch.table');
+// suppliers post (create)
+Route::post('/suppliers', [SupplierController::class, 'create'])
+    ->name('suppliers.create');
 
 // orders modals get
 Route::get('/order/{id}/step-actions/upload-purchase-order', [OrderController::class, 'modalUploadPurchaseOrder'])
