@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SupplierResource\Pages;
-use App\Filament\Resources\SupplierResource\RelationManagers;
 use App\Models\Supplier;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -30,22 +29,27 @@ class SupplierResource extends Resource
                     ->required()
                     ->maxLength(14),
                 Forms\Components\TextInput::make('email')
+                    ->required()
                     ->email()
-                    ->maxLength(255)
-                    ->default(null),
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('phone_number')
+                    ->required()
                     ->tel()
-                    ->maxLength(255)
-                    ->default(null),
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('contact_name')
-                    ->maxLength(255)
-                    ->default(null),
-                Forms\Components\TextInput::make('speciality')
-                    ->maxLength(255)
-                    ->default(null),
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('address')
+                    ->required()
+                    ->maxLength(255),
                 Forms\Components\Textarea::make('note')
                     ->columnSpanFull(),
-                Forms\Components\Toggle::make('is_valid')
+                Forms\Components\Select::make('is_valid')
+                    ->options([
+                        Supplier::VALIDITY_STATUS_VALIDATED => 'Validé',
+                        Supplier::VALIDITY_STATUS_PENDING => 'En attente',
+                        Supplier::VALIDITY_STATUS_REFUSED => 'Refusé',
+                    ])
                     ->required(),
             ]);
     }
@@ -64,10 +68,8 @@ class SupplierResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('contact_name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('speciality')
+                Tables\Columns\TextColumn::make('is_valid')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_valid')
-                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

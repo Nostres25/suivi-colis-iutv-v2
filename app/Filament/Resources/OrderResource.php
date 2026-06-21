@@ -3,8 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
-use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Order;
+use Database\Seeders\Status;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -37,7 +37,7 @@ class OrderResource extends Resource
                 Forms\Components\TextInput::make('cost')
                     ->numeric()
                     ->default(null)
-                    ->prefix('$'),
+                    ->prefix('€'),
                 Forms\Components\TextInput::make('quote_num')
                     ->required()
                     ->maxLength(255),
@@ -50,7 +50,8 @@ class OrderResource extends Resource
                 Forms\Components\TextInput::make('path_delivery_note')
                     ->maxLength(255)
                     ->default(null),
-                Forms\Components\TextInput::make('status')
+                Forms\Components\Select::make('status')
+                    ->options(Status::getDisplayNamesDict())
                     ->required(),
                 Forms\Components\Select::make('author_id')
                     ->relationship('author', 'id')

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PackageResource\Pages;
-use App\Filament\Resources\PackageResource\RelationManagers;
 use App\Models\Package;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -29,10 +28,13 @@ class PackageResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\TextInput::make('tracking_number')
+                    ->required()
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('cost')
                     ->numeric()
                     ->default(null)
-                    ->prefix('$'),
+                    ->prefix('€'),
                 Forms\Components\TextInput::make('expected_delivery_time')
                     ->maxLength(255)
                     ->default(null),
@@ -48,6 +50,8 @@ class PackageResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('tracking_number')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('cost')
                     ->money()
