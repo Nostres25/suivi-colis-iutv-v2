@@ -311,7 +311,6 @@ class OrderController extends BaseController
                 }
 
             } else {
-                // TODO is_valid ne va plus être un boolean mais un string où il faut mettre la bonne valeur
                 $supplier = new Supplier([
                     'company_name' => $request['companyName'],
                     'siret' => $request['siret'],
@@ -776,13 +775,15 @@ class OrderController extends BaseController
                 WHEN orders.status = ? THEN 3
                 WHEN orders.status = ? THEN 4
                 WHEN orders.status = ? THEN 5
-                ELSE 6
+                WHEN orders.status = ? THEN 6
+                ELSE 7
             END', [
                     Status::SERVICE_FAIT->value,
                     Status::DEVIS->value,
                     Status::BON_DE_COMMANDE_NON_SIGNE->value,
                     Status::BON_DE_COMMANDE_REFUSE->value,
                     Status::LIVRE_ET_PAYE->value,
+                    Status::EN_ATTENTE_VALIDATION_FOURNISSEUR,
                 ]);
 
             } elseif ($isResponsableColis) {
@@ -801,13 +802,16 @@ class OrderController extends BaseController
                 WHEN orders.status = ? AND orders.author_id = ? THEN 1
                 WHEN orders.status IN (?, ?, ?) THEN 2
                 WHEN orders.status IN (?, ?, ?, ?) THEN 3
-                ELSE 4
+                WHEN orders.status IN (?) THEN 4
+                ELSE 5
             END';
 
                 $query->orderByRaw($sqlSort, [
                     Status::BROUILLON->value, $user->getId(),
+                    // TODO pour les refusés il faut que ça parte de la priorité au bout d'un moment
                     Status::DEVIS_REFUSE->value, Status::BON_DE_COMMANDE_REFUSE->value, Status::COMMANDE_REFUSEE->value,
                     Status::BON_DE_COMMANDE_SIGNE->value, Status::COMMANDE->value, Status::COMMANDE_AVEC_REPONSE->value, Status::PARTIELLEMENT_LIVRE->value,
+                    Status::EN_ATTENTE_VALIDATION_FOURNISSEUR,
                 ]);
             }
         }

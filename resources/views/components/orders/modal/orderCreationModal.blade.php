@@ -3,16 +3,15 @@
 @use(Illuminate\Support\ViewErrorBag)
 
 <!-- Modal de création de commande -->
-{{-- TODO ajouter un message d'avertissement de validation de formulaire --}}
-{{--TODO: Il n'est pas possible de définir une langue par défaut bootstrap mais on peut changer la valeur des attribtuts (notamment pour le message qui apparaît quand on valide sans remplir les champs requis : https://stackoverflow.com/questions/23731862/how-can-i-set-bootstrap-language-manually--}}
-{{--TODO pour traduire le message "champ requis", la solution de l'attribut "oninvalid="this.setCustomValidity('Veuillez remplir un titre de commande avant de valider !')" sur l'input ne fonctionne pas. Peut-être trouver une solution (pas prioritaire)--}}
+{{--TODO faire la nuance entre fournisseur en attente et refusé--}}
+
 
 @php
     $askExistantSupplier = !isset($newOrExistantSupplierRadio) || @$newOrExistantSupplierRadio == 'existant';
     $askNewSupplier = @$newOrExistantSupplierRadio == 'new';
 
     $currentSupplier = !isset($supplier_name) ? null :  $suppliers->first(function(Supplier $supplier) use ($supplier_name) {return $supplier->getCompanyName() == $supplier_name;});
-    $isCurrentSupplierNotValid = $askNewSupplier || ($currentSupplier && !$currentSupplier->isValid());
+    $isCurrentSupplierNotValid = $askNewSupplier || (isset($currentSupplier) && !$currentSupplier->isValid());
 
     /* @var Illuminate\Support\ViewErrorBag $errors */
 @endphp
