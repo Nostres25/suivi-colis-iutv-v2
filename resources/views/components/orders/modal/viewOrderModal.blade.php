@@ -51,11 +51,11 @@
                     <div class="d-flex gap-2">
                         @if(!$edit)
                             <a href="{{ route('orders.generate.quote', ['id' => $order->getId()]) }}" class="btn btn-outline-primary btn-sm">
-                                <img src="{{ asset('icons/picture_as_pdf.svg') }}" alt="PDF" width="16" height="16" style="vertical-align: middle;">
+                                <img src="{{ asset('icons/picture_as_pdf.jpg') }}" alt="PDF" width="16" height="16" style="vertical-align: middle;">
                                 Generer le devis
                             </a>
                             <a href="{{ route('orders.generate.purchase-order', ['id' => $order->getId()]) }}" class="btn btn-outline-primary btn-sm">
-                                <img src="{{ asset('icons/picture_as_pdf.svg') }}" alt="PDF" width="16" height="16" style="vertical-align: middle;">
+                                <img src="{{ asset('icons/picture_as_pdf.jpg') }}" alt="PDF" width="16" height="16" style="vertical-align: middle;">
                                 Generer le bon de commande
                             </a>
                         @endif
