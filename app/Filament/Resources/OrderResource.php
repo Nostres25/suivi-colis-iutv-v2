@@ -73,16 +73,13 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('supplier.id')
                     ->numeric()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->limit(25)
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('cost')
                     ->money()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quote_num')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('path_quote')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('path_purchase_order')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('path_delivery_note')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status'),
                 Tables\Columns\TextColumn::make('created_at')
