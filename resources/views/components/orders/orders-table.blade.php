@@ -37,7 +37,7 @@
             <td class="d-none d-sm-table-cell"><strong>{{ $order->getDepartment()->getName() }}</strong><br></td>
             <td class="ps-0 pe-0">{{ $order->getTitle() }} <span class="d-table-cell d-sm-none">({{$order->getDepartment()->getName()}})</span></td>
             <td>
-                <span class="orders-status-badge" title="{{$order->getStatus()->getDescription()}}">{{ $order->getStatus() }}</span><br>
+                <span class="orders-status-badge" title="{{$order->getStatus()->getDescription()}}">{{ $order->getStatus()->getDisplayName() }}</span><br>
             </td>
             {{-- Mettre des petties icones --}}
             <td class="d-none d-sm-table-cell">
