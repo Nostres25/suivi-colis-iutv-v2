@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
 // orders get
-Route::get('/', [OrderController::class, 'viewOrders']);
+Route::get('/', [OrderController::class, 'viewOrders'])->name('home');
+Route::get('/dashboard', [OrderController::class, 'viewDashboard'])->name('dashboard');
 Route::get('/orders', [OrderController::class, 'viewOrders'])->name('orders');
 Route::get('/orders', [OrderController::class, 'viewOrders'])->name('orders.index');
 Route::get('/orders/fetch/table', [OrderController::class, 'fetchOrdersTable'])

@@ -19,12 +19,13 @@
     @yield('head')
 </head>
 <body>
-<header class="app-header">
-    <div id="navbar-container">
-        <x-base.nav></x-base.nav>
-        <x-base.alert></x-base.alert>
-    </div>
 
+<div id="navbar-container">
+    <x-base.nav></x-base.nav>
+    <x-base.alert></x-base.alert>
+</div>
+
+<header class="app-header">
     <div class="page-header">
         <div class="container page-header-inner">
             <div class="page-header-content">
@@ -32,7 +33,7 @@
             </div>
 
             <div class="page-header-brand d-none d-md-flex">
-                <img src="{{ asset('217.png') }}" alt="Logo Sorbonne Paris Nord">
+                <img src="{{ asset('217.png') }}" alt="Logo IUT de Villetaneuse">
             </div>
         </div>
     </div>

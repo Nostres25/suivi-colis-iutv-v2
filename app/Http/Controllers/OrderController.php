@@ -22,10 +22,78 @@ class OrderController extends BaseController
 {
     // TODO Annotation pour utiliser la fonction auth() de AuthController pour chaque page
     // Routes GET
-    public function viewOrders(?string $alertMsg = null): View|Response|RedirectResponse|Redirector
+    public function viewDashboard(): View|Response|RedirectResponse|Redirector
     {
-        $request = request();
+        $user = Auth::user();
+
+        $dashboardOrders = $this->fetchDashboardOrders($user);
+
+        $today = now()->startOfDay();
+        $weekStart = now()->startOfWeek();
+
+        $dashboardStats = [
+            'treatedToday' => $dashboardOrders
+                ->filter(fn (Order $order) =>
+                    $order->getStatus(true) === Status::LIVRE_ET_PAYE->value
+                    && $order->updated_at
+                    && $order->updated_at->greaterThanOrEqualTo($today)
+                )
+                ->count(),
+
+            'treatedWeek' => $dashboardOrders
+                ->filter(fn (Order $order) =>
+                    $order->getStatus(true) === Status::LIVRE_ET_PAYE->value
+                    && $order->updated_at
+                    && $order->updated_at->greaterThanOrEqualTo($weekStart)
+                )
+                ->count(),
+
+            'toProcess' => $dashboardOrders
+                ->filter(fn (Order $order) => in_array($order->getStatus(true), [
+                    Status::DEVIS->value,
+                    Status::SERVICE_FAIT->value,
+                ]))
+                ->count(),
+
+            'quotesToCheck' => $dashboardOrders
+                ->filter(fn (Order $order) => $order->getStatus(true) === Status::DEVIS->value)
+                ->count(),
+
+            'paymentsPending' => $dashboardOrders
+                ->filter(fn (Order $order) => $order->getStatus(true) === Status::SERVICE_FAIT->value)
+                ->count(),
+        ];
+
+        $dashboardPriorities = $dashboardOrders
+            ->filter(fn (Order $order) => in_array($order->getStatus(true), [
+                Status::DEVIS->value,
+                Status::SERVICE_FAIT->value,
+            ]))
+            ->sortBy('updated_at')
+            ->take(5);
+
+        $dashboardRecent = $dashboardOrders
+            ->sortByDesc('updated_at')
+            ->take(5);
+
+        $suppliers = Supplier::all(['id', 'company_name', 'is_valid']);
+
+        return view('dashboard', [
+            'user' => $user,
+            'dashboardStats' => $dashboardStats,
+            'dashboardPriorities' => $dashboardPriorities,
+            'dashboardRecent' => $dashboardRecent,
+            'validSupplierNames' => $suppliers->where('is_valid', true)->map(fn (Supplier $supplier) => $supplier->getCompanyName())->values()->toArray(),
+            'userDepartments' => $user->getRoles()->filter(fn (Role $role) => $role->isDepartment()),
+            'search' => null,
+        ]);
+    }
+    public function viewOrders(Request $request, ?string $alertMsg = null): View|Response|RedirectResponse|Redirector
+    {
         $search = $request->input('search');
+        $status = $request->input('status');
+        $dashboardFilter = $request->input('dashboard_filter');
+        $updatedFrom = $request->input('updated_from');
         $page = $request->input('page');
 
         /* @var User $user */
@@ -34,7 +102,14 @@ class OrderController extends BaseController
         $userPermissions = $user->getPermissions(); // Récupération d'un dictionnaire des permissions pour simplifier la vérification de permissions
         $userDepartments = $userRoles->filter(fn (Role $role) => $role->isDepartment());
 
-        $orders = $this->fetchOrders($user, $page, $search)->withQueryString();
+        $orders = $this->fetchOrders(
+            $user,
+            $page,
+            $search,
+            $status,
+            $dashboardFilter,
+            $updatedFrom
+        )->withQueryString();
 
         $suppliers = Supplier::all(['id', 'company_name', 'is_valid']); // Récupération uniquement des informations utiles à propos des fournisseurs
 
@@ -42,6 +117,9 @@ class OrderController extends BaseController
         return view('orders', [
             'user' => $user,
             'orders' => $orders,
+            'status' => $status,
+            'dashboardFilter' => $dashboardFilter,
+            'updatedFrom' => $updatedFrom,
             'validSupplierNames' => $suppliers->where('is_valid', true)->map(fn (Supplier $supplier) => $supplier->getCompanyName())->values()->toArray(),
             'userDepartments' => $userDepartments,
             'search' => $search, // Variable pour la vue
@@ -54,9 +132,10 @@ class OrderController extends BaseController
         $user = Auth::user();
         $request = request();
         $search = $request->input('search');
+        $status = $request->input('status');
 
         // Récupération des commandes
-        $orders = $this->fetchOrders($user, $request->input('page'), $search);
+        $orders = $this->fetchOrders($user, $request->input('page'), $search, $status);
 
         // Redéfinition de l'URL des boutons de navigation afin de pointer vers la page des commandes et non vers la route pour actualiser la table
         $orders->withPath('/orders')->withQueryString();
@@ -394,7 +473,35 @@ class OrderController extends BaseController
 
     // Autres fonctions
 
-    public function fetchOrders(User $user, string|int|null $page, ?string $search): AbstractPaginator
+    private function fetchDashboardOrders(User $user)
+    {
+        $userRoles = $user->getRoles();
+        $userPermissions = $user->getPermissions();
+        $userDepartments = $userRoles->filter(fn (Role $role) => $role->isDepartment());
+
+        $query = Order::query();
+
+        if (! $user->hasPermission(PermissionValue::CONSULTER_TOUTES_COMMANDES)) {
+            $query->where(function (Builder $q) use ($userDepartments, $userPermissions) {
+                $userDepartments->each(function (Role $department) use ($q, $userPermissions) {
+                    if ($userPermissions[PermissionValue::CONSULTER_COMMANDES_DEPARTMENT->value]) {
+                        $q->orWhere('department_id', $department->getId());
+                    }
+                });
+            });
+        }
+
+        return $query->get();
+    }
+
+    public function fetchOrders(
+        User $user,
+        string|int|null $page,
+        ?string $search,
+        ?string $status = null,
+        ?string $dashboardFilter = null,
+        ?string $updatedFrom = null
+    ): AbstractPaginator
     {
 
         // TODO réduire le nombre de requêtes et voir à propos du cache (je pense qu'on ne fera pas de cache mais on opti les requêtes)
@@ -501,6 +608,25 @@ class OrderController extends BaseController
             $query->orderByRaw($sqlSort, [$user->getId()]);
             $query->orderByRaw($sqlSort, [$user->getId()]);
         }
+
+
+        // Filtre par statut venant du dashboard
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($dashboardFilter === 'to_process') {
+            $query->whereIn('status', [
+                Status::DEVIS->value,
+                Status::SERVICE_FAIT->value,
+            ]);
+        }
+
+        if ($updatedFrom) {
+            $query->whereDate('updated_at', '>=', $updatedFrom);
+        }
+
 
         // 2.1 Filtre de recherche (si rempli)
         if ($search) {

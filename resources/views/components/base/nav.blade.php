@@ -24,7 +24,7 @@
             </svg>
             Scan
         </button>
-        <a class="navbar-brand" href="/">Suivi des colis IUTV</a>
+        <a class="navbar-brand" href="{{ route('orders.index') }}">Suivi des colis IUTV</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -32,13 +32,18 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-xl-0">
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ route('dashboard') }}">
+                        Tableau de bord
+                    </a>
+                </li>
+                <li class="nav-item">
                     <div class="d-flex">
-                        <a class="nav-link pe-0 active" href="/">Commandes</a>
+                        <a class="nav-link pe-0 active" href="{{ route('orders.index') }}">Commandes</a>
                         <div class="dropdown">
                             <a class="nav-link dropdown-toggle ps-2" href="/" role="button" data-bs-toggle="dropdown"
                                aria-expanded="false"></a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item active" href="/">Voir les commandes</a></li>
+                                <li><a class="dropdown-item active" href="{{ route('orders.index') }}">Voir les commandes</a></li>
                                 <li><a class="dropdown-item" href="/orders?search=DEVIS">Voir les devis</a></li>
                                 <li><a class="dropdown-item" href="/orders?search=BON_DE_COMMANDE">Voir les bons de
                                         commandes</a></li>
@@ -49,6 +54,7 @@
                         </div>
                     </div>
                 </li>
+
                 <li class="nav-item">
                     <a class="nav-link" href="/suppliers">Fournisseurs</a>
                 </li>

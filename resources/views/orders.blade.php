@@ -1,4 +1,13 @@
 @extends('base')
+@section('header')
+    <div class="orders-hero-content">
+        <span class="hero-kicker">Commandes</span>
+
+        <h1>Commandes</h1>
+
+        <p>Liste des commandes, devis et bons de commande.</p>
+    </div>
+@endsection
 @section('content')
     @use(Database\Seeders\Status)
     @use(Database\Seeders\PermissionValue)
@@ -37,14 +46,20 @@
             <p>Devis et bons de commandes</p>
         </div>
 
-        <div id="orders-table-container"
-             data-url="{{ route('orders.fetch.table', ['search' => $search, 'page' => $orders->currentPage()]) }}">
-            <x-orders.orders-table
-                :orders="$orders"
-                :user="$user"
-                :userDepartments="$userDepartments"
-            />
-        </div>
+            <div id="orders-table-container"
+                 data-url="{{ route('orders.fetch.table', [
+        'search' => $search,
+        'status' => $status ?? null,
+        'dashboard_filter' => $dashboardFilter ?? null,
+        'updated_from' => $updatedFrom ?? null,
+        'page' => $orders->currentPage()
+     ]) }}">
+                <x-orders.orders-table
+                    :orders="$orders"
+                    :user="$user"
+                    :userDepartments="$userDepartments"
+                />
+            </div>
     </section>
 @endsection
 

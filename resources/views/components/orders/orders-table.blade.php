@@ -4,7 +4,6 @@
 @use(App\Models\Order)
 
 <table class="table orders-table align-middle mb-0">
-    {{ $orders->links()}}
     <caption>
         @if ($user->hasPermission(PermissionValue::CONSULTER_TOUTES_COMMANDES))
             Liste des commandes
@@ -181,4 +180,7 @@
     @endforeach
     </tbody>
 </table>
-{{ $orders->links()}}
+
+<div class="orders-pagination mt-3">
+    {{ $orders->links() }}
+</div>
