@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Supplier;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Supplier>
+ * @extends Factory<Supplier>
  */
 class SupplierFactory extends Factory
 {
@@ -25,7 +25,13 @@ class SupplierFactory extends Factory
             'contact_name' => fake()->name(),
             'speciality' => fake()->domainWord(),
             'note' => fake()->sentences(rand(1, 15), true),
-            'is_valid' => fake()->boolean(),
+            'is_valid' => fake()->randomElement([
+                Supplier::VALIDITY_STATUS_VALIDATED,
+                Supplier::VALIDITY_STATUS_PENDING,
+                Supplier::VALIDITY_STATUS_REFUSED,
+            ]),
+            'address' => fake()->address(),
+
         ];
     }
 }

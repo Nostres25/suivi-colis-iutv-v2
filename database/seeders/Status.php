@@ -17,6 +17,7 @@ enum Status: string
 { // états possibles de la commande (triés dans l'ordre) :
 
     case BROUILLON = 'BROUILLON';
+    case EN_ATTENTE_VALIDATION_FOURNISSEUR = 'EN_ATTENTE_VALIDATION_FOURNISSEUR';
     case DEVIS = 'DEVIS'; // (première étape)
     case DEVIS_REFUSE = 'DEVIS_REFUSE';
     case BON_DE_COMMANDE_NON_SIGNE = 'BON_DE_COMMANDE_NON_SIGNE';
@@ -38,6 +39,7 @@ enum Status: string
     public static function getDescriptions(): string
     {
         return "
+        - EN_ATTENTE_VALIDATION_FOURNISSEUR : Commande en attente de validation de son fournisseur par le service financier. Si le fournisseur est validé, la commande passe à l'état de devis. Sinon si le fournisseur est refusé, la commande passe à l'état de devis refusé.
         - BROUILLON : Commande enregistrée à l'état de brouillon. Mis en avant seulement pour l'auteur de la commande.
         - DEVIS : Commande à l'état de devis. En attente d'un bon de commande (première étape).
         - DEVIS_REFUSE : À l'état de devis. Le service financier a refusé de faire un bon de commande.
@@ -56,6 +58,7 @@ enum Status: string
     public static function getDescriptionsDict(): array
     {
         return [
+            Status::EN_ATTENTE_VALIDATION_FOURNISSEUR->value => "Commande en attente de validation de son fournisseur par le service financier. Si le fournisseur est validé, la commande passe à l'état de devis. Sinon si le fournisseur est refusé, la commande passe à l'état de devis refusé.",
             Status::BROUILLON->value => "Commande enregistrée à l'état de brouillon. Mis en avant seulement pour l'auteur de la commande.",
             Status::DEVIS->value => "Commande à l'état de devis. En attente d'un bon de commande (première étape).",
             Status::DEVIS_REFUSE->value => "À l'état de devis. Le service financier a refusé de faire un bon de commande.",
@@ -75,5 +78,30 @@ enum Status: string
     public function getDescription(): string
     {
         return Status::getDescriptionsDict()[$this->value];
+    }
+
+    public static function getDisplayNamesDict(): array
+    {
+        return [
+            Status::EN_ATTENTE_VALIDATION_FOURNISSEUR->value => 'En attente de validation du fournisseur',
+            Status::BROUILLON->value => 'Brouillon',
+            Status::DEVIS->value => 'Devis',
+            Status::DEVIS_REFUSE->value => 'Devis refusé',
+            Status::BON_DE_COMMANDE_NON_SIGNE->value => 'Bon de commande non signé',
+            Status::BON_DE_COMMANDE_REFUSE->value => 'Bon de commande refusé',
+            Status::BON_DE_COMMANDE_SIGNE->value => 'Bon de commande signé',
+            Status::COMMANDE->value => 'Commandé',
+            Status::COMMANDE_REFUSEE->value => 'Commande refusée',
+            Status::COMMANDE_AVEC_REPONSE->value => 'Commande en cours',
+            Status::PARTIELLEMENT_LIVRE->value => 'Commande partiellement livrée',
+            Status::SERVICE_FAIT->value => 'Service fait (livré)',
+            Status::LIVRE_ET_PAYE->value => 'Livré et payé',
+            Status::ANNULE->value => 'Commande annulée',
+        ];
+    }
+
+    public function getDisplayName(): string
+    {
+        return Status::getDisplayNamesDict()[$this->value];
     }
 }

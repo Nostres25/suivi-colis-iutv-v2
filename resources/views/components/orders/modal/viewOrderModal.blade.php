@@ -70,6 +70,21 @@
                         {{session('orderSuccess')}}
                     </div>
                 @endif
+                @if (session()->exists('success'))
+                    <div class="alert alert-success mb-0">
+                        {{session('success')}}
+                    </div>
+                @endif
+                @if ($errors->any())
+                    <div class="alert alert-danger mb-0 pb-0">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
 
                 {{-- BOUTON BASCULE VUE/EDITION --}}
                 @if($edit && $canEditOrder)
@@ -252,7 +267,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="text-muted small fw-bold text-uppercase ps-1">Coût Total (€)</label>
-                                    <input type="number" step="0.01" name="cost" class="mb-0 form-control" value="{{ $order->getCost() }}"/>
+                                    <input type="number" step="0.01" min="0" maxlength="12" max="2147483647" name="cost" class="mb-0 form-control" value="{{ $order->getCost() }}"/>
                                 </div>
                             </div>
 

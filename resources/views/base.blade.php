@@ -19,35 +19,43 @@
     @yield('head')
 </head>
 <body>
-<header class="app-header">
-    <div id="navbar-container">
-        <x-base.nav></x-base.nav>
+
+<header class="sticky-top bg-white">
+    <div id="navbar-container" class="navbar-container">
+        <x-base.nav :user="$user"></x-base.nav>
         <x-base.alert></x-base.alert>
-    </div>
-
-    <div class="page-header">
-        <div class="container page-header-inner">
-            <div class="page-header-content">
-                @yield('header')
-            </div>
-
-            <div class="page-header-brand d-none d-md-flex">
-                <img src="{{ asset('217.png') }}" alt="Logo Sorbonne Paris Nord">
-            </div>
+        <div class="alert-container">
+            @if (session()->exists('success-login'))
+                <div class="alert alert-success mb-0">
+                    {{session('success-login')}}
+                </div>
+            @endif
         </div>
+        @yield('alert')
     </div>
 </header>
+
+<div class="page-header mb-5">
+    <div class="container d-flex flex-row-reverse align-items-center justify-content-between">
+        <img src="{{ asset('217.png') }}" alt="Logo Sorbonne" style="height: 70px; width: auto; margin-left: 20px;">
+        <div>
+            @yield('header')
+        </div>
+    </div>
+</div>
+
 <main>
     @yield('content')
     <div id="modal-container"></div>
 </main>
+
 <footer>
     @yield('footer')
     <div class="bg-gray-50 px-8 py-5 text-center border-t">
         <p class="text-sm font-semibold text-gray-700">BUT2 Informatique - IUT de Villetaneuse</p>
-        <p class="text-xs text-gray-500 mt-1">Projet SAE - Suivi de Colis • 2024-2025</p>
+        <p class="text-xs text-gray-500 mt-1">Projet SAE - Suivi de Colis • 2025-2026</p>
     </div>
-{{--    <div class="min-h-screen bg-gray-50 py-8">--}}
+    {{--    <div class="min-h-screen bg-gray-50 py-8">--}}
 {{--        <div class="mx-auto max-w-5xl">--}}
 
 {{--            <div class="bg-white shadow-lg rounded-xl overflow-hidden">--}}
@@ -58,14 +66,8 @@
 {{--    </div>--}}
 </footer>
 </body>
-<script>
-    {{--let modalToOpenId = '{{$modalToOpen}}';--}}
-    {{--if (modalToOpenId) {--}}
-    {{--    console.debug(modalToOpenId);--}}
-    {{--    let modalToOpen = new bootstrap.Modal(document.getElementById(modalToOpenId));--}}
-    {{--    modalToOpen.show();--}}
-    {{--}--}}
 
+<script>
     // --------------------------------------------------------------------------------
     // CONFIGURATION : Mapping des Enums PHP vers JS avec synchronisation automatique
     // --------------------------------------------------------------------------------
@@ -77,5 +79,5 @@
 </script>
 <script src="{{asset('js/global_functions.js')}}"></script>
 <script src="{{asset('js/base.js')}}"></script>
-@yield('javascript')
+@yield('js')
 </html>

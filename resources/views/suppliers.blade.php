@@ -1,5 +1,10 @@
 @extends('base')
 
+@section('head')
+    <script>
+        let suppliers = null;
+    </script>
+@endsection
 
 @section('header')
     <div class="container d-block">
@@ -58,7 +63,9 @@
                 </svg>
                 Ajouter un fournisseur
             </button>
-            <x-suppliers.modal.supplierCreationModal :user="$user"/>
+            <div id="createSupplierModalContainer">
+                <x-suppliers.modal.supplierCreationModal :user="$user"/>
+            </div>
         @endif
 
         <div class="table-header mt-4">
@@ -82,6 +89,6 @@
 @endsection
 
 
-@section('javascript')
+@section('js')
     <script src="{{ asset('js/suppliers.js') }}"></script>
 @endsection

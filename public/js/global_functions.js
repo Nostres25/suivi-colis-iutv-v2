@@ -1,26 +1,32 @@
 function displayAlert(message, type = 'success') {
 
-    const alertContainer = document.querySelector('.alert-container');
-    const divAlert = document.createElement('DIV');
+    if (type === 'error' && !message) message = 'Une erreur inconnue est survenue';
 
-    divAlert.className = "alert mb-0";
+    const alertContainers = document.getElementsByClassName('alert-container');
 
-    switch (type) {
-        case 'error': {
-            divAlert.className += " alert-danger";
-            break;
-        }
-        case 'success': {
-            divAlert.className += " alert-success";
-            break;
+    for (let i = 0; i < alertContainers.length; i++) {
+        const alertContainer = alertContainers[i];
+        const divAlert = document.createElement('DIV');
+
+        divAlert.className = "alert mb-0";
+
+        switch (type) {
+            case 'error': {
+                divAlert.className += " alert-danger";
+                break;
+            }
+            case 'success': {
+                divAlert.className += " alert-success";
+                break;
+            }
+
+            default: {
+                divAlert.className += " alert-success";
+                break;
+            }
         }
 
-        default: {
-            divAlert.className += " alert-success";
-            break;
-        }
+        divAlert.textContent = message;
+        alertContainer.append(divAlert);
     }
-
-    divAlert.textContent = message;
-    alertContainer.append(divAlert);
 }

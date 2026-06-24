@@ -35,8 +35,8 @@ class ProfileController extends BaseController
 
         // On garde l'ancien état pour comparer
         $before = [
-            'email' => $user->email,
-            'phone_number' => $user->phone_number,
+            'email' => $user->getEmail(),
+            'phone_number' => $user->getPhoneNumber(),
         ];
 
         $user->fill($validated);
@@ -51,7 +51,7 @@ class ProfileController extends BaseController
         $user->save();
 
         // Envoi d'un mail uniquement si on a une adresse email
-        if (!empty($user->email)) {
+        if (! empty($user->getEmail())) {
             $changes = [];
             foreach (['email', 'phone_number'] as $field) {
                 if (($before[$field] ?? null) !== ($user->$field ?? null)) {
@@ -59,9 +59,13 @@ class ProfileController extends BaseController
                 }
             }
 
+            if (config('app.debug')) {
+                error_log('envoi de l email à '.$user->getEmail());
+            }
+
             // Mail simple (sans Mailable pour rester léger)
             Mail::raw($this->formatChangesMail($user, $changes), function ($message) use ($user) {
-                $message->to($user->email)
+                $message->to($user->getEmail())
                     ->subject('Modification de votre profil - Suivi des colis IUTV');
             });
 
@@ -78,10 +82,10 @@ class ProfileController extends BaseController
     {
         $lines = [];
         $lines[] = "Bonjour {$user->getFullName()},";
-        $lines[] = "";
-        $lines[] = "Une modification a été effectuée sur votre profil (Suivi des colis IUTV).";
-        $lines[] = "";
-        $lines[] = "Changements :";
+        $lines[] = '';
+        $lines[] = 'Une modification a été effectuée sur votre profil (Suivi des colis IUTV).';
+        $lines[] = '';
+        $lines[] = 'Changements :';
         foreach ($changes as $field => $diff) {
             $label = match ($field) {
                 'email' => 'Email',
@@ -90,11 +94,11 @@ class ProfileController extends BaseController
             };
             $lines[] = "- {$label} : \"{$diff['before']}\" → \"{$diff['after']}\"";
         }
-        $lines[] = "";
-        $lines[] = "Si vous n’êtes pas à l’origine de cette modification, contactez un responsable.";
-        $lines[] = "";
-        $lines[] = "Cordialement,";
-        $lines[] = "Suivi des colis IUTV";
+        $lines[] = '';
+        $lines[] = 'Si vous n’êtes pas à l’origine de cette modification, contactez un responsable.';
+        $lines[] = '';
+        $lines[] = 'Cordialement,';
+        $lines[] = 'Suivi des colis IUTV';
 
         return implode("\n", $lines);
     }
