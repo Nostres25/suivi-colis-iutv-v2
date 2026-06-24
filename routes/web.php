@@ -56,6 +56,9 @@ Route::post('/order/{id}/step-actions/upload-purchase-order', [OrderController::
 Route::post('/order/{id}/step-actions/paid', [OrderController::class, 'actionOrderPaid'])
     ->name('orders.step-actions.paid');
 
+Route::delete('/order/{id}', [OrderController::class, 'deleteOrder'])
+    ->name('orders.delete');
+
 // EDIT ORDER
 Route::post('/order/{id}/view-details', [OrderController::class, 'editOrder'])
     ->name('orders.modal.view-details');
