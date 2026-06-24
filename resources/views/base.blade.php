@@ -21,7 +21,7 @@
 <body>
 
 <div id="navbar-container">
-    <x-base.nav></x-base.nav>
+    <x-base.nav :user="$user"></x-base.nav>
     <x-base.alert></x-base.alert>
 </div>
 

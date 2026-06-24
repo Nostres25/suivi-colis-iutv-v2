@@ -31,11 +31,13 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-xl-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('dashboard') }}">
-                        Tableau de bord
-                    </a>
-                </li>
+                @if($user->hasPermission(\Database\Seeders\PermissionValue::GERER_BONS_DE_COMMANDES))
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('dashboard') }}">
+                            Tableau de bord
+                        </a>
+                    </li>
+                @endif
                 <li class="nav-item">
                     <div class="d-flex">
                         <a class="nav-link pe-0 active" href="{{ route('orders.index') }}">Commandes</a>

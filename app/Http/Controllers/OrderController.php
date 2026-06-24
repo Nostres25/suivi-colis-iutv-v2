@@ -26,6 +26,10 @@ class OrderController extends BaseController
     {
         $user = Auth::user();
 
+        if (!$user->hasPermission(PermissionValue::GERER_BONS_DE_COMMANDES)) {
+            return redirect()->route('orders.index');
+        }
+
         $dashboardOrders = $this->fetchDashboardOrders($user);
 
         $today = now()->startOfDay();
