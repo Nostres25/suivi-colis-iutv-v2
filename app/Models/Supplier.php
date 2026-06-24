@@ -11,16 +11,11 @@ class Supplier extends Model
 {
     use HasFactory;
 
-    // protected $fillable = [
-    //     'company_name',
-    //     'siret',
-    //     'email',
-    //     'phone_number',
-    //     'contact_name',
-    //     'is_valid',
-    // ];
+    public const VALIDITY_STATUS_VALIDATED = 'validated';
+    public const VALIDITY_STATUS_PENDING = 'pending';
+    public const VALIDITY_STATUS_REFUSED = 'refused';
 
-    // Pas remplissable
+   
     protected $guarded = [
 
     ];
@@ -85,6 +80,11 @@ class Supplier extends Model
         return $this->attributes['contact_name'];
     }
 
+    public function getAddress(): ?string
+    {
+        return $this->attributes['address'];
+    }
+
     /**
      * Retourne la description des spécialités de l'entreprise fournisseur.
      *
@@ -106,14 +106,66 @@ class Supplier extends Model
     }
 
     /**
-     * Retourne true si le fournisseur est considéré comme valide, false sinon.
+     * Retourne le statut de validité du fournisseur.
+     *
+     * @return string // Statut du fournisseur
+     */
+    public function getValidityStatus(): string
+    {
+        return $this->attributes['is_valid'] ?? self::VALIDITY_STATUS_PENDING;
+    }
+
+    /**
+     * Retourne le libellé lisible du statut du fournisseur.
+     *
+     * @return string // Statut affichable du fournisseur
+     */
+    public function getValidityLabel(): string
+    {
+        return match ($this->getValidityStatus()) {
+            self::VALIDITY_STATUS_VALIDATED => 'Validé',
+            self::VALIDITY_STATUS_REFUSED => 'Refusé',
+            default => 'En attente',
+        };
+    }
+
+    /**
+     * Retourne la variante visuelle du statut du fournisseur.
+     *
+     * @return string // Classe visuelle du statut
+     */
+    public function getValidityBadgeClass(): string
+    {
+        return match ($this->getValidityStatus()) {
+            self::VALIDITY_STATUS_VALIDATED => 'valid',
+            self::VALIDITY_STATUS_REFUSED => 'invalid',
+            default => 'pending',
+        };
+    }
+
+    /**
+     * Retourne les statuts disponibles pour un fournisseur.
+     *
+     * @return array<string, string>
+     */
+    public static function validityOptions(): array
+    {
+        return [
+            self::VALIDITY_STATUS_VALIDATED => 'Validé',
+            self::VALIDITY_STATUS_PENDING => 'En attente',
+            self::VALIDITY_STATUS_REFUSED => 'Refusé',
+        ];
+    }
+
+    /**
+     * Retourne true si le fournisseur est considéré comme valide.
      * Un fournisseur valide est un fournisseur auprès duquel il est possible de commander.
      *
      * @return bool // Si le fournisseur est valide
      */
     public function isValid(): bool
     {
-        return $this->attributes['is_valid'];
+        return $this->getValidityStatus() === self::VALIDITY_STATUS_VALIDATED;
     }
 
     /**
@@ -191,6 +243,15 @@ class Supplier extends Model
         }
     }
 
+    public function setAddress(string $address, bool $save = true): void
+    {
+        if ($save) {
+            $this->setAttribute('address', $address);
+        } else {
+            $this->attributes['address'] = $address;
+        }
+    }
+
     /**
      * Définit la description des spécialités de l'entreprise fournisseur.
      *
@@ -221,14 +282,14 @@ class Supplier extends Model
         }
     }
 
+
     /**
-     * Définit si le fournisseur est considéré comme valide, false sinon.
-     * Un fournisseur valide est un fournisseur auprès duquel il est possible de commander.
+     * Définit le statut de validité du fournisseur.
      *
-     * @param  bool  $is_valid  true si le fournisseur est considéré comme valide, false sinon.
+     * @param  string  $is_valid  statut du fournisseur
      * @param  bool  $save  si la donnée doit directement être sauvegardée en base de données
      */
-    public function setValidity(bool $is_valid, bool $save = true): void
+    public function setValidity(string $is_valid, bool $save = true): void
     {
         if ($save) {
             $this->setAttribute('is_valid', $is_valid);

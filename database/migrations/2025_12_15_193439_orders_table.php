@@ -67,6 +67,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id')->autoIncrement();
             $table->foreignId('order_id')->constrained('orders', 'id')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('name');
+            $table->string('tracking_number')
+                ->nullable()
+                ->comment('Numéro de suivi du colis communiqué par le fournisseur');
             $table->decimal('cost', 12, 2)
                 ->nullable()
                 ->comment('Coût unitaire du colis');

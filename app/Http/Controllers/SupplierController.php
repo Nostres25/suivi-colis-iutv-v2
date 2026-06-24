@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\PermissionValue;
@@ -11,16 +10,23 @@ use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class SupplierController extends BaseController
 {
-    // Routes GET
+    // =========================================================================
+    // GET ROUTES (Listing & Views)
+    // =========================================================================
+
+    /**
+     * Renders the main suppliers list view page.
+     */
     public function viewSuppliers(): View|Response|RedirectResponse|Redirector
     {
         $request = request();
 
-        /* @var User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         $search = $request->input('search');
@@ -35,17 +41,18 @@ class SupplierController extends BaseController
         ]);
     }
 
+    /**
+     * Refreshes and returns just the HTML table slice component via AJAX.
+     */
     public function fetchSuppliersTable()
     {
-        // Récupérer les informations de la requête
         $user = Auth::user();
         $request = request();
         $search = $request->input('search');
 
-        // Récupérer les fournisseurs
         $suppliers = $this->fetchSuppliers($user, $request->input('page'), $search);
 
-        // Redéfinition de l'URL des boutons de navigation afin de pointer vers la page des fournisseurs et non vers la route pour actualiser la table
+        // Redirect URL inside navigation items to point back to standard routing index
         $suppliers->withPath('/suppliers')->withQueryString();
 
         return view('components.suppliers.suppliers-table', [
@@ -53,15 +60,16 @@ class SupplierController extends BaseController
         ]);
     }
 
-    // Routes GET modal
-
+    /**
+     * Renders detailed profile data within a modal element frame.
+     */
     public function modalViewDetails(string $id)
     {
         $user = Auth::user();
         $request = request();
 
-        /* @var Supplier $supplier */
-        $supplier = Supplier::where('id', $id)->first();
+        /** @var Supplier $supplier */
+        $supplier = Supplier::where('id', $id)->firstOrFail();
         $edit = $request['edit'];
 
         return view('components.suppliers.modal.viewSupplierModal', [
@@ -70,21 +78,21 @@ class SupplierController extends BaseController
             'supplierId' => $supplier->getId(),
             'edit' => $edit,
         ]);
-
     }
 
-    // Routes POST modal
+    /**
+     * Updates an existing supplier record profile entry.
+     */
     public function editSupplier(string $id)
     {
         $user = Auth::user();
         $request = request();
 
-        /* @var Supplier $supplier */
-        $supplier = Supplier::where('id', $id)->first();
+        /** @var Supplier $supplier */
+        $supplier = Supplier::where('id', $id)->firstOrFail();
         $edit = $request['edit'];
 
         if ($request->method() === 'POST') {
-            // TODO corriger le fait que le message erreur ou succès il disparait seulement au bout de 2 actualisations, pas une.
             if ($user->hasPermission(PermissionValue::NOTES_ET_COMMENTAIRES)) {
                 $note = $request['note'];
                 $supplier->setNote($note, false);
@@ -92,40 +100,25 @@ class SupplierController extends BaseController
             }
 
             if ($edit && $user->hasPermission(PermissionValue::GERER_FOURNISSEURS)) {
-                $companyName = $request['companyName'];
-                $email = $request['email'];
-                $phoneNumber = $request['phoneNumber'];
-                $siret = $request['siret'];
-                $isValid = $request['isValid'];
-                $speciality = $request['speciality'];
 
-                if (isset($companyName)) {
-                    $supplier->setCompanyName($companyName, false);
-                }
-                if (isset($email)) {
-                    $supplier->setEmail($email, false);
-                }
-                if (isset($phoneNumber)) {
-                    $supplier->setPhoneNumber($phoneNumber, false);
-                }
+                // Validation rapide des données entrantes pour éviter les crashs SQL
+                $validated = $request->validate([
+                    'siret' => 'required|string|size:14',
+                    'address' => 'required|string|max:255',
+                    'contactName' => 'required|string|max:255',
+                    'email' => 'required|email|max:255',
+                    'phoneNumber' => 'required|string|max:50',
+                    'speciality' => 'nullable|string|max:255',
+                    'isValid' => 'required|string',
+                ]);
 
-                if (isset($contactName)) {
-                    $supplier->setCompanyName($contactName, false);
-                }
-
-                if (isset($speciality)) {
-                    $supplier->setSpeciality($speciality, false);
-                }
-
-                if (isset($siret)) {
-                    $siretLength = strlen($siret);
-                    if ($siretLength > 14 || $siretLength < 14) {
-                        session()->flash('supplierError-'.$supplier->getId(), 'Le siret doit faire exactement 14 chiffres et non '.$siretLength.' chiffres');
-                    } else {
-                        $supplier->setSiret($siret, false);
-                    }
-                }
-                $supplier->setValidity((bool) $isValid, false);
+                $supplier->setCompanyName($request->input('companyName', $supplier->getCompanyName()), false);
+                $supplier->setEmail($validated['email'], false);
+                $supplier->setPhoneNumber($validated['phoneNumber'], false);
+                $supplier->setContactName($validated['contactName'], false);
+                $supplier->setAddress($validated['address'], false);
+                $supplier->setSiret($validated['siret'], false);
+                $supplier->setValidity($validated['isValid'], false);
 
                 session()->flash('supplierSuccess', 'Fournisseur mis à jour !');
             } else {
@@ -145,45 +138,117 @@ class SupplierController extends BaseController
             'supplierId' => $supplier->getId(),
             'edit' => $edit,
         ]);
-
     }
 
-    // Autres fonctions
+    /**
+     * Route POST - Crée un nouveau fournisseur.
+     * Accessible par le Service financier/Admin BD (via GERER_FOURNISSEURS)
+     * ou d'autres rôles disposant de la permission de demande d'ajout.
+     */
+    public function create(): RedirectResponse|View
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $request = request();
+
+        // Validation stricte via Permissions uniquement
+        $canManage = $user->hasPermission(PermissionValue::GERER_FOURNISSEURS);
+        $canRequest = $user->hasPermission(PermissionValue::DEMANDER_AJOUT_FOURNISSEUR);
+
+        $componentVars = array_merge([
+            'user' => $user,
+        ], $request->all());
+
+        if (! $canRequest) {
+            return view('components.suppliers.modal.supplierCreationModal', $componentVars)
+                ->withErrors("Accès refusé. Vous n'avez pas l'autorisation d'ajouter un fournisseur.");
+        }
+
+        $validated = Validator::make($request->all(), [
+            'companyName' => 'required|string|max:255|unique:suppliers,company_name',
+            'siret' => 'required|numeric|max_digits:14|min_digits:14|unique:suppliers,siret',
+            'email' => 'required|email|max:255',
+            'phoneNumber' => 'required|string|max:50',
+            'contactName' => 'required|string|max:255',
+            'address' => 'required|string|max:255', // Prise en compte du nouveau composant
+            'note' => 'nullable|string|max:65535',
+        ]);
+
+        if ($validated->fails()) {
+            return view('components.suppliers.modal.supplierCreationModal', $componentVars)
+                ->withErrors($validated);
+        }
+
+        try {
+            $supplier = new Supplier;
+            $supplier->setCompanyName($request['companyName'], false);
+            $supplier->setSiret($request['siret'], false);
+            $supplier->setEmail($request['email'], false);
+            $supplier->setPhoneNumber($request['phoneNumber'], false);
+            $supplier->setContactName($request['contactName'], false);
+            $supplier->setAddress($request['address'], false);
+
+            if (isset($request['note'])) {
+                $supplier->setNote($request['note'], false);
+            }
+
+            // Sécurité Backend absolue : Gestion du statut selon les droits réels
+            if ($canManage && $request->filled('isValid')) {
+                $isValid = $request->input('isValid');
+                $supplier->setValidity($isValid, false);
+            } else {
+                // Règle d'or : Passage forcé en "En attente" pour les utilisateurs de département / demandeurs
+                $supplier->setValidity(Supplier::VALIDITY_STATUS_PENDING, false);
+            }
+
+            $isSaved = $supplier->save();
+            if (! $isSaved) {
+                return view('components.suppliers.modal.supplierCreationModal', $componentVars)
+                    ->withErrors('Une erreur est survenue lors de la sauvegarde du nouveau fournisseur.');
+            }
+
+            session()->flash('success', "Le fournisseur \"{$supplier->getCompanyName()}\" au SIRET \"{$supplier->getSiret()}\" a été créé !");
+
+            return redirect()->route('orders.index');
+        } catch (\Throwable $th) {
+
+            if (config('app.debug')) {
+                error_log($th->getMessage());
+                error_log($th->getTraceAsString());
+            }
+
+            return view('components.suppliers.modal.supplierCreationModal', $componentVars)
+                ->withErrors("Une erreur inconnue est survenue lors de l'ajout du fournisseur");
+        }
+    }
+
+    // =========================================================================
+    // INTERNAL UTILITY FUNCTIONS
+    // =========================================================================
+
+    /**
+     * Query orchestrator containing complex sorting and pagination logic for suppliers lists.
+     */
     public function fetchSuppliers(User $user, int|string|null $page, ?string $search): LengthAwarePaginator
     {
-
-        $user = Auth::user();
-        $userRoles = $user->getRoles();
-        $userPermissions = Role::getPermissionsAsDict($userRoles);
-
-        // 1. Initialisation de la Query
         $query = Supplier::query();
 
         // ---------------------------------------------------------
-        // ETAPE 1 : TRI PAR VALIDITÉ (Reste identique)
+        // STEP 1: SORT BY VALIDITY STATUS PREFERENCE RULES
         // ---------------------------------------------------------
         $isFinancier = $user->hasPermission(PermissionValue::GERER_FOURNISSEURS);
 
         if ($isFinancier) {
-            // Service Financier : Non validés en premier
-            $query->orderBy('is_valid', 'asc');
+            // Service Financier: Pending requests process first
+            $query->orderByRaw("CASE is_valid WHEN 'pending' THEN 0 WHEN 'validated' THEN 1 WHEN 'refused' THEN 2 ELSE 3 END", []);
         } else {
-            // Autres : Validés en premier
-            $query->orderBy('is_valid', 'desc');
+            // Basic User Roles: Validated accounts surface first
+            $query->orderByRaw("CASE is_valid WHEN 'validated' THEN 0 WHEN 'pending' THEN 1 WHEN 'refused' THEN 2 ELSE 3 END", []);
         }
 
         // ---------------------------------------------------------
-        // ETAPE 2 : LE TRI "MÉLANGÉ" (Activité Globale)
+        // STEP 2: ORDER BY SYSTEM ACTIVITY PATTERNS
         // ---------------------------------------------------------
-
-        // Nous allons trier en utilisant une logique SQL brute (orderByRaw).
-        // La logique est : PRENDS LA PLUS GRANDE DATE ENTRE :
-        // 1. La date de modification du fournisseur (suppliers.updated_at)
-        // 2. La date de modification de sa dernière commande (sous-requête)
-
-        // NOTE : COALESCE est là pour gérer le cas où un fournisseur n'a AUCUNE commande.
-        // Dans ce cas, la sous-requête renvoie NULL, et on se rabat sur suppliers.updated_at.
-
         $sqlActivitySort = '
             GREATEST(
                 suppliers.updated_at,
@@ -195,13 +260,14 @@ class SupplierController extends BaseController
         ';
 
         if ($search) {
-            $query->where('company_name', 'LIKE', "%{$search}%")
-                ->orWhere('contact_name', 'LIKE', "%{$search}%")
-                ->orWhere('siret', 'LIKE', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('company_name', 'LIKE', "%{$search}%")
+                    ->orWhere('contact_name', 'LIKE', "%{$search}%")
+                    ->orWhere('siret', 'LIKE', "%{$search}%");
+            });
         }
-        $query->orderByRaw($sqlActivitySort);
+        $query->orderByRaw($sqlActivitySort, []);
 
-        // return suppliers pagination
         if (is_string($page)) {
             $page = intval($page);
         }

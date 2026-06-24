@@ -1,6 +1,7 @@
 @use(Database\Seeders\Status)
 @use(App\Models\Role)
 @use(App\Models\User)
+@use(App\Http\Controllers\BaseController)
 
 
 <div class="modal fade" id="addPurchaseOrderModal-{{$orderId}}" data-bs-keyboard="false" tabindex="-1"
@@ -17,6 +18,15 @@
                         {{session('purchaseOrderError-'.$orderId)}}
                     </div>
                 @endif
+                @if ($errors->any())
+                    <div class="alert alert-danger mb-0 pb-0">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <form id="addPurchaseOrder-{{$orderId}}" class="ajax-form" method="POST" enctype="multipart/form-data" action="{{route('orders.step-actions.upload-purchase-order', $orderId)}}" autocomplete="off">
                     @csrf
                     <input type="hidden" name="modalId" value="addPurchaseOrderModal-{{$orderId}}">
@@ -24,7 +34,10 @@
                     <p>Déposer un bon de commande pour la commande N°{{$order->getOrderNumber()}} : "{{$order->getTitle()}}" </p>
                     <label class="form-label fs-5">Sélectionnez un bon de commande :</label><br/>
                     <small>Fichiers acceptés : pdf, doc, docx jusqu'à 10MB</small>
-                    <input type="file" name="purchase_order" class="form-control mb-3" accept="*,.pdf,.docx,.doc" required>
+                    <input type="file" name="purchase_order" id="purchase_order" class="form-control mb-3 @error('purchase_order') is-invalid @enderror" accept="*,.pdf,.docx,.doc" value="{{ old('purchase_order') }}" required>
+{{--                    @error('purchase_order')--}}
+{{--                    <div class="alert alert-danger">{{ $message }}</div>--}}
+{{--                    @enderror--}}
 
                     <div class="d-flex justify-content-start" title="À cocher si le directeur de l'IUT a signé le bon de commande">
                         <input class="form-check-input me-2" type="checkbox" name="signed"
@@ -34,71 +47,25 @@
                         </label>
                     </div>
                     <hr/>
-                    <div class="d-flex justify-content-start" title="Cocher pour envoyer un mail automatique aux acteurs concernés lorsque le bon de commande sera déposé">
-                        <input class="form-check-input me-2" type="checkbox" name="sendMail"
-                               id="checkboxMail-{{$orderId}}" form="addPurchaseOrder-{{$orderId}}" checked>
-                        <label class="form-check-label" for="checkboxMail-{{$orderId}}">
-                            Envoyer un mail automatique
-                        </label>
-                    </div>
-                    <div id="mailOptionsDiv-{{$orderId}}">
-                        <label class="form-label fs-6"><a class="" data-bs-toggle="collapse"
-                                                                                            href="#mailOptions-{{$orderId}}" role="button"
-                                                                                            aria-expanded="false"
-                                                                                            aria-controls="mailOptions-{{$orderId}}">Mail automatique
-                                ></a></label>
-                        <div class="collapse" id="mailOptions-{{$orderId}}">
-                            <dl class="fw-light">
-                                Modifiez le contenu par défaut pour l'adapter au besoin.<br/>
-                                Les receveurs du mail automatique seront l'auteur de la commande et l'acteur chargé de la prochaine étape.
-                            </dl>
-                            <div class="mb-3">
-                                @php
-                                    $signature = implode(', ', $user->getRoles()->map(fn (Role $role) => $role->getName())->toArray());
-
-                                    // On utilise " " (double quotes) et \n pour les sauts de ligne pour que le code reste propre
-                                    $defaultContent = "Madame, monsieur,\n" .
-                                                      "Un bon de commande a été ajouté à la commande désignée \"{$order->getTitle()}\" de numéro {$order->getOrderNumber()}.\n\n" .
-                                                      "{$user->getFullName()}\n" .
-                                                      "{$signature},\n" .
-                                                      "IUT de Villetaneuse, Sorbonne Paris Nord";
-                                @endphp
-
-                                <label for="mailContent-{{$orderId}}" class="col-form-label fs-6">Contenu :</label>
-                                <textarea
-                                    class="form-control"
-                                    style="height: 200px"
-                                    name="mailContent"
-                                    id="mailContent-{{$orderId}}"
-                                >{{$defaultContent}}</textarea>
-                            </div>
-                        </div>
-                    </div>
+                    <x-orders.modal.modal-fields.auto-mail-field
+                        :orderId="$orderId"
+                        :defaultMailContent="BaseController::getDefaultMailContent('update_purchase_order', $order, $user)"
+                    ></x-orders.modal.modal-fields.auto-mail-field>
                 </form>
             </div>
-            <div class="modal-footer justify-content-between">
-                <div class="d-flex justify-content-start" title="Passer la commande du statut {{ $order->getStatus() }} au statut de {{ Status::BON_DE_COMMANDE_NON_SIGNE }} ou de {{ Status::BON_DE_COMMANDE_SIGNE }} si le bon de commande est marqué comme signé.">
+            <div class="modal-footer">
+                <div class="me-auto" title="Passer la commande du statut {{ $order->getStatus()->getDisplayName() }} au statut de {{ Status::COMMANDE->getDisplayName() }} ou de {{ Status::BON_DE_COMMANDE_SIGNE->getDisplayName() }} si le bon de commande est marqué comme signé.">
                     <input class="form-check-input me-2" name="nextStep" type="checkbox"
                            id="checkboxNextStep-{{$orderId}}" form="addPurchaseOrder-{{$orderId}}" checked>
                     <label class="form-check-label" for="checkboxNextStep-{{$orderId}}">
-                        Passer au statut suivant
+                        Passer la commande au statut suivant
                     </label>
                 </div>
-                <div class="d-inline">
-                    <button type="submit" form="addPurchaseOrder-{{$orderId}}" class="btn btn-primary">Sauvegarder</button>
+                <div class="d-flex justify-content-end">
+                    <button type="button" form="orderPaid-{{$orderId}}" class="btn btn-secondary m-1" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="addPurchaseOrder-{{$orderId}}" class="btn btn-primary m-1">Sauvegarder</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<script>
-    // TODO ajouter les modals avec le php
-    const mailCheckBox = document.getElementById('checkboxMail-{{$orderId}}');
-    const mailOptionsDiv = document.getElementById('mailOptionsDiv-{{$orderId}}');
-
-    mailCheckBox.addEventListener('click', (event) => {
-        console.debug(mailOptionsDiv.style);
-        mailOptionsDiv.style = event.target.checked ? "display:block;" : "display:none;"
-    });
-
-</script>

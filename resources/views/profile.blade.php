@@ -15,15 +15,6 @@
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const el = document.getElementById('profileToast');
-            if (!el) return;
-            const toast = new bootstrap.Toast(el, { delay: 5000 }); // 5 sec
-            toast.show();
-        });
-    </script>
 @endif
 
 
@@ -89,4 +80,15 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('js')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById('profileToast');
+            if (!el) return;
+            const toast = new bootstrap.Toast(el, { delay: 5000 }); // 5 sec
+            toast.show();
+        });
+    </script>
 @endsection

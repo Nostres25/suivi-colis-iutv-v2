@@ -1,0 +1,46 @@
+networks:
+  reverse_proxy2:
+    external: true
+
+secrets:
+  suivi_colis_env:
+    file: .env
+  suivi_colis_cacert:
+    file: cacert.pem
+
+volumes:
+  laravel_storage:
+    driver: local
+
+services:
+  sae-jupiter:
+    image: ghcr.io/at9ph/suivi-colis-iutv:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    networks:
+      - reverse_proxy2
+    secrets:
+      - source: suivi_colis_env
+        target: /var/www/suivi-colis-iutv/.env
+        mode: 444
+      - source: suivi_colis_cacert
+        target: /etc/ssl/certs/cacert.pem
+        mode: 444
+    volumes:
+      - laravel_storage:/var/www/suivi-colis-iutv/storage/app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sae-jupiter.rule=Host(`sae.nom.domaine`)"
+      - "traefik.http.routers.sae-jupiter.tls=true"
+      - "traefik.http.routers.sae-jupiter.tls.certresolver=prodresolver"
+      - "traefik.http.routers.sae-jupiter.entrypoints=websecure"
+      - "traefik.http.services.sae-jupiter.loadbalancer.server.port=80"
