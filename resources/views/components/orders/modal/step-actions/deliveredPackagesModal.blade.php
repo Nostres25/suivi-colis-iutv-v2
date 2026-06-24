@@ -42,7 +42,7 @@
                                 {{ $checkAll || $package->getShippingDate() ? 'checked' : '' }}>
 
                             <label class="form-check-label" for="package-{{$orderId}}-{{$package->getId()}}">
-                                Colis #{{ $package->getId() }}
+                                Colis {{ $package->getName() }}
 
                                 @if($package->getShippingDate())
                                     <span class="badge bg-success ms-2">
