@@ -762,14 +762,6 @@ class OrderController extends BaseController
         // Initialisation sql
         $query = Order::query()->select('orders.*');
 
-        // Ordre d'affichage global des Bons de commande
-        $query->orderByRaw("CASE
-        WHEN orders.status = 'BON_DE_COMMANDE_NON_SIGNE' THEN 1
-        WHEN orders.status = 'BON_DE_COMMANDE_SIGNE' THEN 2
-        WHEN orders.status = 'BON_DE_COMMANDE_REFUSE' THEN 3
-        ELSE 4
-    END");
-
         // Filtrage par droits / départements
         if (! $user->hasPermission(PermissionValue::CONSULTER_TOUTES_COMMANDES)) {
             $query->where(function (Builder $q) use ($userDepartments, $userPermissions) {

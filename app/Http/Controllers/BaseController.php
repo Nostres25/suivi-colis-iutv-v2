@@ -95,7 +95,7 @@ abstract class BaseController extends Controller
 
                         // Nombre de rôles que l'utilisateur de test doit avoir
                         $minRoles = 1;
-                        $maxRoles = null;
+                        $maxRoles = 1;
 
                         $currentNbMatchingRoles = 0;
                         $isMatching = false;
@@ -110,7 +110,7 @@ abstract class BaseController extends Controller
                             }
                         }
 
-                        if ($isMatching && $currentNbMatchingRoles <= $maxRoles) {
+                        if ($isMatching && $roles->count() <= $maxRoles) {
                             return true;
                         }
 
